@@ -10,7 +10,7 @@ Launch target: one category (Winter wear), retailers in Srinagar, Sopore, Baramu
 ## Phase 0 — Foundation
 - [x] P0.1 Create .NET 10 solution skeleton (6 projects), git init, build passes
 - [x] P0.2 Remove template files (Class1.cs, WeatherForecast*, UnitTest1.cs); build; commit
-- [ ] P0.3 Add AGENTS.md (root) and docs/PHASES.md to the repo; commit
+- [x] P0.3 Add AGENTS.md (root) and docs/PHASES.md to the repo; commit
 - [ ] P0.4 Add base packages: MySql.EntityFrameworkCore, Serilog, FluentValidation, Swashbuckle/OpenAPI UI
 - [ ] P0.5 Api: Serilog, global exception handler (ProblemDetails), health endpoint `/api/v1/health`
 - [ ] P0.6 Connection string + keys via user-secrets; document required secrets in docs/SECRETS.md (names only, no values)
