@@ -69,7 +69,7 @@ Source: old project, read-only. Only the files listed in the Step 2 prompt.
 - [ ] P5.6 Invoices (seller-to-retailer, platform commission) as PDF
 - [ ] P5.7 AuditLogs via EF SaveChanges interceptor
 - [ ] P5.8 Rate limiting on auth/search; CORS for frontend domain only
-- [ ] P5.9 MSG91 real OTP sender + WhatsApp Cloud API sender (needs accounts — STOP and ask)
+- [ ] P5.9 BLOCKED: needs accounts (MSG91 and WhatsApp)
 
 ## Phase 6 — Frontend PWA (client/)
 - [ ] P6.1 React + Vite + TS + Tailwind + shadcn/ui; PWA manifest; API client with cookie + CSRF header
