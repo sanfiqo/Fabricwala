@@ -39,6 +39,15 @@ public sealed class BusinessIsolationTests
         Assert.Equal(2, errors.Count);
     }
 
+    [Fact]
+    public void Landed_cost_uses_freight_floor_gst_and_configured_fee()
+    {
+        var result = LandedCostCalculator.Calculate(300, 200, 0.05m, 0.5m,
+            new ShippingRate { RateType = ShippingRateType.PerKg, Rate = 4, MinCharge = 4000 }, 0m);
+        Assert.Equal(20m, result.FreightPerUnit);
+        Assert.Equal(335m, result.TotalPerUnit);
+    }
+
     private static Business NewBusiness(string name) => new()
     {
         LegalName = name,

@@ -45,10 +45,10 @@ Source: old project, read-only. Only the files listed in the Step 2 prompt.
 - [x] P3.2 Seed categories (Men's, Women's, Kids, Winter wear, Fabrics, Shawls, Innerwear, Home textiles)
 - [x] P3.3 Seller API: create/edit/delete own products, variants, slabs, media (Manufacturer + ApprovedBusiness only)
 - [x] P3.4 Slab validation: no overlapping ranges, first slab MinQty = Moq
-- [ ] P3.5 Public API: GET /categories, GET /products (search, category, price, city filters, paging), GET /products/{slug}
+- [x] P3.5 Public API: GET /categories, GET /products (search, category, price, city filters, paging), GET /products/{slug}
 - [x] P3.6 ShippingRates table (From city, To city, PerKg/PerPiece, Rate, MinCharge, TransitDays) + admin CRUD
 - [x] P3.7 Landed cost service + GET /landed-cost?productId=&qty=&cityId= (slab price + freight/unit + GST + platform fee)
-- [ ] P3.8 Tests: slab selection, landed cost math, seller cannot edit another seller's product
+- [x] P3.8 Tests: slab selection, landed cost math, seller cannot edit another seller's product
 
 ## Phase 4 — Cart and orders
 - [ ] P4.1 Domain: CartItem (business-level cart), Order, SellerOrder, OrderItem (snapshots), OrderStatusHistory
