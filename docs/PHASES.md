@@ -41,7 +41,7 @@ Source: old project, read-only. Only the files listed in the Step 2 prompt.
 - [x] P2.10 Tests: isolation (business A cannot read business B), unapproved business blocked
 
 ## Phase 3 — Catalogue
-- [ ] P3.1 Domain: Category (ParentId tree), Product, ProductMedia, ProductVariant, PriceSlab, PlatformSettings
+- [x] P3.1 Domain: Category (ParentId tree), Product, ProductMedia, ProductVariant, PriceSlab, PlatformSettings
 - [ ] P3.2 Seed categories (Men's, Women's, Kids, Winter wear, Fabrics, Shawls, Innerwear, Home textiles)
 - [ ] P3.3 Seller API: create/edit/delete own products, variants, slabs, media (Manufacturer + ApprovedBusiness only)
 - [ ] P3.4 Slab validation: no overlapping ranges, first slab MinQty = Moq
