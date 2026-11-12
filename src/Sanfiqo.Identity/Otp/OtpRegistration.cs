@@ -33,11 +33,13 @@ public static class OtpRegistration
                 throw new InvalidOperationException("The fake user OTP delivery adapter is restricted to Development/test.");
             services.AddSingleton<FakeOtpDelivery>();
             services.AddSingleton<IOtpDelivery>(sp => sp.GetRequiredService<FakeOtpDelivery>());
+            services.AddSingleton<IOtpSender>(sp => sp.GetRequiredService<FakeOtpDelivery>());
             services.AddSingleton<ILocalOtpInspection>(sp => sp.GetRequiredService<FakeOtpDelivery>());
         }
         else if (provider.Equals("Unconfigured", StringComparison.OrdinalIgnoreCase))
         {
             services.AddSingleton<IOtpDelivery, UnconfiguredOtpDelivery>();
+            services.AddSingleton<IOtpSender>(sp => sp.GetRequiredService<UnconfiguredOtpDelivery>());
         }
         else
         {

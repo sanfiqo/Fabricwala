@@ -33,6 +33,12 @@ public interface IOtpDelivery
         CancellationToken cancellationToken);
 }
 
+public interface IOtpSender
+{
+    Task SendAsync(Guid challengeId, string mobileE164, string code, DateTimeOffset expiresAt,
+        CancellationToken cancellationToken);
+}
+
 /// <summary>Available only through a Development/test service provider, never an HTTP route.</summary>
 public interface ILocalOtpInspection
 {

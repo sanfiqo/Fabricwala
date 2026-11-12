@@ -4,7 +4,7 @@ using Sanfiqo.Identity;
 namespace Sanfiqo.Identity;
 
 /// <summary>In-memory delivery capture for local Development/test only. It has no network surface.</summary>
-public sealed class FakeOtpDelivery : IOtpDelivery, ILocalOtpInspection
+public sealed class FakeOtpDelivery : IOtpDelivery, IOtpSender, ILocalOtpInspection
 {
     private sealed record CapturedCode(string Value, DateTimeOffset ExpiresAt);
     private readonly ConcurrentDictionary<Guid, CapturedCode> _codes = new();
@@ -14,6 +14,7 @@ public sealed class FakeOtpDelivery : IOtpDelivery, ILocalOtpInspection
     {
         cancellationToken.ThrowIfCancellationRequested();
         _codes[challengeId] = new CapturedCode(code, expiresAt);
+        Console.WriteLine($"Development OTP for {mobileE164}: {code} (challenge {challengeId})");
         return Task.CompletedTask;
     }
 
@@ -31,7 +32,7 @@ public sealed class FakeOtpDelivery : IOtpDelivery, ILocalOtpInspection
     }
 }
 
-public sealed class UnconfiguredOtpDelivery : IOtpDelivery
+public sealed class UnconfiguredOtpDelivery : IOtpDelivery, IOtpSender
 {
     public Task SendAsync(Guid challengeId, string mobileE164, string code, DateTimeOffset expiresAt,
         CancellationToken cancellationToken)
