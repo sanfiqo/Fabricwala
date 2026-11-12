@@ -1,0 +1,28 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using TextileConnect.Application.Businesses;
+using TextileConnect.Domain.Businesses;
+
+namespace TextileConnect.Api;
+
+public static class BusinessEndpoints
+{
+    public static void MapBusinessEndpoints(this WebApplication app)
+    {
+        var group = app.MapGroup("/api/v1/businesses").RequireAuthorization();
+        group.MapPost("", (Business business, ClaimsPrincipal principal, IBusinessDirectory directory) =>
+            Results.Ok(directory.Create(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "", business)));
+        group.MapGet("/me", (ClaimsPrincipal principal, IBusinessDirectory directory) =>
+            directory.GetForUser(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "") is { } business
+                ? Results.Ok(business) : Results.NotFound());
+        group.MapPut("/me", (BusinessUpdate request, ClaimsPrincipal principal, IBusinessDirectory directory) =>
+            directory.UpdateForUser(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "", b =>
+            { b.DisplayName = request.DisplayName; b.Email = request.Email; }) is { } business
+                ? Results.Ok(business) : Results.NotFound());
+        group.MapPost("/me/addresses", (BusinessAddress address, ClaimsPrincipal principal, IBusinessDirectory directory) =>
+            Results.Ok(directory.AddAddress(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "", address)));
+    }
+
+    public sealed record BusinessUpdate(string DisplayName, string? Email);
+}

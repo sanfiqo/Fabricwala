@@ -33,7 +33,7 @@ Source: old project, read-only. Only the files listed in the Step 2 prompt.
 - [x] P2.2 Master data: State, City (IsDeliveryZone, IsSourcingHub); seed J&K delivery cities and sourcing hubs (Surat, Delhi, Ludhiana, Panipat, Jaipur, Tiruppur, Ahmedabad, Mumbai)
 - [ ] P2.3 BLOCKED: EF migration tooling is not configured in the infrastructure project; model context is committed
 - [x] P2.4 `ICurrentBusiness` service: resolves BusinessId from the logged-in user; used for all isolation filters
-- [ ] P2.5 API: POST /businesses, GET/PUT /businesses/me, POST /businesses/me/addresses
+- [x] P2.5 API: POST /businesses, GET/PUT /businesses/me, POST /businesses/me/addresses
 - [ ] P2.6 Document upload via `IFileStorage` (local disk in Development); private access
 - [ ] P2.7 Admin API: list pending, approve, reject (with note); approval assigns Retailer/Manufacturer role
 - [ ] P2.8 Policy `ApprovedBusiness` blocks listing/ordering until approved

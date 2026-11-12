@@ -12,3 +12,4 @@
 2026-11-13 | P2.2 | done | build passed; 6 tests passed
 2026-11-13 | P2.3 | blocked | build passed; 6 tests passed; EF model added, migration tooling not configured
 2026-11-13 | P2.4 | done | build passed; 6 tests passed
+2026-11-13 | P2.5 | done | build passed; 6 tests passed
