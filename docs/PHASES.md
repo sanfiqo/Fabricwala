@@ -51,7 +51,7 @@ Source: old project, read-only. Only the files listed in the Step 2 prompt.
 - [x] P3.8 Tests: slab selection, landed cost math, seller cannot edit another seller's product
 
 ## Phase 4 — Cart and orders
-- [ ] P4.1 Domain: CartItem (business-level cart), Order, SellerOrder, OrderItem (snapshots), OrderStatusHistory
+- [x] P4.1 Domain: CartItem (business-level cart), Order, SellerOrder, OrderItem (snapshots), OrderStatusHistory
 - [ ] P4.2 Cart API: get, add, update qty, remove
 - [ ] P4.3 Checkout: validate MOQ, approved business, stock; compute slab price, shipping, GST, commission on server; split into SellerOrders
 - [ ] P4.4 Retailer API: list/get own orders with status timeline
