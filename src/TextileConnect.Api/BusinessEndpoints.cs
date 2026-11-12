@@ -22,6 +22,8 @@ public static class BusinessEndpoints
                 ? Results.Ok(business) : Results.NotFound());
         group.MapPost("/me/addresses", (BusinessAddress address, ClaimsPrincipal principal, IBusinessDirectory directory) =>
             Results.Ok(directory.AddAddress(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "", address)));
+        group.MapPost("/me/users", (StaffRequest request, ClaimsPrincipal principal, IBusinessDirectory directory) =>
+            Results.Ok(directory.AddStaff(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "", request.UserId)));
 
         var admin = app.MapGroup("/api/v1/admin/businesses").RequireAuthorization(p => p.RequireRole("Admin"));
         admin.MapGet("", (IBusinessDirectory directory) => Results.Ok(directory.ListPending()));
@@ -35,4 +37,5 @@ public static class BusinessEndpoints
 
     public sealed record BusinessUpdate(string DisplayName, string? Email);
     public sealed record Rejection(string Note);
+    public sealed record StaffRequest(string UserId);
 }

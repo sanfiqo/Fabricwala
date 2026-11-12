@@ -37,7 +37,7 @@ Source: old project, read-only. Only the files listed in the Step 2 prompt.
 - [x] P2.6 Document upload via `IFileStorage` (local disk in Development); private access
 - [x] P2.7 Admin API: list pending, approve, reject (with note); approval assigns Retailer/Manufacturer role
 - [x] P2.8 Policy `ApprovedBusiness` blocks listing/ordering until approved
-- [ ] P2.9 Staff users: POST /businesses/me/users (owner adds staff by mobile)
+- [x] P2.9 Staff users: POST /businesses/me/users (owner adds staff by mobile)
 - [ ] P2.10 Tests: isolation (business A cannot read business B), unapproved business blocked
 
 ## Phase 3 — Catalogue

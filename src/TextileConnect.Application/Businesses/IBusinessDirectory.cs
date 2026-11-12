@@ -10,6 +10,7 @@ public interface IBusinessDirectory
     BusinessAddress AddAddress(string userId, BusinessAddress address);
     IReadOnlyList<Business> ListPending();
     Business? SetVerification(long id, VerificationStatus status, string? note, string? approverId);
+    BusinessUser AddStaff(string ownerUserId, string staffUserId);
 }
 
 public sealed class InMemoryBusinessDirectory : IBusinessDirectory
@@ -47,5 +48,10 @@ public sealed class InMemoryBusinessDirectory : IBusinessDirectory
         record.Business.ApprovedByUserId = approverId;
         record.Business.ApprovedAtUtc = status == VerificationStatus.Approved ? DateTime.UtcNow : null;
         return record.Business;
+    }
+    public BusinessUser AddStaff(string ownerUserId, string staffUserId)
+    {
+        var record = _records.First(x => x.UserId == ownerUserId);
+        return new BusinessUser { BusinessId = record.Business.Id, UserId = staffUserId, Role = BusinessMemberRole.Staff };
     }
 }
