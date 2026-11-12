@@ -12,6 +12,9 @@ import ProductPage from '@/pages/shop/ProductPage'
 import CartPage from '@/pages/shop/CartPage'
 import CheckoutPage from '@/pages/shop/CheckoutPage'
 import { OrdersPage, OrderDetailPage } from '@/pages/shop/OrdersPage'
+import SellerProductsPage from '@/pages/seller/SellerProductsPage'
+import ProductEditorPage from '@/pages/seller/ProductEditorPage'
+import { SellerOrdersPage, SellerOrderDetailPage } from '@/pages/seller/SellerOrdersPage'
 
 function RootRedirect() {
   const { data: me, isLoading } = useMe()
@@ -42,6 +45,16 @@ export default function App() {
           <Route path="/shop/checkout" element={<CheckoutPage />} />
           <Route path="/shop/orders" element={<OrdersPage />} />
           <Route path="/shop/orders/:id" element={<OrderDetailPage />} />
+        </Route>
+      </Route>
+
+      <Route element={<Gate area="Manufacturer" />}>
+        <Route element={<AppShell />}>
+          <Route path="/seller/products" element={<SellerProductsPage />} />
+          <Route path="/seller/products/new" element={<ProductEditorPage />} />
+          <Route path="/seller/products/:id" element={<ProductEditorPage />} />
+          <Route path="/seller/orders" element={<SellerOrdersPage />} />
+          <Route path="/seller/orders/:id" element={<SellerOrderDetailPage />} />
         </Route>
       </Route>
 

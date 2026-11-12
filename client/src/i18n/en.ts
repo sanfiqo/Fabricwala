@@ -268,7 +268,7 @@ export const en = {
     slabFirst: 'First row must start at {moq}',
     slabOverlap: 'Rows {a} and {b} overlap',
     slabGap: 'Gap between rows {a} and {b}',
-    slabMax: 'Row {a}: "to" must be more than "from"',
+    slabMax: 'Row {a}: "to" cannot be less than "from"',
     slabOpen: 'Only the last row can be "and above"',
     slabLast: 'Last row must be "and above"',
     slabPrice: 'Row {a}: enter a price',
