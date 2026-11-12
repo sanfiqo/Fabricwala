@@ -22,3 +22,5 @@
 2026-11-13 | P3.2 | done | build passed; 8 tests passed
 2026-11-13 | P3.3 | done | build passed; 8 tests passed
 2026-11-13 | P3.4 | done | build passed; 9 tests passed
+2026-11-13 | P3.6 | done | build passed; 9 tests passed
+2026-11-13 | P3.7 | done | build passed; 9 tests passed
