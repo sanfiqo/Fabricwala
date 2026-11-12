@@ -57,7 +57,7 @@ Source: old project, read-only. Only the files listed in the Step 2 prompt.
 - [ ] P4.4 Retailer API: list/get own orders with status timeline
 - [ ] P4.5 Seller API: list own SellerOrders, accept, reject (reason), dispatch (LR number)
 - [ ] P4.6 Shipments table + status updates (In transit, Reached Kashmir, Delivered) + retailer confirm delivery
-- [ ] P4.7 Notifications table + `INotificationSender` (fake in Development); queue on every status change
+- [x] P4.7 Notifications table + `INotificationSender` (fake in Development); queue on every status change
 - [x] P4.8 Tests: checkout split by seller, price tamper rejected, isolation on orders
 
 ## Phase 5 — Payments and launch readiness
