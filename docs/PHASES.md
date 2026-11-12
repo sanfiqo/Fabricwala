@@ -18,7 +18,7 @@ Launch target: one category (Winter wear), retailers in Srinagar, Sopore, Baramu
 ## Phase 1 — Identity (Sanfiqo.Identity)
 Source: old project, read-only. Only the files listed in the Step 2 prompt.
 - [x] P1.1 Copy ApplicationUser, ApplicationRole, Identity DbContext into Sanfiqo.Identity (Users/, Persistence/); rename namespaces
-- [ ] P1.2 Copy OTP challenge service, policy, entities, delivery into Otp/; rename Customer* to neutral names; keep ALL security rules (expiry, single use, attempt limit, resend/IP/mobile limits, hashed storage)
+- [x] P1.2 Copy OTP challenge service, policy, entities, delivery into Otp/; rename Customer* to neutral names; keep ALL security rules (expiry, single use, attempt limit, resend/IP/mobile limits, hashed storage)
 - [ ] P1.3 Copy contact ownership + crypto into Contacts/; HMAC key from options
 - [ ] P1.4 Security/: cookie + antiforgery + claims factory + cookie validator as extension methods `AddSanfiqoIdentity()` / `MapSanfiqoAuthEndpoints()`
 - [ ] P1.5 Options class for all settings (no hardcoded local-database restrictions)
