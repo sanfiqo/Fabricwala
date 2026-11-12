@@ -6,6 +6,9 @@ using TextileConnect.Api;
 using TextileConnect.Application.Files;
 using TextileConnect.Infrastructure.Files;
 using TextileConnect.Application.Catalogue;
+using TextileConnect.Infrastructure.Persistence;
+using TextileConnect.Infrastructure.Businesses;
+using TextileConnect.Infrastructure.Catalogue;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,8 +26,9 @@ builder.Services.AddHealthChecks();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentBusiness, CurrentBusiness>();
 builder.Services.AddSingleton<IAuthorizationHandler, ApprovedBusinessHandler>();
-builder.Services.AddSingleton<IBusinessDirectory, InMemoryBusinessDirectory>();
-builder.Services.AddSingleton<IProductDirectory, InMemoryProductDirectory>();
+builder.Services.AddMarketplacePersistence(builder.Configuration);
+builder.Services.AddScoped<IBusinessDirectory, EfBusinessDirectory>();
+builder.Services.AddScoped<IProductDirectory, EfProductDirectory>();
 if (builder.Environment.IsDevelopment())
     builder.Services.AddSingleton<IFileStorage, DevelopmentFileStorage>();
 builder.Services.AddSanfiqoIdentity(builder.Configuration, builder.Environment);

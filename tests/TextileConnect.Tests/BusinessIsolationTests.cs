@@ -5,6 +5,9 @@ using TextileConnect.Domain.Businesses;
 using TextileConnect.Domain.Catalogue;
 using TextileConnect.Domain.Orders;
 using TextileConnect.Application.Payments;
+using Microsoft.EntityFrameworkCore;
+using TextileConnect.Infrastructure.Businesses;
+using TextileConnect.Infrastructure.Persistence;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -15,7 +18,9 @@ public sealed class BusinessIsolationTests
     [Fact]
     public void Directory_returns_only_the_requesting_users_business()
     {
-        var directory = new InMemoryBusinessDirectory();
+        var options = new DbContextOptionsBuilder<MarketplaceDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options;
+        using var db = new MarketplaceDbContext(options);
+        var directory = new EfBusinessDirectory(db);
         directory.Create("user-a", NewBusiness("A"));
         directory.Create("user-b", NewBusiness("B"));
 
