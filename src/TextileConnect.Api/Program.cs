@@ -1,4 +1,5 @@
 using Serilog;
+using Sanfiqo.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,8 +14,12 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddProblemDetails();
 builder.Services.AddHealthChecks();
+builder.Services.AddSanfiqoIdentity(builder.Configuration, builder.Environment);
 
 var app = builder.Build();
+
+if (!app.Environment.IsEnvironment("Testing"))
+    await SanfiqoRoleSeeder.SeedAsync(app.Services);
 
 app.UseExceptionHandler();
 
@@ -27,9 +32,12 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
+app.UseAntiforgery();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapSanfiqoAuthEndpoints();
 app.MapHealthChecks("/api/v1/health");
 
 app.Run();

@@ -5,3 +5,4 @@
 2026-11-12 | P1.5 | done | build passed; 4 tests passed
 2026-11-13 | P1.6 | done | build passed; 4 tests passed
 2026-11-13 | P1.7 | done | build passed; 4 tests passed
+2026-11-13 | P1.8 | done | build passed; 4 tests passed; migration/database apply not run (no configured local MySQL secret)
