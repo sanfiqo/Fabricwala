@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Sanfiqo.Identity/Sanfiqo.Identity.csproj" />
+    <Project Path="src/TextileConnect.Api/TextileConnect.Api.csproj" />
+    <Project Path="src/TextileConnect.Application/TextileConnect.Application.csproj" />
+    <Project Path="src/TextileConnect.Domain/TextileConnect.Domain.csproj" />
+    <Project Path="src/TextileConnect.Infrastructure/TextileConnect.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/TextileConnect.Tests/TextileConnect.Tests.csproj" />
+  </Folder>
+</Solution>
