@@ -1,13 +1,15 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using MySql.EntityFrameworkCore.Extensions;
 
 namespace Sanfiqo.Identity;
 
 public sealed class ApplicationIdentityDbContext(DbContextOptions<ApplicationIdentityDbContext> options)
-    : IdentityDbContext<ApplicationUser, ApplicationRole, string>(options)
+    : IdentityDbContext<ApplicationUser, ApplicationRole, string>(options), IDataProtectionKeyContext
 {
+    public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
     public DbSet<OtpChallenge> OtpChallenges => Set<OtpChallenge>();
     public DbSet<OtpSendEvent> OtpSendEvents => Set<OtpSendEvent>();
     public DbSet<OtpWriteGate> OtpWriteGates => Set<OtpWriteGate>();

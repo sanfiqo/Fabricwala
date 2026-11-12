@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
@@ -19,6 +21,7 @@ public static class SanfiqoIdentityRegistration
             .Validate(options => !string.IsNullOrWhiteSpace(options.ConnectionStringName), "Identity connection string name is required.")
             .Validate(options => !string.IsNullOrWhiteSpace(options.CookieName), "Identity cookie name is required.")
             .ValidateOnStart();
+        services.AddDataProtection().PersistKeysToDbContext<ApplicationIdentityDbContext>();
         services.AddApplicationIdentityPersistence();
         services.AddOtpChallengeFoundation(configuration, environment.EnvironmentName);
         services.AddUserContactOwnership();
