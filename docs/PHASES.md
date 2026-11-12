@@ -25,7 +25,7 @@ Source: old project, read-only. Only the files listed in the Step 2 prompt.
 - [x] P1.6 Roles Admin, Retailer, Manufacturer seeded at startup; remove MFA requirement from Manufacturer policy; TODO for Admin MFA
 - [x] P1.7 `IOtpSender` with Development fake sender (logs OTP to console)
 - [x] P1.8 Wire into Api; fresh initial migration; apply to local MySQL test DB
-- [ ] P1.9 Test end to end: request OTP -> verify -> cookie -> protected test endpoint returns 200; wrong OTP 5x gets locked
+- [x] P1.9 Test end to end: request OTP -> verify -> cookie -> protected test endpoint returns 200; wrong OTP 5x gets locked
 - [ ] P1.10 Persist Data Protection keys in the database
 
 ## Phase 2 — Businesses and approval
