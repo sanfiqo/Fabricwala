@@ -1,4 +1,5 @@
 using Serilog;
+using Microsoft.AspNetCore.Authorization;
 using Sanfiqo.Identity;
 using TextileConnect.Application.Businesses;
 using TextileConnect.Api;
@@ -20,10 +21,13 @@ builder.Services.AddProblemDetails();
 builder.Services.AddHealthChecks();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentBusiness, CurrentBusiness>();
+builder.Services.AddSingleton<IAuthorizationHandler, ApprovedBusinessHandler>();
 builder.Services.AddSingleton<IBusinessDirectory, InMemoryBusinessDirectory>();
 if (builder.Environment.IsDevelopment())
     builder.Services.AddSingleton<IFileStorage, DevelopmentFileStorage>();
 builder.Services.AddSanfiqoIdentity(builder.Configuration, builder.Environment);
+builder.Services.AddAuthorization(options => options.AddPolicy("ApprovedBusiness",
+    policy => policy.RequireAuthenticatedUser().AddRequirements(new ApprovedBusinessRequirement())));
 
 var app = builder.Build();
 
