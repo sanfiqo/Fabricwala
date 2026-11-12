@@ -10,9 +10,7 @@ namespace Sanfiqo.Identity;
 /// <summary>Owns the atomic verified-mobile resolution, proof consumption and user creation.</summary>
 public sealed class EfVerifiedMobileAccountStore : IVerifiedMobileAccountStore
 {
-    private const string UserRole = "User";
-    private const string PrivilegedRole = "Seller";
-    private const string AdministratorRole = "Admin";
+    private const string UserRole = SanfiqoRoleNames.Retailer;
     private readonly ApplicationIdentityDbContext _db;
     private readonly UserManager<ApplicationUser> _users;
     private readonly RoleManager<ApplicationRole> _roles;
@@ -92,7 +90,7 @@ public sealed class EfVerifiedMobileAccountStore : IVerifiedMobileAccountStore
                 await _db.SaveChangesAsync(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
 
-                // OTP alone must never enter seller/admin scope. Existing users must
+                // OTP alone must never enter manufacturer/admin scope. Existing users must
                 // already be active; no legacy activation or role promotion is inferred.
                 if (user is null || !user.IsActive || duplicateLegacyPhone
                     || userRoles.Count != 1 || !userRoles.Contains(UserRole, StringComparer.Ordinal))
