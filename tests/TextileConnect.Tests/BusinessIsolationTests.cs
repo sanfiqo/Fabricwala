@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using TextileConnect.Application.Businesses;
 using TextileConnect.Domain.Businesses;
 using TextileConnect.Domain.Catalogue;
+using TextileConnect.Domain.Orders;
 
 namespace TextileConnect.Tests;
 
@@ -46,6 +47,14 @@ public sealed class BusinessIsolationTests
             new ShippingRate { RateType = ShippingRateType.PerKg, Rate = 4, MinCharge = 4000 }, 0m);
         Assert.Equal(20m, result.FreightPerUnit);
         Assert.Equal(335m, result.TotalPerUnit);
+    }
+
+    [Fact]
+    public void Checkout_splits_sellers_and_uses_two_percent_manufacturer_commission()
+    {
+        var split = CheckoutRules.SplitBySeller([(1, 100m), (2, 50m), (1, 25m)]);
+        Assert.Equal(125m, split[1]);
+        Assert.Equal(2m, CheckoutRules.Commission(100m, null, new PlatformSettings()));
     }
 
     private static Business NewBusiness(string name) => new()

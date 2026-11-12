@@ -53,12 +53,12 @@ Source: old project, read-only. Only the files listed in the Step 2 prompt.
 ## Phase 4 — Cart and orders
 - [x] P4.1 Domain: CartItem (business-level cart), Order, SellerOrder, OrderItem (snapshots), OrderStatusHistory
 - [ ] P4.2 Cart API: get, add, update qty, remove
-- [ ] P4.3 Checkout: validate MOQ, approved business, stock; compute slab price, shipping, GST, commission on server; split into SellerOrders
+- [x] P4.3 Checkout: validate MOQ, approved business, stock; compute slab price, shipping, GST, commission on server; split into SellerOrders
 - [ ] P4.4 Retailer API: list/get own orders with status timeline
 - [ ] P4.5 Seller API: list own SellerOrders, accept, reject (reason), dispatch (LR number)
 - [ ] P4.6 Shipments table + status updates (In transit, Reached Kashmir, Delivered) + retailer confirm delivery
 - [ ] P4.7 Notifications table + `INotificationSender` (fake in Development); queue on every status change
-- [ ] P4.8 Tests: checkout split by seller, price tamper rejected, isolation on orders
+- [x] P4.8 Tests: checkout split by seller, price tamper rejected, isolation on orders
 
 ## Phase 5 — Payments and launch readiness
 - [ ] P5.1 Payments table; Razorpay order create; client payment flow endpoint
