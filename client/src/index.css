@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+@theme {
+  --color-navy-950: #091a2e;
+  --color-navy-900: #0f2742;
+  --color-navy-800: #17365a;
+  --color-navy-700: #234a77;
+  --color-navy-100: #e3eaf3;
+  --color-navy-50: #f2f5f9;
+  --color-leaf-700: #217a50;
+  --color-leaf-600: #2f9e6b;
+  --color-leaf-100: #dff3e9;
+  --color-leaf-50: #f0faf5;
+  --color-ink: #1c2733;
+  --color-mute: #5d6b7a;
+  --color-line: #dde3ea;
+  --color-warn: #8a5a0f;
+  --color-warn-bg: #fdf3dc;
+  --color-bad: #b42f2f;
+  --color-bad-bg: #fbe7e7;
+  --font-sans: "Noto Sans", "Noto Sans Devanagari", "Noto Nastaliq Urdu", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+body {
+  margin: 0;
+  background: #fff;
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-tap-highlight-color: transparent;
+}
+input,
+select,
+textarea,
+button {
+  font: inherit;
+}
+/* Stitched divider: the one recurring motif of the app */
+.stitch {
+  border: 0;
+  border-top: 2px dashed color-mix(in srgb, var(--color-leaf-600) 45%, transparent);
+}
+.stitch-b {
+  border-bottom: 2px dashed color-mix(in srgb, var(--color-leaf-600) 45%, transparent);
+}
+.safe-b {
+  padding-bottom: env(safe-area-inset-bottom);
+}
