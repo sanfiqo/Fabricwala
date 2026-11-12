@@ -4,6 +4,9 @@ using TextileConnect.Application.Businesses;
 using TextileConnect.Domain.Businesses;
 using TextileConnect.Domain.Catalogue;
 using TextileConnect.Domain.Orders;
+using TextileConnect.Application.Payments;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace TextileConnect.Tests;
 
@@ -55,6 +58,16 @@ public sealed class BusinessIsolationTests
         var split = CheckoutRules.SplitBySeller([(1, 100m), (2, 50m), (1, 25m)]);
         Assert.Equal(125m, split[1]);
         Assert.Equal(2m, CheckoutRules.Commission(100m, null, new PlatformSettings()));
+    }
+
+    [Fact]
+    public void Razorpay_webhook_signature_uses_hmac_and_rejects_tampering()
+    {
+        const string payload = "{\"event\":\"payment.captured\"}";
+        using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes("test-secret"));
+        var signature = Convert.ToHexString(hmac.ComputeHash(Encoding.UTF8.GetBytes(payload))).ToLowerInvariant();
+        Assert.True(RazorpaySignatureVerifier.Verify(payload, signature, "test-secret"));
+        Assert.False(RazorpaySignatureVerifier.Verify(payload + "x", signature, "test-secret"));
     }
 
     private static Business NewBusiness(string name) => new()

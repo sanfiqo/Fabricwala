@@ -61,8 +61,8 @@ Source: old project, read-only. Only the files listed in the Step 2 prompt.
 - [x] P4.8 Tests: checkout split by seller, price tamper rejected, isolation on orders
 
 ## Phase 5 — Payments and launch readiness
-- [ ] P5.1 Payments table; Razorpay order create; client payment flow endpoint
-- [ ] P5.2 Webhook endpoint: signature verify, idempotent, marks Payment paid
+- [x] P5.1 Payments table; Razorpay order create; client payment flow endpoint
+- [x] P5.2 Webhook endpoint: signature verify, idempotent, marks Payment paid
 - [ ] P5.3 PayoutAccounts (gateway linked account id only; no bank numbers stored)
 - [ ] P5.4 Settlements: Hangfire job releases transfer after delivery confirm or N days without dispute
 - [ ] P5.5 Refunds for rejected SellerOrders
