@@ -9,3 +9,4 @@
 2026-11-13 | P1.9 | done | build passed; 6 tests passed; service flow and five-attempt lock covered without MySQL host
 2026-11-13 | P1.10 | done | pending restore/build validation; database migration/apply skipped without MySQL secret
 2026-11-13 | P2.1 | done | build passed; 6 tests passed
+2026-11-13 | P2.2 | done | build passed; 6 tests passed
