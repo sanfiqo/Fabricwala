@@ -14,6 +14,9 @@ import CheckoutPage from '@/pages/shop/CheckoutPage'
 import { OrdersPage, OrderDetailPage } from '@/pages/shop/OrdersPage'
 import SellerProductsPage from '@/pages/seller/SellerProductsPage'
 import ProductEditorPage from '@/pages/seller/ProductEditorPage'
+import AdminBusinessesPage from '@/pages/admin/AdminBusinessesPage'
+import AdminSettingsPage from '@/pages/admin/AdminSettingsPage'
+import AdminShippingPage from '@/pages/admin/AdminShippingPage'
 import { SellerOrdersPage, SellerOrderDetailPage } from '@/pages/seller/SellerOrdersPage'
 
 function RootRedirect() {
@@ -55,6 +58,14 @@ export default function App() {
           <Route path="/seller/products/:id" element={<ProductEditorPage />} />
           <Route path="/seller/orders" element={<SellerOrdersPage />} />
           <Route path="/seller/orders/:id" element={<SellerOrderDetailPage />} />
+        </Route>
+      </Route>
+
+      <Route element={<Gate area="Admin" />}>
+        <Route element={<AppShell />}>
+          <Route path="/admin/businesses" element={<AdminBusinessesPage />} />
+          <Route path="/admin/settings" element={<AdminSettingsPage />} />
+          <Route path="/admin/shipping" element={<AdminShippingPage />} />
         </Route>
       </Route>
 
