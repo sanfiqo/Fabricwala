@@ -22,7 +22,17 @@ public static class BusinessEndpoints
                 ? Results.Ok(business) : Results.NotFound());
         group.MapPost("/me/addresses", (BusinessAddress address, ClaimsPrincipal principal, IBusinessDirectory directory) =>
             Results.Ok(directory.AddAddress(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "", address)));
+
+        var admin = app.MapGroup("/api/v1/admin/businesses").RequireAuthorization(p => p.RequireRole("Admin"));
+        admin.MapGet("", (IBusinessDirectory directory) => Results.Ok(directory.ListPending()));
+        admin.MapPost("/{id:long}/approve", (long id, ClaimsPrincipal principal, IBusinessDirectory directory) =>
+            directory.SetVerification(id, VerificationStatus.Approved, null, principal.FindFirstValue(ClaimTypes.NameIdentifier)) is { } business
+                ? Results.Ok(business) : Results.NotFound());
+        admin.MapPost("/{id:long}/reject", (long id, Rejection request, ClaimsPrincipal principal, IBusinessDirectory directory) =>
+            directory.SetVerification(id, VerificationStatus.Rejected, request.Note, principal.FindFirstValue(ClaimTypes.NameIdentifier)) is { } business
+                ? Results.Ok(business) : Results.NotFound());
     }
 
     public sealed record BusinessUpdate(string DisplayName, string? Email);
+    public sealed record Rejection(string Note);
 }

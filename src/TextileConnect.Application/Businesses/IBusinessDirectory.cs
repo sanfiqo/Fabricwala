@@ -8,6 +8,8 @@ public interface IBusinessDirectory
     Business? GetForUser(string userId);
     Business? UpdateForUser(string userId, Action<Business> update);
     BusinessAddress AddAddress(string userId, BusinessAddress address);
+    IReadOnlyList<Business> ListPending();
+    Business? SetVerification(long id, VerificationStatus status, string? note, string? approverId);
 }
 
 public sealed class InMemoryBusinessDirectory : IBusinessDirectory
@@ -34,5 +36,16 @@ public sealed class InMemoryBusinessDirectory : IBusinessDirectory
         address.BusinessId = record.Business.Id;
         record.Addresses.Add(address);
         return address;
+    }
+    public IReadOnlyList<Business> ListPending() => _records.Where(x => x.Business.VerificationStatus == VerificationStatus.Pending).Select(x => x.Business).ToList();
+    public Business? SetVerification(long id, VerificationStatus status, string? note, string? approverId)
+    {
+        var record = _records.FirstOrDefault(x => x.Business.Id == id);
+        if (record.Business is null) return null;
+        record.Business.VerificationStatus = status;
+        record.Business.RejectionNote = note;
+        record.Business.ApprovedByUserId = approverId;
+        record.Business.ApprovedAtUtc = status == VerificationStatus.Approved ? DateTime.UtcNow : null;
+        return record.Business;
     }
 }
