@@ -1,5 +1,6 @@
 using Serilog;
 using Sanfiqo.Identity;
+using TextileConnect.Application.Businesses;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +15,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddProblemDetails();
 builder.Services.AddHealthChecks();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentBusiness, CurrentBusiness>();
 builder.Services.AddSanfiqoIdentity(builder.Configuration, builder.Environment);
 
 var app = builder.Build();
