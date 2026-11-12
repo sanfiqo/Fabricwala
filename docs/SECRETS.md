@@ -5,7 +5,8 @@ Store local development values with `dotnet user-secrets` for the API project. U
 Required and reserved secret names:
 
 - `ConnectionStrings:TextileConnect`
-- `CustomerContacts:LookupHmacKey`
+- `UserContacts:LookupHmacKey`
+- `Otp:StorageHmacKey`
 - `DataProtection:KeyRingConnectionString`
 - `Otp:Msg91:AuthKey`
 - `Otp:Msg91:TemplateId`

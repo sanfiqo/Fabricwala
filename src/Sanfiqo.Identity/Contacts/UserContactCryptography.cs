@@ -14,17 +14,17 @@ namespace Sanfiqo.Identity;
 /// </summary>
 public sealed class UserContactCryptography : IUserContactProofProtector
 {
-    private const string LookupKeyConfiguration = "UserContacts:LookupHmacKey";
     private readonly IDataProtector _valueProtector;
     private readonly ITimeLimitedDataProtector _proofProtector;
     private readonly byte[] _lookupKey;
 
-    public UserContactCryptography(IDataProtectionProvider protection, IConfiguration configuration)
+    public UserContactCryptography(IDataProtectionProvider protection, IConfiguration configuration,
+        Microsoft.Extensions.Options.IOptions<SanfiqoIdentityOptions> identityOptions)
     {
         _valueProtector = protection.CreateProtector("TextileConnect.UserContacts.StoredValue.v1");
         _proofProtector = protection.CreateProtector("TextileConnect.UserContacts.VerificationProof.v1")
             .ToTimeLimitedDataProtector();
-        var configured = configuration[LookupKeyConfiguration];
+        var configured = configuration[identityOptions.Value.LookupHmacKeyConfiguration];
         try { _lookupKey = Convert.FromBase64String(configured ?? string.Empty); }
         catch (FormatException) { throw new InvalidOperationException("User contact lookup-key configuration is invalid."); }
         if (_lookupKey.Length < 32)

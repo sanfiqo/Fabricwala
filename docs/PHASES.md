@@ -21,7 +21,7 @@ Source: old project, read-only. Only the files listed in the Step 2 prompt.
 - [x] P1.2 Copy OTP challenge service, policy, entities, delivery into Otp/; rename Customer* to neutral names; keep ALL security rules (expiry, single use, attempt limit, resend/IP/mobile limits, hashed storage)
 - [x] P1.3 Copy contact ownership + crypto into Contacts/; HMAC key from options
 - [x] P1.4 Security/: cookie + antiforgery + claims factory + cookie validator as extension methods `AddSanfiqoIdentity()` / `MapSanfiqoAuthEndpoints()`
-- [ ] P1.5 Options class for all settings (no hardcoded local-database restrictions)
+- [x] P1.5 Options class for all settings (no hardcoded local-database restrictions)
 - [ ] P1.6 Roles Admin, Retailer, Manufacturer seeded at startup; remove MFA requirement from Manufacturer policy; TODO for Admin MFA
 - [ ] P1.7 `IOtpSender` with Development fake sender (logs OTP to console)
 - [ ] P1.8 Wire into Api; fresh initial migration; apply to local MySQL test DB

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 
 namespace Sanfiqo.Identity;
 
@@ -13,6 +14,11 @@ public static class SanfiqoIdentityRegistration
     public static IServiceCollection AddSanfiqoIdentity(this IServiceCollection services,
         IConfiguration configuration, IHostEnvironment environment)
     {
+        services.AddOptions<SanfiqoIdentityOptions>()
+            .Bind(configuration.GetSection(SanfiqoIdentityOptions.SectionName))
+            .Validate(options => !string.IsNullOrWhiteSpace(options.ConnectionStringName), "Identity connection string name is required.")
+            .Validate(options => !string.IsNullOrWhiteSpace(options.CookieName), "Identity cookie name is required.")
+            .ValidateOnStart();
         services.AddApplicationIdentityPersistence();
         services.AddOtpChallengeFoundation(configuration, environment.EnvironmentName);
         services.AddUserContactOwnership();
@@ -25,12 +31,13 @@ public static class SanfiqoIdentityRegistration
             options.DefaultChallengeScheme = IdentityConstants.ApplicationScheme;
         }).AddCookie(IdentityConstants.ApplicationScheme, options =>
         {
-            options.Cookie.Name = ".AspNetCore.TextileConnect.Identity";
+            var identityOptions = services.BuildServiceProvider().GetRequiredService<IOptions<SanfiqoIdentityOptions>>().Value;
+            options.Cookie.Name = identityOptions.CookieName;
             options.Cookie.HttpOnly = true;
-            options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+            options.Cookie.SecurePolicy = identityOptions.RequireSecureCookie ? CookieSecurePolicy.Always : CookieSecurePolicy.SameAsRequest;
             options.Cookie.SameSite = SameSiteMode.Lax;
-            options.ExpireTimeSpan = TimeSpan.FromHours(8);
-            options.SlidingExpiration = false;
+            options.ExpireTimeSpan = identityOptions.CookieLifetime;
+            options.SlidingExpiration = identityOptions.CookieSlidingExpiration;
             options.Events.OnRedirectToLogin = context =>
             {
                 context.Response.StatusCode = StatusCodes.Status401Unauthorized;
@@ -50,7 +57,8 @@ public static class SanfiqoIdentityRegistration
             };
         });
         services.AddAuthorization();
-        services.AddAntiforgery(options => options.HeaderName = "X-CSRF-TOKEN");
+        services.AddAntiforgery(options => options.HeaderName =
+            configuration[$"{SanfiqoIdentityOptions.SectionName}:AntiforgeryHeaderName"] ?? "X-CSRF-TOKEN");
         return services;
     }
 }

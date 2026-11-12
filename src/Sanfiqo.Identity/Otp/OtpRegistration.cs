@@ -1,6 +1,7 @@
 using Sanfiqo.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace Sanfiqo.Identity;
 
@@ -10,7 +11,9 @@ public static class OtpRegistration
         IConfiguration configuration, string environmentName)
     {
         var policy = configuration.GetSection("Otp:Policy").Get<OtpPolicy>() ?? new OtpPolicy();
-        policy.StorageHmacKey = configuration["Otp:StorageHmacKey"] ?? policy.StorageHmacKey;
+        var identityOptions = new SanfiqoIdentityOptions();
+        configuration.GetSection(SanfiqoIdentityOptions.SectionName).Bind(identityOptions);
+        policy.StorageHmacKey = configuration[identityOptions.OtpStorageHmacKeyConfiguration] ?? policy.StorageHmacKey;
         var policyErrors = policy.Validate();
         if (policyErrors.Count != 0)
             throw new InvalidOperationException("User OTP policy configuration is invalid: " + string.Join(" ", policyErrors));
