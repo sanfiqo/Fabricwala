@@ -43,7 +43,7 @@ Source: old project, read-only. Only the files listed in the Step 2 prompt.
 ## Phase 3 — Catalogue
 - [x] P3.1 Domain: Category (ParentId tree), Product, ProductMedia, ProductVariant, PriceSlab, PlatformSettings
 - [x] P3.2 Seed categories (Men's, Women's, Kids, Winter wear, Fabrics, Shawls, Innerwear, Home textiles)
-- [ ] P3.3 Seller API: create/edit/delete own products, variants, slabs, media (Manufacturer + ApprovedBusiness only)
+- [x] P3.3 Seller API: create/edit/delete own products, variants, slabs, media (Manufacturer + ApprovedBusiness only)
 - [ ] P3.4 Slab validation: no overlapping ranges, first slab MinQty = Moq
 - [ ] P3.5 Public API: GET /categories, GET /products (search, category, price, city filters, paging), GET /products/{slug}
 - [ ] P3.6 ShippingRates table (From city, To city, PerKg/PerPiece, Rate, MinCharge, TransitDays) + admin CRUD

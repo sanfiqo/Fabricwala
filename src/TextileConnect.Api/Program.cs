@@ -5,6 +5,7 @@ using TextileConnect.Application.Businesses;
 using TextileConnect.Api;
 using TextileConnect.Application.Files;
 using TextileConnect.Infrastructure.Files;
+using TextileConnect.Application.Catalogue;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,6 +24,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentBusiness, CurrentBusiness>();
 builder.Services.AddSingleton<IAuthorizationHandler, ApprovedBusinessHandler>();
 builder.Services.AddSingleton<IBusinessDirectory, InMemoryBusinessDirectory>();
+builder.Services.AddSingleton<IProductDirectory, InMemoryProductDirectory>();
 if (builder.Environment.IsDevelopment())
     builder.Services.AddSingleton<IFileStorage, DevelopmentFileStorage>();
 builder.Services.AddSanfiqoIdentity(builder.Configuration, builder.Environment);
@@ -52,6 +54,7 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapSanfiqoAuthEndpoints();
 app.MapBusinessEndpoints();
+app.MapProductEndpoints();
 app.MapHealthChecks("/api/v1/health");
 
 app.Run();
