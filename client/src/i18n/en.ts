@@ -198,6 +198,7 @@ export const en = {
     emptySub: 'Your orders will show here.',
     number: 'Order {n}',
     placedOn: 'Placed on {d}',
+    orderDate: 'Order date',
     items: '{n} items',
     paymentStatus: 'Payment',
     timeline: 'Order progress',
