@@ -34,7 +34,7 @@ Source: old project, read-only. Only the files listed in the Step 2 prompt.
 - [ ] P2.3 BLOCKED: EF migration tooling is not configured in the infrastructure project; model context is committed
 - [x] P2.4 `ICurrentBusiness` service: resolves BusinessId from the logged-in user; used for all isolation filters
 - [x] P2.5 API: POST /businesses, GET/PUT /businesses/me, POST /businesses/me/addresses
-- [ ] P2.6 Document upload via `IFileStorage` (local disk in Development); private access
+- [x] P2.6 Document upload via `IFileStorage` (local disk in Development); private access
 - [ ] P2.7 Admin API: list pending, approve, reject (with note); approval assigns Retailer/Manufacturer role
 - [ ] P2.8 Policy `ApprovedBusiness` blocks listing/ordering until approved
 - [ ] P2.9 Staff users: POST /businesses/me/users (owner adds staff by mobile)

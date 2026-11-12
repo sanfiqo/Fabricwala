@@ -2,6 +2,8 @@ using Serilog;
 using Sanfiqo.Identity;
 using TextileConnect.Application.Businesses;
 using TextileConnect.Api;
+using TextileConnect.Application.Files;
+using TextileConnect.Infrastructure.Files;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +21,8 @@ builder.Services.AddHealthChecks();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentBusiness, CurrentBusiness>();
 builder.Services.AddSingleton<IBusinessDirectory, InMemoryBusinessDirectory>();
+if (builder.Environment.IsDevelopment())
+    builder.Services.AddSingleton<IFileStorage, DevelopmentFileStorage>();
 builder.Services.AddSanfiqoIdentity(builder.Configuration, builder.Environment);
 
 var app = builder.Build();
