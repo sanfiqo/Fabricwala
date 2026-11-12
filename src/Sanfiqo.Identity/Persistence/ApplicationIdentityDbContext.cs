@@ -44,8 +44,8 @@ public sealed class ApplicationIdentityDbContext(DbContextOptions<ApplicationIde
         {
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Id).ValueGeneratedNever();
-            entity.Property(x => x.ProtectedMobile).HasColumnType("text").IsRequired();
-            entity.Property(x => x.ProtectedCode).HasColumnType("text").IsRequired();
+            entity.Property(x => x.MobileHash).HasColumnType("binary(32)").IsRequired();
+            entity.Property(x => x.CodeHash).HasColumnType("binary(32)").IsRequired();
             entity.Property(x => x.CreatedAtUtc).HasColumnType("datetime(6)");
             entity.Property(x => x.ExpiresAtUtc).HasColumnType("datetime(6)");
             entity.Property(x => x.ConsumedAtUtc).HasColumnType("datetime(6)");
@@ -54,8 +54,8 @@ public sealed class ApplicationIdentityDbContext(DbContextOptions<ApplicationIde
         builder.Entity<OtpSendEvent>(entity =>
         {
             entity.HasKey(x => x.Id);
-            entity.Property(x => x.ProtectedMobile).HasColumnType("text").IsRequired();
-            entity.Property(x => x.ProtectedIp).HasColumnType("text").IsRequired();
+            entity.Property(x => x.MobileHash).HasColumnType("binary(32)").IsRequired();
+            entity.Property(x => x.IpHash).HasColumnType("binary(32)").IsRequired();
             entity.Property(x => x.OccurredAtUtc).HasColumnType("datetime(6)");
             entity.HasIndex(x => x.OccurredAtUtc);
             entity.HasIndex(x => x.ChallengeId).IsUnique();
