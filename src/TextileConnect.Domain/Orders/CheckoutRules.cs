@@ -4,6 +4,9 @@ namespace TextileConnect.Domain.Orders;
 
 public static class CheckoutRules
 {
+    public static bool IsClientPriceValid(decimal clientPrice, decimal serverPrice)
+        => clientPrice == serverPrice;
+
     public static decimal Commission(decimal subtotal, decimal? overrideRate, PlatformSettings settings)
         => subtotal * (overrideRate ?? settings.CommissionDefaultRate);
 
