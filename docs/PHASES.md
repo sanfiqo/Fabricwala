@@ -31,7 +31,7 @@ Source: old project, read-only. Only the files listed in the Step 2 prompt.
 ## Phase 2 — Businesses and approval
 - [x] P2.1 Domain: Business (type, names, GSTIN, PAN, phone, VerificationStatus, IsPlatformOwned, CommissionRateOverride), BusinessUser, BusinessAddress, BusinessDocument
 - [x] P2.2 Master data: State, City (IsDeliveryZone, IsSourcingHub); seed J&K delivery cities and sourcing hubs (Surat, Delhi, Ludhiana, Panipat, Jaipur, Tiruppur, Ahmedabad, Mumbai)
-- [ ] P2.3 EF configurations + migration
+- [ ] P2.3 BLOCKED: EF migration tooling is not configured in the infrastructure project; model context is committed
 - [ ] P2.4 `ICurrentBusiness` service: resolves BusinessId from the logged-in user; used for all isolation filters
 - [ ] P2.5 API: POST /businesses, GET/PUT /businesses/me, POST /businesses/me/addresses
 - [ ] P2.6 Document upload via `IFileStorage` (local disk in Development); private access
