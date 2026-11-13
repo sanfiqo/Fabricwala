@@ -39,8 +39,9 @@ function tabsFor(area: Area | null): TabItem[] {
   }
   if (area === 'Manufacturer') {
     return [
+      { to: '/seller', label: S.nav.home, icon: Home, end: true },
+      { to: '/seller/orders', label: S.nav.orders, icon: Inbox },
       { to: '/seller/products', label: S.nav.products, icon: Package },
-      { to: '/seller/orders', label: S.nav.inbox, icon: Inbox },
     ]
   }
   if (area === 'Admin') {
@@ -54,7 +55,7 @@ function tabsFor(area: Area | null): TabItem[] {
 }
 
 /** Screens that have their own bottom action bar hide the floating menu (as in the design files). */
-const NO_TABS = [/^\/shop\/p\//, /^\/shop\/cart/, /^\/shop\/checkout/, /^\/shop\/orders\/\d+\/report/]
+const NO_TABS = [/^\/seller\/orders\/\d+/, /^\/seller\/products\/(new|\d+)/, /^\/seller\/notifications/, /^\/shop\/p\//, /^\/shop\/cart/, /^\/shop\/checkout/, /^\/shop\/orders\/\d+\/report/]
 
 export function AppShell() {
   const { data: me } = useMe()
@@ -81,13 +82,13 @@ export function AppShell() {
         {S.app.skip}
       </a>
       <OfflineBanner />
-      {USE_MOCKS && area !== 'Retailer' && (
+      {USE_MOCKS && area === 'Admin' && (
         <Link to="/" className="block bg-saving-bg px-4 py-1.5 text-center text-xs text-saving">
           {S.app.demo}
         </Link>
       )}
       {/* Shopkeeper screens draw their own header (see design files). Other roles keep a slim one until their screens are migrated. */}
-      {area !== 'Retailer' && (
+      {area === 'Admin' && (
         <header className="flex items-center gap-3 px-4 pt-4">
           <BrandMark />
           <div className="min-w-0 flex-1 leading-tight">

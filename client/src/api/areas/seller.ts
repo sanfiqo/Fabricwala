@@ -1,5 +1,5 @@
 import { del, get, post, put, upload } from '../client'
-import type { PriceSlab, ProductDetail, ProductInput, ProductMedia, ProductSummary, SellerOrder } from '../types'
+import type { SellerDashboard, PriceSlab, ProductDetail, ProductInput, ProductMedia, ProductSummary, SellerOrder } from '../types'
 
 export const sellerProductApi = {
   list: () => get<ProductSummary[]>('seller/products'),
@@ -23,4 +23,8 @@ export const sellerOrderApi = {
   dispatch: (id: number, lrNumber: string, carrierName: string) =>
     post<SellerOrder>(`seller/orders/${id}/dispatch`, { lrNumber, carrierName }),
   setStatus: (id: number, status: 'ReachedKashmir' | 'Delivered') => post<SellerOrder>(`seller/orders/${id}/status`, { status }),
+}
+
+export const sellerHomeApi = {
+  dashboard: () => get<SellerDashboard>('seller/dashboard'),
 }

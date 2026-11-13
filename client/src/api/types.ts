@@ -362,3 +362,18 @@ export interface Claim {
   status: 'Open' | 'SellerReplied' | 'Refunded' | 'Rejected'
   createdAt: string
 }
+
+// ---- Seller dashboard. TODO(BE): shape is my proposal (API_SCREENS.md: "partly"). Every number is computed by the server.
+export interface SellerDashboard {
+  newOrders: { count: number; value: number; cities: string[]; acceptBy: string | null }
+  toPack: number
+  salesThisMonth: number
+  salesChangePct: number | null
+  payoutDue: number
+  nextPayoutDate: string | null
+  rating: number | null
+  ratingCount: number
+  salesByMonth: Array<{ month: string; amount: number }>
+  lowStock: Array<{ productId: number; title: string; variant: string; qty: number }>
+  topProducts: Array<{ productId: number; title: string; pieces: number; amount: number }>
+}

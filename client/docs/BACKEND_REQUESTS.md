@@ -34,3 +34,7 @@ Each item: endpoint, request, response, why. The frontend runs on mock data unti
 
 ## 8. Order items need `variantId` and an image (Home "Order again", Orders list)
 - `OrderItem.variantId` and `OrderItem.imageUrl`.
+
+## 9. Seller dashboard (B4a)
+- `GET /api/v1/seller/dashboard` returning `{ newOrders:{count,value,cities[],acceptBy}, toPack, salesThisMonth, salesChangePct, payoutDue, nextPayoutDate, rating, ratingCount, salesByMonth:[{month,amount}] (6 months), lowStock:[{productId,title,variant,qty}], topProducts:[{productId,title,pieces,amount}] }`. All money computed by the server.
+- Seller order list needs `commissionRate` and `commissionAmount` (already used) and a paged response.

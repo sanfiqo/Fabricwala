@@ -38,7 +38,7 @@ export function homeFor(me: Me | null | undefined): string {
   if (area === 'Admin') return '/admin/businesses'
   if (!me.business) return '/register'
   if (me.business.verificationStatus !== 'Approved') return '/pending'
-  return area === 'Manufacturer' ? '/seller/products' : '/shop'
+  return area === 'Manufacturer' ? '/seller' : '/shop'
 }
 
 /** Clears the cached session when any API call answers 401. */

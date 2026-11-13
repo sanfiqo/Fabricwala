@@ -294,6 +294,44 @@ on('GET', 'landed-cost', ({ db, query }) => {
   return landedCost(db, Number(query.productId), Math.max(1, Number(query.qty)), Number(query.cityId))
 })
 
+// Seller dashboard (mock). The real one is computed on the server (a backend request).
+on('GET', 'seller/dashboard', ({ db }) => {
+  const b = requireApproved(db, 'Manufacturer')
+  const mine = db.orders.flatMap((o) => o.sellerOrders.map((s) => ({ o, s }))).filter(({ s }) => s.manufacturerId === b.id)
+  const now = new Date()
+  const monthKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+  const sold = mine.filter(({ s }) => s.paymentStatus === 'Paid' && !['Rejected', 'Cancelled'].includes(s.status))
+  const byMonth = new Map<string, number>()
+  for (const { s } of sold) byMonth.set(monthKey(new Date(s.placedAt)), (byMonth.get(monthKey(new Date(s.placedAt))) ?? 0) + s.subTotal)
+  const months = Array.from({ length: 6 }, (_, i) => new Date(now.getFullYear(), now.getMonth() - (5 - i), 1))
+  const salesByMonth = months.map((d, i) => ({ month: d.toLocaleDateString('en-IN', { month: 'short' }), amount: byMonth.get(monthKey(d)) ?? Math.round(120000 * (0.4 + i * 0.12)) }))
+  const thisMonth = salesByMonth[5].amount
+  const last = salesByMonth[4].amount
+  const waiting = mine.filter(({ s }) => s.status === 'PendingAcceptance')
+  const delivered = mine.filter(({ s }) => s.status === 'ReachedKashmir' || s.status === 'Delivered')
+  const topMap = new Map<number, { productId: number; title: string; pieces: number; amount: number }>()
+  for (const { s } of sold) for (const i of s.items) {
+    const t = topMap.get(i.productId) ?? { productId: i.productId, title: i.title, pieces: 0, amount: 0 }
+    t.pieces += i.quantity
+    t.amount += i.lineTotal
+    topMap.set(i.productId, t)
+  }
+  const low = db.products.filter((p) => p.sellerBusinessId === b.id).flatMap((p) => p.variants.filter((v) => v.stockQty > 0 && v.stockQty < 60).map((v) => ({ productId: p.id, title: p.title, variant: `${v.colour} ${v.size}`, qty: v.stockQty })))
+  return {
+    newOrders: { count: waiting.length, value: waiting.reduce((a, { s }) => a + s.subTotal, 0), cities: [...new Set(waiting.map(({ s }) => s.deliveryCity))], acceptBy: waiting.length ? new Date(Math.min(...waiting.map(({ s }) => new Date(s.placedAt).getTime())) + 24 * 3_600_000).toISOString() : null },
+    toPack: mine.filter(({ s }) => s.status === 'Accepted').length,
+    salesThisMonth: thisMonth,
+    salesChangePct: last > 0 ? Math.round(((thisMonth - last) / last) * 100) : null,
+    payoutDue: delivered.filter(({ s }) => s.status === 'ReachedKashmir').reduce((a, { s }) => a + (s.subTotal - s.commissionAmount), 0),
+    nextPayoutDate: delivered.length ? new Date(Date.now() + 3 * 86_400_000).toISOString() : null,
+    rating: 4.6,
+    ratingCount: 212,
+    salesByMonth,
+    lowStock: low.slice(0, 3),
+    topProducts: [...topMap.values()].sort((a, c) => c.amount - a.amount).slice(0, 3),
+  } satisfies import('../types').SellerDashboard
+})
+
 // Seller products
 on('GET', 'seller/products', ({ db }) => {
   const b = requireApproved(db, 'Manufacturer')

@@ -39,7 +39,8 @@ export default function AccountPage() {
   const nav = useNavigate()
   const status = me?.business?.verificationStatus
   const name = me?.business?.displayName ?? me?.fullName ?? '—'
-  const addrs = biz.data?.addresses.filter((a) => a.addressType === 'Delivery') ?? []
+  const isSeller = me?.business?.type === 'Manufacturer'
+  const addrs = biz.data?.addresses.filter((a) => a.addressType === (isSeller ? 'Pickup' : 'Delivery')) ?? []
 
   const logout = async () => {
     try {
@@ -77,11 +78,11 @@ export default function AccountPage() {
         <div className={rowCls.replace('press ', '')}>
           <span className={iconCls} aria-hidden><MapPin className="size-5" /></span>
           <span className="min-w-0 flex-1">
-            <span className="block text-[15px] font-medium">{S.account.addressesTitle}</span>
+            <span className="block text-[15px] font-medium">{isSeller ? S.account.pickupTitle : S.account.addressesTitle}</span>
             <span className="block text-[13px] text-mute">{addrs.length === 0 ? S.address.none : addrs.map((a) => `${a.cityName} ${a.pincode}`).join(' · ')}</span>
           </span>
         </div>
-        <Link to="/shop/notifications" viewTransition className={rowCls}>
+        <Link to={isSeller ? '/seller/notifications' : '/shop/notifications'} viewTransition className={rowCls}>
           <span className={iconCls} aria-hidden><Bell className="size-5" /></span>
           <span className="min-w-0 flex-1 text-[15px] font-medium">{S.account.notifications}</span>
           {unread > 0 && <Badge tone="warn">{fmt(S.notif.newCount, { n: unread })}</Badge>}

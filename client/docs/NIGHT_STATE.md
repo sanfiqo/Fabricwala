@@ -23,7 +23,7 @@ Format: `- [ ] id: task` then `- [x] id: task (commit)` or `- [!] id: BLOCKED re
 - [x] B2b: Orders list, Track order
 - [x] B2c: Account, Notifications, Report a problem
 - [x] B3: Checkout restyle, payment result states
-- [ ] B4a: Seller Home, Seller Orders (accept, cannot do, ship with LR)
+- [x] B4a: Seller Home, Seller Orders (accept, cannot do, ship with LR)
 - [ ] B4b: Seller Products (list, toggle), Add/Edit product, Payouts
 - [ ] B5: Admin (laptop layout): Home, Approvals, Review
 
@@ -56,3 +56,4 @@ Format: `- [ ] id: task` then `- [x] id: task (commit)` or `- [!] id: BLOCKED re
 - B2b done: Orders list (Active / Delivered / Problems chips, "Needs your action" confirm card with auto-confirm date, skeleton, empty, error, offline from saved data) and Track order (headline, per-seller tabs, step bar that fills on open, timeline with current step pulsing twice, carrier and LR card, WhatsApp help, sticky confirm delivery). Links to `/shop/orders/:id/report` are built in B2c.
 - B2c done: Account (profile, business, addresses, language, help, demo switch, log out), Notifications (Today / Earlier, unread dots, optimistic read and mark-all, bell with dot on Home), Report a problem (reason chips, pieces, up to 3 photos shrunk on the phone, note, what happens next, sent state). Mock handlers for notifications and claims. Tested: seller marks order reached, shopkeeper sees confirm card, reports a problem with a photo. Backend requests added below.
 - B3 done: Checkout restyled (address radio cards, summary, sticky Place order). One Idempotency-Key per order attempt and per payment attempt (double tap makes 1 order, tested). Result screens: success, pending, failed (retry payment is manual, never automatic). Mock switch `localStorage tc_mock_payfail=1` shows the failed screen. Razorpay itself is still not wired (account blocked), so real mode ends in the pending screen.
+- B4a done: Seller Home (headline, dark new-orders card with accept countdown, 4 stats, 6 month bars, low stock, best selling) and Seller Orders (New / To pack / Shipped / Done, order value, platform fee, You get, countdown chip, Cannot do it, Accept, Ship with LR number, detail page). Seller tabs: Home, Orders, My cloth (Payouts comes in B4b). Mock dashboard handler; backend request for `GET seller/dashboard` shape.
