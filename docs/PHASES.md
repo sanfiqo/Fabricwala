@@ -91,3 +91,99 @@ Source: old project, read-only. Only the files listed in the Step 2 prompt.
 - Who pays commission in MVP: manufacturer only (recommended) or shared with retailer?
 - Settlement release: after delivery confirm, or N days (what N)?
 - Brand name and domain.
+
+# PHASES_NEXT.md — append to docs/PHASES.md (after Phase 9)
+
+Decided 2026-11-13: the current build is the MVP skeleton (one order end to end). These phases make it a real,
+launchable app for ALL INDIA. Order matters: Phase 10 and 11 are required before launch; 12 and 13 come after.
+
+Ownership in every phase:
+- [BE] = backend, Codex, branch main, folder src/ + tests/
+- [WEB] = web PWA, Claude Code, branch frontend/pwa, folder client/
+Mobile (React Native) screens follow later in Phase 8, using the final design.
+One agent per folder at a time. A [WEB] task starts only after its [BE] task is done.
+
+---
+
+## Phase 10 — Launch essentials (MVP+)
+
+### Data contract and auth (do first)
+- [x] P10.1 [BE] Explicit response DTOs for all endpoints; no EF entities in API responses; remove JSON cycle-ignore
+- [x] P10.2 [BE] Claims refresh after admin approval/rejection without logout (security stamp / cookie re-validation) + test
+
+### All India
+- [ ] P10.3 [BE] Replace Kashmir-specific data: seed all Indian states + major cities; delivery zones by pincode (zone table: pincode prefix → zone; rate per zone pair, PerKg/PerPiece, min charge, transit days)
+- [ ] P10.4 [BE] Landed cost uses retailer pincode → zone; "shipping on request" when no rate
+- [ ] P10.5 [WEB] Pincode/city picker on home; landed price everywhere uses it
+
+### Retailer
+- [ ] P10.6 [BE] Search: full-text on title/description/material, filters (category, price range, MOQ, seller city, material, size, colour), sort (popular, price, newest), paging
+- [ ] P10.7 [WEB] Search screen with filter bottom sheet and sort
+- [ ] P10.8 [BE] Address book: multiple delivery addresses, default address
+- [ ] P10.9 [BE] Invoices: GST-compliant PDF per SellerOrder (seller → retailer) and platform commission invoice (platform → seller); download endpoint
+- [ ] P10.10 [WEB] Invoice download on order detail
+- [ ] P10.11 [BE] Return / damage claim flow on delivered SellerOrder: reason, photos, seller response, admin decision, partial refund
+- [ ] P10.12 [WEB] Report a problem screen + claim status
+- [ ] P10.13 [BE] Notification center: list, unread count, mark read (in-app channel)
+- [ ] P10.14 [WEB] Notification center screen + bell badge
+- [ ] P10.15 [BE] Seller storefront endpoint: business profile, banner, about, city, rating, products
+- [ ] P10.16 [WEB] Storefront screen
+
+### Manufacturer
+- [ ] P10.17 [BE] Seller dashboard API: new orders, pending dispatch, sales this month, top products, payout due, low stock
+- [ ] P10.18 [WEB] Seller dashboard screen
+- [ ] P10.19 [BE] Bulk product upload: CSV/Excel template download, validate rows, preview errors, import; bulk image upload matched by SKU
+- [ ] P10.20 [WEB] Bulk upload screen with error preview
+- [ ] P10.21 [BE] Stock alerts (low stock, out of stock) + duplicate product
+- [ ] P10.22 [BE] Payout statement: per SellerOrder amount, commission, settled date; CSV export
+- [ ] P10.23 [WEB] Payouts screen
+
+### Admin
+- [ ] P10.24 [BE] Admin dashboard API: GMV, orders, commission earned, new businesses, pending approvals (today / 7 days / 30 days)
+- [ ] P10.25 [BE] Reports export CSV: orders, payments, settlements, businesses
+- [ ] P10.26 [BE] Product moderation: list, flag, deactivate with reason; seller notified
+- [ ] P10.27 [BE] Categories admin (tree, reorder) and home banners admin (image, link, start/end date)
+- [ ] P10.28 [BE] Suspend / reactivate business and user; suspended cannot log in or order
+- [ ] P10.29 [WEB] Admin screens for P10.24–P10.28
+
+### Legal pages
+- [ ] P10.30 [WEB] Privacy policy, terms of use, seller agreement, refund and returns policy pages (content placeholders marked [LEGAL REVIEW NEEDED])
+
+---
+
+## Phase 11 — Production readiness (before launch)
+
+- [ ] P11.1 [BE] Real MSG91 OTP sender (DLT template id from config) — needs account: STOP and ask
+- [ ] P11.2 [BE] Razorpay live mode + Route linked accounts onboarding flow — needs account: STOP and ask
+- [ ] P11.3 [BE] WhatsApp Cloud API sender for order updates (approved templates) — needs Meta verification: STOP and ask
+- [ ] P11.4 [BE] File storage on Cloudflare R2 (or Azure Blob) with signed URLs — needs account: STOP and ask
+- [ ] P11.5 [BE] Health checks (DB, storage), structured logs (Serilog sink), error tracking (Sentry or App Insights)
+- [ ] P11.6 [BE] Deployment: Dockerfile, environment variables, migrations on deploy, daily MySQL backup + restore test, docs/DEPLOY.md
+- [ ] P11.7 [BE] CI: build + tests on every push (GitHub Actions)
+- [ ] P11.8 [BE] Security pass: rate limits, CORS, headers, secrets check, dependency vulnerabilities, OWASP top 10 checklist in docs/SECURITY_REVIEW.md
+- [ ] P11.9 [BE] Load test checkout and search (k6), report p95 latency
+- [ ] P11.10 [WEB] Production build, PWA icons from brand, error pages, analytics events (search, add to cart, checkout)
+
+---
+
+## Phase 12 — After launch (growth)
+
+- [ ] P12.1 Coupons and offers (seller-funded and platform-funded)
+- [ ] P12.2 Reviews and ratings UI (backend exists)
+- [ ] P12.3 Wishlist, recently viewed, product compare (same product type across sellers)
+- [ ] P12.4 Quick order: quantities for many products on one screen; reorder whole past order
+- [ ] P12.5 Courier integration (Shiprocket / Delhivery): live rates, AWB, tracking webhooks
+- [ ] P12.6 Regional languages: Hindi first, then Gujarati, Marathi, Tamil, Bengali, Telugu, Punjabi, Urdu (RTL)
+- [ ] P12.7 Referral (retailer invites retailer)
+- [ ] P12.8 Seller subscription plans (Basic free, Pro paid: more listings, featured slots)
+
+---
+
+## Phase 13 — Franchise network (later, after Phase 12.8)
+
+- [ ] P13.1 Franchise role, territories (city / pincode list), one franchise per territory
+- [ ] P13.2 Attribution: manufacturer linked to the franchise that onboarded it (first come wins)
+- [ ] P13.3 Earnings ledger: share of subscription (and optional share of commission), only when manufacturer is approved and paid; clawback if it churns within 90 days
+- [ ] P13.4 Payouts to franchise via Razorpay Route linked account
+- [ ] P13.5 Franchise dashboard: onboarded sellers, their sales, earnings, payouts
+- Rules: single level only (no franchise under franchise); written agreement; TDS on commission — confirm with CA
