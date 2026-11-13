@@ -3,6 +3,7 @@ using TextileConnect.Domain.Businesses;
 using TextileConnect.Domain.Catalogue;
 using TextileConnect.Domain.Orders;
 using TextileConnect.Domain.Payments;
+using TextileConnect.Domain.Community;
 
 namespace TextileConnect.Infrastructure.Persistence;
 
@@ -30,6 +31,7 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
     public DbSet<Refund> Refunds => Set<Refund>();
     public DbSet<Invoice> Invoices => Set<Invoice>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<Enquiry> Enquiries => Set<Enquiry>(); public DbSet<Quotation> Quotations => Set<Quotation>(); public DbSet<Dispute> Disputes => Set<Dispute>(); public DbSet<Review> Reviews => Set<Review>(); public DbSet<Favourite> Favourites => Set<Favourite>(); public DbSet<GroupBuy> GroupBuys => Set<GroupBuy>(); public DbSet<GroupBuyParticipant> GroupBuyParticipants => Set<GroupBuyParticipant>(); public DbSet<LogisticsAssignment> LogisticsAssignments => Set<LogisticsAssignment>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -97,5 +99,6 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
         builder.Entity<AuditLog>().HasKey(x => x.Id);
         builder.Entity<AuditLog>().Property(x => x.Action).HasMaxLength(32).IsRequired();
         builder.Entity<AuditLog>().Property(x => x.EntityName).HasMaxLength(200).IsRequired();
+        builder.Entity<Enquiry>().HasKey(x => x.Id); builder.Entity<Quotation>().HasKey(x => x.Id); builder.Entity<Dispute>().HasKey(x => x.Id); builder.Entity<Review>().HasKey(x => x.Id); builder.Entity<Favourite>().HasKey(x => x.Id); builder.Entity<Favourite>().HasIndex(x => new { x.RetailerBusinessId, x.ProductId }).IsUnique(); builder.Entity<GroupBuy>().HasKey(x => x.Id); builder.Entity<GroupBuyParticipant>().HasKey(x => x.Id); builder.Entity<LogisticsAssignment>().HasKey(x => x.Id);
     }
 }

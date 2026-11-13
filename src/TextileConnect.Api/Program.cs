@@ -11,6 +11,8 @@ using TextileConnect.Infrastructure.Businesses;
 using TextileConnect.Infrastructure.Catalogue;
 using TextileConnect.Application.Orders;
 using TextileConnect.Infrastructure.Orders;
+using TextileConnect.Application.Community;
+using TextileConnect.Infrastructure.Community;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.RateLimiting;
 
@@ -42,6 +44,7 @@ builder.Services.AddScoped<IBusinessDirectory, EfBusinessDirectory>();
 builder.Services.AddScoped<IProductDirectory, EfProductDirectory>();
 builder.Services.AddScoped<ICartService, EfCartService>();
 builder.Services.AddScoped<IOrderService, EfOrderService>();
+builder.Services.AddScoped<ICommunityService, EfCommunityService>();
 builder.Services.AddScoped<IAuthBusinessProfileReader, AuthBusinessProfileReader>();
 if (builder.Environment.IsDevelopment())
     builder.Services.AddSingleton<IFileStorage, DevelopmentFileStorage>();
@@ -77,6 +80,7 @@ app.MapBusinessEndpoints();
 app.MapProductEndpoints();
 app.MapCartEndpoints();
 app.MapOrderEndpoints();
+app.MapCommunityEndpoints();
 app.MapHealthChecks("/api/v1/health");
 
 app.Run();

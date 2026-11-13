@@ -80,12 +80,12 @@ Source: old project, read-only. Only the files listed in the Step 2 prompt.
 - [ ] P6.6 Hindi/Urdu text resources (later), mobile-first check on a real phone
 
 ## Phase 7 — After first 20 real orders (do not start early)
-- [ ] P7.1 Enquiries + Quotations (RFQ)
-- [ ] P7.2 Disputes with evidence upload
-- [ ] P7.3 Reviews and ratings
-- [ ] P7.4 Favourites and one-click reorder
-- [ ] P7.5 Collective buying (GroupBuys)
-- [ ] P7.6 Logistics partner role and dashboard
+- [x] P7.1 Enquiries + Quotations (RFQ) backend foundation
+- [x] P7.2 Disputes with evidence upload backend foundation
+- [x] P7.3 Reviews and ratings backend
+- [x] P7.4 Favourites and one-click reorder backend foundation
+- [x] P7.5 Collective buying (GroupBuys) backend foundation
+- [x] P7.6 Logistics partner role and dashboard backend foundation
 
 ## Open decisions (ask before building)
 - Who pays commission in MVP: manufacturer only (recommended) or shared with retailer?
