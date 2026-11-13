@@ -1,7 +1,16 @@
 # NIGHT STATE
 
 ## Morning report
-(written when the run stops)
+- **Done (commit):** A1 fc26d84, A2 970843c, A3 f40c257, A4 15a88c7, B1 3e614ab, B2a 2e4c02e, B2b 43ab19c, B2c a04da24, B3 474ed82, B4a e34e9a6, B4b 09eddc8, B5 9d46031, C1-C5 e650b18 (mock + adapter), D1 94e010f, D2 cab0939, E1-E4 9e7f877.
+- **BLOCKED:** none. C1-C5 were closed as mock + adapter ready, not tested against a real server, because no API was reachable.
+- **Build, lint:** pass. **Smoke** (`npm run smoke`, 108 screens, EN 390, HI 360, HI 390, admin 1280): pass. **E2E** (`npm run e2e`, 23 steps): pass. Initial JS about 97 kB gzip for the main chunk (under 200 KB).
+- **Real API or mock:** every area is mock. Switch per area with `VITE_REAL_AREAS=catalog,cart,...` or all with `VITE_USE_MOCKS=false`.
+- **Bugs found and fixed on the way:** a saved login state could bounce a reload through /login; a saved empty cart sent /shop/checkout back to the cart; focus ring and button font rules were beating Tailwind classes.
+- **Still different from the design / not done:** voice and photo search (mic), Save heart, ratings, category counts, order-again thumbnail, cart arrival date and seller city; garment cut-out photos (textures until real photos arrive); Add/Edit product keeps the old layout with new inputs (full InkAddProduct layout not done); Razorpay checkout not wired (pending screen shown); update prompt and install prompt cannot be seen in dev (tested with a simulated install event; update prompt needs a production build).
+- **Backend requests:** `client/docs/BACKEND_REQUESTS.md` (11 items: pincode lookup, refresh, error `code`, Idempotency-Key, owner name and optional GST, notifications, problem reports, order item variantId and image, seller dashboard, seller products on/off and payouts, admin dashboard).
+- **You must:** (1) copy `openapi.json` and `RUN_LOCAL.md` into `client/docs/api/` and run the backend, then try `VITE_REAL_AREAS=catalog` first; (2) send product photos named `<productId>-<n>.jpg`, 800x800 (see `public/photos/README.txt`), then `npm run photos`; (3) tell me if `Section 6 (Nonstop mode)` of the night prompt should say more, it was missing from the file; (4) review the commits and merge yourself.
+- **Phone:** in `client/` run `npm run dev -- --host`, open the `Network:` address it prints (this PC was `http://10.34.116.48:5173`), same Wi-Fi. Demo logins: 9000000001 shopkeeper, 9000000002 seller, 9000000003 admin, code 123456.
+
 
 ## Context (step 0)
 - Read: CLAUDE.md, CLAUDE_NIGHT_PROMPT.md, CLAUDE_CODE_UI_PROMPT.md, docs/UX_RULES.md (present now), docs/UI_MIGRATION.md, DECISIONS.md, docs/API_SCREENS.md.
