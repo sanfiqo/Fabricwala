@@ -140,7 +140,7 @@ One agent per folder at a time. A [WEB] task starts only after its [BE] task is 
 
 ### Admin
 - [x] P10.24 [BE] Admin dashboard API: GMV, orders, commission earned, new businesses, pending approvals (today / 7 days / 30 days)
-- [ ] P10.25 [BE] Reports export CSV: orders, payments, settlements, businesses
+- [x] P10.25 [BE] Reports export CSV: orders, payments, settlements, businesses
 - [ ] P10.26 [BE] Product moderation: list, flag, deactivate with reason; seller notified
 - [ ] P10.27 [BE] Categories admin (tree, reorder) and home banners admin (image, link, start/end date)
 - [ ] P10.28 [BE] Suspend / reactivate business and user; suspended cannot log in or order
