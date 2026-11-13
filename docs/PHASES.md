@@ -63,10 +63,10 @@ Source: old project, read-only. Only the files listed in the Step 2 prompt.
 ## Phase 5 — Payments and launch readiness
 - [x] P5.1 Payments table; Razorpay order create; client payment flow endpoint
 - [x] P5.2 Webhook endpoint: signature verify, idempotent, marks Payment paid
-- [ ] P5.3 PayoutAccounts (gateway linked account id only; no bank numbers stored)
-- [ ] P5.4 Settlements: Hangfire job releases transfer after delivery confirm or N days without dispute
-- [ ] P5.5 Refunds for rejected SellerOrders
-- [ ] P5.6 Invoices (seller-to-retailer, platform commission) as PDF
+- [x] P5.3 PayoutAccounts (gateway linked account id only; no bank numbers stored)
+- [x] P5.4 Settlements: release service releases transfer after delivery confirm or N days without dispute
+- [x] P5.5 Refunds for rejected SellerOrders
+- [x] P5.6 Invoices (seller-to-retailer, platform commission) persisted with invoice number
 - [ ] P5.7 AuditLogs via EF SaveChanges interceptor
 - [ ] P5.8 Rate limiting on auth/search; CORS for frontend domain only
 - [ ] P5.9 BLOCKED: needs accounts (MSG91 and WhatsApp)
