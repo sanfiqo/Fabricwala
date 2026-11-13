@@ -135,7 +135,7 @@ One agent per folder at a time. A [WEB] task starts only after its [BE] task is 
 - [x] P10.19 [BE] Bulk product upload: CSV/Excel template download, validate rows, preview errors, import; bulk image upload matched by SKU
 - [ ] P10.20 [WEB] Bulk upload screen with error preview
 - [x] P10.21 [BE] Stock alerts (low stock, out of stock) + duplicate product
-- [ ] P10.22 [BE] Payout statement: per SellerOrder amount, commission, settled date; CSV export
+- [x] P10.22 [BE] Payout statement: per SellerOrder amount, commission, settled date; CSV export
 - [ ] P10.23 [WEB] Payouts screen
 
 ### Admin
