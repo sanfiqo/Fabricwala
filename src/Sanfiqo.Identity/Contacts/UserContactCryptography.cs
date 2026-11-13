@@ -26,7 +26,7 @@ public sealed class UserContactCryptography : IUserContactProofProtector
             .ToTimeLimitedDataProtector();
         var configured = configuration[identityOptions.Value.LookupHmacKeyConfiguration];
         try { _lookupKey = Convert.FromBase64String(configured ?? string.Empty); }
-        catch (FormatException) { throw new InvalidOperationException("User contact lookup-key configuration is invalid."); }
+        catch (FormatException) { _lookupKey = Encoding.UTF8.GetBytes(configured ?? string.Empty); }
         if (_lookupKey.Length < 32)
             throw new InvalidOperationException("User contact lookup-key configuration is unavailable or too short.");
     }
