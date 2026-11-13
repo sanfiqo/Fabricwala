@@ -130,7 +130,7 @@ One agent per folder at a time. A [WEB] task starts only after its [BE] task is 
 - [ ] P10.16 [WEB] Storefront screen
 
 ### Manufacturer
-- [ ] P10.17 [BE] Seller dashboard API: new orders, pending dispatch, sales this month, top products, payout due, low stock
+- [x] P10.17 [BE] Seller dashboard API: new orders, pending dispatch, sales this month, top products, payout due, low stock
 - [ ] P10.18 [WEB] Seller dashboard screen
 - [ ] P10.19 [BE] Bulk product upload: CSV/Excel template download, validate rows, preview errors, import; bulk image upload matched by SKU
 - [ ] P10.20 [WEB] Bulk upload screen with error preview
