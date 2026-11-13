@@ -4,6 +4,7 @@ import type { ProductSummary } from '@/api/types'
 import { ProductImage } from '@/components/ProductImage'
 import { Appear } from '@/motion'
 import { fmt, S } from '@/i18n'
+import { usePhoto } from '@/lib/photos'
 import { money } from '@/lib/utils'
 
 /** Soft grey card: rounded photo with a soft shadow under it, seller, name, price and minimum order. */
@@ -11,12 +12,13 @@ export function ProductCard({ p, index = 0 }: { p: ProductSummary; index?: numbe
   const to = `/shop/p/${p.slug}`
   // Only the card being opened shares its photo with the product page (names must be unique on a page).
   const morphing = useViewTransitionState(to)
+  const photo = usePhoto(p.id, 1, p.imageUrl)
   return (
     <Appear index={index}>
       <Link to={to} viewTransition className="press @container flex flex-col gap-0.5 rounded-card bg-soft px-3 pb-3.5 pt-3 text-ink">
         <span className="photo-slot mb-2 h-[138px] items-start" style={{ '--shadow-bottom': '3px', '--shadow-width': '56%' } as CSSProperties}>
           <ProductImage
-            src={p.imageUrl}
+            src={photo}
             lqip={p.imageLqip}
             alt=""
             width={400}

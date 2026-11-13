@@ -3,7 +3,13 @@ import type { CSSProperties } from 'react'
 import type { ProductDetail } from '@/api/types'
 import { ProductImage } from '@/components/ProductImage'
 import { fmt, S } from '@/i18n'
+import { usePhoto } from '@/lib/photos'
 import { cn } from '@/lib/utils'
+
+function Thumb({ productId, n, url, lqip }: { productId: number; n: number; url: string; lqip?: string | null }) {
+  const src = usePhoto(productId, n, url)
+  return <ProductImage src={src} lqip={lqip} alt="" width={120} height={120} className="size-full rounded-lg" />
+}
 
 /** Large photo on a soft panel, thumbnails down the right. Swipe the photo to change. Fixed height, so nothing jumps while loading. */
 export function PhotoGallery({ p }: { p: ProductDetail }) {
@@ -14,6 +20,7 @@ export function PhotoGallery({ p }: { p: ProductDetail }) {
   const cur = media[Math.min(i, Math.max(0, n - 1))]
   const go = (d: number) => n > 1 && setI((x) => (x + d + n) % n)
   const shown = media.slice(0, 4)
+  const mainPhoto = usePhoto(p.id, Math.min(i, Math.max(0, n - 1)) + 1, cur?.url)
 
   return (
     <div className={cn('mx-5 grid overflow-hidden rounded-[24px] bg-soft', n > 1 ? 'grid-cols-[minmax(0,1fr)_80px]' : 'grid-cols-1')}>
@@ -31,7 +38,7 @@ export function PhotoGallery({ p }: { p: ProductDetail }) {
         }}
       >
         <ProductImage
-          src={cur?.url}
+          src={mainPhoto}
           lqip={cur?.lqip}
           alt={p.title}
           width={800}
@@ -54,7 +61,7 @@ export function PhotoGallery({ p }: { p: ProductDetail }) {
               onClick={() => setI(idx)}
               className={cn('press flex h-[72px] items-stretch justify-stretch overflow-hidden rounded-xl border-2 bg-surface p-1', idx === i ? 'border-ink' : 'border-transparent')}
             >
-              <ProductImage src={m.url} lqip={m.lqip} alt="" width={120} height={120} className="size-full rounded-lg" />
+              <Thumb productId={p.id} n={idx + 1} url={m.url} lqip={m.lqip} />
             </button>
           ))}
           {n > shown.length && (

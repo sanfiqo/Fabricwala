@@ -61,3 +61,18 @@ Status column: **fix** = changed in this pass, **keep** = intentional difference
 | C6 | Extra slab note, estimate note and WhatsApp help row | keep: existing features |
 | C7 | Button says "Checkout · total", design "Pay total" | keep: payment is not wired yet |
 | C8 | "Add 50 more, save ₹10" chip under each item | n/a: cart items carry no slab data; shown on the product page instead |
+
+## Night run re-check (after FE-NIGHT B1-B5)
+
+Images refreshed: `docs/polish/side-*.png` (before = start of the polish pass, after = now, design).
+
+| Item | Now |
+| --- | --- |
+| H2 notification bell with amber dot | fixed (Notifications screen built) |
+| Seed names (Sharma Textiles, Kapoor Knits, Shree Kurti House) | in the mock data |
+| H4 mic in the search pill, voice search | still missing (needs the Web Speech UI, not in this queue) |
+| H6 order-again thumbnail | still an icon (order items have no image: BACKEND_REQUESTS #8) |
+| H8 category counts | still missing (API has no counts) |
+| P2 Save heart, P3 rating | still missing (no data or screen) |
+| Photos | design shows garment cut-outs; ours are textures until real photos arrive (`public/photos`) |
+| C2, C3 arrival date and seller city in the cart | still missing (cart API) |

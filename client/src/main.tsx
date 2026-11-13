@@ -5,6 +5,7 @@ import { useIsRestoring } from '@tanstack/react-query'
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
 import { queryClient, persistOptions } from '@/queryClient'
 import { ToastProvider } from '@/components/ui/toast'
+import { UpdatePrompt } from '@/components/UpdatePrompt'
 import { MotionRoot, initPerfProfile } from '@/motion'
 import { useLang } from '@/i18n'
 import App from './App'
@@ -34,6 +35,7 @@ createRoot(document.getElementById('root')!).render(
           <WaitForSavedData>
             <LangRoot />
           </WaitForSavedData>
+          <UpdatePrompt />
         </MotionRoot>
       </ToastProvider>
     </PersistQueryClientProvider>

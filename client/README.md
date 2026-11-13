@@ -48,6 +48,14 @@ npm run dev
 Vite proxies `/api` to the backend, so the auth cookie stays same-origin and no CORS setup is needed in development.
 In production, serve the client and the API from the same site (see ARCHITECTURE.md, cookie note).
 
+Checks you can run (they start the app themselves in demo mode, Edge or Chrome must be installed; set `PW_EXECUTABLE` to use another browser):
+
+- `npm run e2e`: the whole journey in a browser (shopkeeper signs up, admin approves, shopkeeper orders, seller accepts and ships, shopkeeper confirms, seller payout shows). Screenshots go to `docs/e2e/`.
+- `npm run smoke`: every screen in English at 390 px and Hindi at 360 and 390 px (admin also at 1280 px). Fails on sideways scrolling, cut-off text or browser errors.
+- `npm run photos`: after adding real photos to `public/photos` (see the README.txt there).
+
+Real backend, one area at a time: `VITE_REAL_AREAS=catalog,cart` (areas: auth business catalog cart orders seller payouts notifications account admin). Shapes the screens assume are in `docs/BACKEND_REQUESTS.md`.
+
 Other scripts: `npm run build` (typecheck + production build + service worker), `npm run lint`, `npm run preview`.
 
 ## How the client talks to the API

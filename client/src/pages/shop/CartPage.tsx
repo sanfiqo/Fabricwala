@@ -17,6 +17,7 @@ import { useDebounced, useDeliveryAddress } from '@/hooks'
 import { fmt, S } from '@/i18n'
 import { CountUp, haptic, useMotion } from '@/motion'
 import { clearReorderPrices, readReorderPrices } from '@/lib/reorder'
+import { usePhoto } from '@/lib/photos'
 import { money } from '@/lib/utils'
 import { waLink } from '@/lib/whatsapp'
 
@@ -43,6 +44,7 @@ export function CartTotals({ cart }: { cart: Cart }) {
 }
 
 function CartRow({ item, onChange, onRemove }: { item: CartItem; onChange: (q: number) => void; onRemove: () => void }) {
+  const photo = usePhoto(item.productId, 1, item.imageUrl)
   const [qty, setQty] = useState(item.quantity)
   const [leaving, setLeaving] = useState(false)
   const { still } = useMotion()
@@ -73,7 +75,7 @@ function CartRow({ item, onChange, onRemove }: { item: CartItem; onChange: (q: n
         className="photo-slot size-[76px] items-start"
         style={{ '--shadow-bottom': '2px', '--shadow-width': '60%', '--shadow-height': '8px' } as CSSProperties}
       >
-        <ProductImage src={item.imageUrl} alt="" width={120} height={120} className="relative z-[1] mt-1 size-[62px] rounded-2xl" />
+        <ProductImage src={photo} alt="" width={120} height={120} className="relative z-[1] mt-1 size-[62px] rounded-2xl" />
       </Link>
       <div className="flex min-w-0 flex-col gap-1">
         <p className="line-clamp-2 break-words text-[15px] font-medium leading-5">{item.title}</p>

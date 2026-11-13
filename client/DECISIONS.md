@@ -46,3 +46,19 @@ Short notes on choices made without asking. Newest at the bottom.
 - **Photos:** all photos use `ProductImage` (fixed size, rounded, lazy, blur-up from an optional `lqip`, fade-in, broken-image fallback). `client/public/photos` does not exist, so the mock swatches stay.
   - Send, per product: `main` 800x800 WebP (square, product centred with some margin), `card` 400x400 WebP, `thumb` 120x120 WebP, and an `lqip` about 20 px wide as a data URL (under 1 KB). Name them `<slug>-1.webp`, `<slug>-2.webp`, and so on. The API should return `url` (800) and, when it can, `srcSet` entries for 400 and 800, plus `lqip`. Marked `TODO(BE)` in `types.ts`.
 - **Search suggestions** call `GET products?q=&pageSize=4` after 250 ms of typing. Recent searches (6) are kept on the phone.
+
+## Night run (FE-NIGHT tasks)
+
+- **Section 6 of CLAUDE_NIGHT_PROMPT.md ("Nonstop mode") is not in the file on disk** (it ends at section 5). I followed section 1 stop rules and kept going through the queue.
+- **API contract:** only `docs/API_SCREENS.md` (an audit without DTO shapes) exists. No openapi.json, no running API. Every area ran on mock data. The shapes I assumed are in `docs/BACKEND_REQUESTS.md`.
+- **Error text:** `ApiError.message` is always the friendly EN/HI text (mapped from the backend `code`, else from the HTTP status). The server text is kept in `serverMessage` for logs only.
+- **Idempotency:** one `Idempotency-Key` per order attempt and per payment attempt, kept in a ref on the checkout page, so a double tap or retry reuses it. Payment retries are manual.
+- **Saved data and login:** the offline cache never saves `me = null`, and the app waits for the saved data before the login check (both were real bugs: a reload could bounce through /login).
+- **Forms:** React Hook Form + Zod on login, registration and the problem report. Drafts live in sessionStorage so a language switch (which re-mounts the app) or reload keeps what was typed.
+- **Waiting shopkeepers can browse** (`Gate allowPending`): Home, search, product and account. Cart, checkout and orders still need approval. The mock allows price lookups while waiting.
+- **Registration is 2 steps** (business details with pincode lookup, then optional documents) instead of 4, to ask for the least (UX_RULES 6). GST and documents are optional; backend must accept an empty GST.
+- **Seller account** is reached from the avatar on Seller Home (tabs are Home, Orders, My cloth, Payouts, as UX_RULES says max 4).
+- **Admin on a laptop:** left sidebar from 1024 px; on phones the floating tab bar. Rejecting needs a note of 5 letters or more.
+- **Add/Edit product** was not re-laid-out screen by screen. It keeps its logic and now uses the new inputs, cards, buttons and sheets (UI_MIGRATION said restyle). A full re-layout to InkAddProduct (photo grid first, category picker, set sizes) is the largest remaining design gap.
+- **Photos:** `public/photos/<productId>-<n>.jpg` + `npm run photos` (manifest, so no failed requests). Without files the server photo or the placeholder is used. The slot has a fixed size.
+- **Update prompt** uses `registerType: 'prompt'`; the app never reloads by itself. The Latin font file is preloaded at build time.

@@ -35,14 +35,14 @@ Format: `- [ ] id: task` then `- [x] id: task (commit)` or `- [!] id: BLOCKED re
 - [x] C5 (mock, adapter ready): Notifications, report a problem, account
 
 ### D. Proof
-- [ ] D1: `npm run e2e` full journey with screenshots in docs/e2e/
-- [ ] D2: `npm run smoke` every screen, EN 390, HI 360/390
+- [x] D1: `npm run e2e` full journey with screenshots in docs/e2e/
+- [x] D2: `npm run smoke` every screen, EN 390, HI 360/390
 
 ### E. Polish
-- [ ] E1: Screenshot compare Home, Product, Cart (POLISH_LIST.md refresh)
-- [ ] E2: Look and feel checks
-- [ ] E3: Advanced features (update prompt, font preload still open)
-- [ ] E4: Image slot `public/photos/<productId>-<n>.jpg`
+- [x] E1: Screenshot compare Home, Product, Cart (POLISH_LIST.md refresh)
+- [x] E2: Look and feel checks
+- [x] E3: Advanced features (update prompt, font preload still open)
+- [x] E4: Image slot `public/photos/<productId>-<n>.jpg`
 
 ## Log
 - Step 0 done. Prompt section 6 (Nonstop mode) is not in CLAUDE_NIGHT_PROMPT.md on disk (file ends at section 5); I follow section 1 stop rules and keep going through the queue.
@@ -60,3 +60,8 @@ Format: `- [ ] id: task` then `- [x] id: task (commit)` or `- [!] id: BLOCKED re
 - B4b done: Seller Products (search, All / Low stock / Draft chips, row with photo slot, price, MOQ, status, on/off switch with undo toast), Payouts (next payout card, on hold, paid this month, order by order, CSV download, 7 day rule), seller tabs now Home, Orders, My cloth, Payouts. Add/Edit product keeps all its logic (variants, slab validation, photos) and uses the new inputs, cards and buttons through the shared primitives; it was not re-laid-out screen by screen (see Morning report). Fixed a stale-language bug in the product status labels.
 - B5 done: Admin laptop layout (left sidebar from 1024px, floating tab bar on phones), Admin Home (needs a decision, Today / 7 / 30 days, 4 numbers), Approvals (table on laptop, cards on phone, search, status chips, Tab + Enter), Review page (details, documents, note, Approve, Reject needs a note of 5+ letters, Esc goes back). Settings and Freight keep their logic and use the new primitives. Tested at 1280 px in English and 360 px in Hindi.
 - C1-C5 closed as MOCK + ADAPTER READY: the API on localhost:5000/5001/7000 is not reachable and there is no openapi.json, so no area could be tested against a real server. Each area has one adapter file in `src/api/areas/` (auth, business, catalog, cart, orders, seller, payouts, notifications, account, admin). To go real for one area: `VITE_REAL_AREAS=catalog` (or all: `VITE_USE_MOCKS=false`) and run the backend; see BACKEND_REQUESTS.md for the 11 shapes the screens assume.
+- D1 done: `npm run e2e` (23 steps, starts its own demo server, screenshots in docs/e2e/). Mock data only, API not reachable.
+- D2 done: `npm run smoke` (108 screens: English 390, Hindi 360 and 390, admin also 1280). It found a real bug: a saved empty cart sent a reload of /shop/checkout back to the cart. Fixed.
+- E1 done: comparison refreshed (docs/polish, POLISH_LIST.md). E2 done: fonts load, 120 ms press, skeletons, photo slot, safe areas, bottom padding were verified in the polish pass and kept by the smoke run.
+- E3: recent searches and suggestions DONE; filter sheet with live count DONE; quick quantity chips and tier hint DONE; undo toast on cart removal and product pause DONE; pull to refresh DONE (Home, Cart, Seller Home, Payouts); swipe-down to close sheets DONE (tested with touch); haptics DONE (add to cart, chips, remove, confirm, checkout); install prompt DONE (tested with a simulated event); offline cache for Home, categories, cart, orders DONE (tested); update prompt DONE in code (cannot be shown in dev, needs a production build with a new version); font preload DONE (checked in the built index.html).
+- E4 done: `public/photos/<productId>-<n>.jpg` + `npm run photos` (manifest). Tested with a temporary file, then removed.
