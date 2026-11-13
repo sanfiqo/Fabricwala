@@ -28,11 +28,11 @@ Format: `- [ ] id: task` then `- [x] id: task (commit)` or `- [!] id: BLOCKED re
 - [x] B5: Admin (laptop layout): Home, Approvals, Review
 
 ### C. Real flows (mock + adapter ready while API is unreachable)
-- [ ] C1: Auth, business, approval
-- [ ] C2: Catalog, cart
-- [ ] C3: Checkout, orders, tracking, delivery confirm
-- [ ] C4: Seller orders, products, payouts, admin approvals
-- [ ] C5: Notifications, report a problem, account
+- [x] C1 (mock, adapter ready): Auth, business, approval
+- [x] C2 (mock, adapter ready): Catalog, cart
+- [x] C3 (mock, adapter ready): Checkout, orders, tracking, delivery confirm
+- [x] C4 (mock, adapter ready): Seller orders, products, payouts, admin approvals
+- [x] C5 (mock, adapter ready): Notifications, report a problem, account
 
 ### D. Proof
 - [ ] D1: `npm run e2e` full journey with screenshots in docs/e2e/
@@ -59,3 +59,4 @@ Format: `- [ ] id: task` then `- [x] id: task (commit)` or `- [!] id: BLOCKED re
 - B4a done: Seller Home (headline, dark new-orders card with accept countdown, 4 stats, 6 month bars, low stock, best selling) and Seller Orders (New / To pack / Shipped / Done, order value, platform fee, You get, countdown chip, Cannot do it, Accept, Ship with LR number, detail page). Seller tabs: Home, Orders, My cloth (Payouts comes in B4b). Mock dashboard handler; backend request for `GET seller/dashboard` shape.
 - B4b done: Seller Products (search, All / Low stock / Draft chips, row with photo slot, price, MOQ, status, on/off switch with undo toast), Payouts (next payout card, on hold, paid this month, order by order, CSV download, 7 day rule), seller tabs now Home, Orders, My cloth, Payouts. Add/Edit product keeps all its logic (variants, slab validation, photos) and uses the new inputs, cards and buttons through the shared primitives; it was not re-laid-out screen by screen (see Morning report). Fixed a stale-language bug in the product status labels.
 - B5 done: Admin laptop layout (left sidebar from 1024px, floating tab bar on phones), Admin Home (needs a decision, Today / 7 / 30 days, 4 numbers), Approvals (table on laptop, cards on phone, search, status chips, Tab + Enter), Review page (details, documents, note, Approve, Reject needs a note of 5+ letters, Esc goes back). Settings and Freight keep their logic and use the new primitives. Tested at 1280 px in English and 360 px in Hindi.
+- C1-C5 closed as MOCK + ADAPTER READY: the API on localhost:5000/5001/7000 is not reachable and there is no openapi.json, so no area could be tested against a real server. Each area has one adapter file in `src/api/areas/` (auth, business, catalog, cart, orders, seller, payouts, notifications, account, admin). To go real for one area: `VITE_REAL_AREAS=catalog` (or all: `VITE_USE_MOCKS=false`) and run the backend; see BACKEND_REQUESTS.md for the 11 shapes the screens assume.
