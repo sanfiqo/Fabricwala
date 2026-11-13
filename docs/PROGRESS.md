@@ -45,3 +45,4 @@ Handover: Phase 1 complete. Phase 2 complete except P2.3 migration tooling block
 2026-11-13 | Config | done | Development-only appsettings.Local.json support; all EF contexts use ConnectionStrings:TextileConnect; 17 tests passed
 2026-11-13 | P2.3 | done | Applied Identity and Marketplace migrations, repaired PlatformSettings table, seeded States=1/Cities=12/Categories=8/PlatformSettings=4/Roles=3; API health 200; 17 tests passed
 2026-11-13 | Contract products | done | Public product paging/detail and seller routes now use EF and current-business isolation; build passed; 17 tests passed
+2026-11-13 | Contract orders/checkout | partial | Added retailer order detail/confirm, seller accept/reject/dispatch aliases, EF checkout split and OrderItems migration; build and 17 tests passed; full MySQL checkout flow still pending product/admin setup

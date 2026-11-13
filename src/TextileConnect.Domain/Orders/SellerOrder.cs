@@ -12,4 +12,6 @@ public sealed class SellerOrder
     public DateTime? AcceptedAt { get; set; }
     public DateTime? DispatchedAt { get; set; }
     public DateTime? DeliveredAt { get; set; }
+    public Order? Order { get; set; }
+    public ICollection<OrderItem> Items { get; set; } = new List<OrderItem>();
 }

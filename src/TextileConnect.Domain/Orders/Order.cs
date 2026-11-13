@@ -8,4 +8,5 @@ public sealed class Order
     public string PlacedByUserId { get; set; } = string.Empty;
     public decimal GrandTotal { get; set; }
     public string PaymentStatus { get; set; } = "Pending";
+    public ICollection<SellerOrder> SellerOrders { get; set; } = new List<SellerOrder>();
 }

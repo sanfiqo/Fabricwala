@@ -9,6 +9,19 @@ public sealed class EfOrderService(MarketplaceDbContext db) : IOrderService
 {
     public async Task<IReadOnlyList<Order>> ListForRetailerAsync(long businessId, CancellationToken cancellationToken = default)
         => await db.Orders.Where(x => x.RetailerBusinessId == businessId).OrderByDescending(x => x.Id).ToListAsync(cancellationToken);
+    public async Task<Order?> GetForRetailerAsync(long businessId, long orderId, CancellationToken cancellationToken = default)
+        => await db.Orders.SingleOrDefaultAsync(x => x.Id == orderId && x.RetailerBusinessId == businessId, cancellationToken);
+    public async Task<Order?> ConfirmDeliveryAsync(long businessId, long orderId, CancellationToken cancellationToken = default)
+    {
+        var order = await GetForRetailerAsync(businessId, orderId, cancellationToken);
+        if (order is null) return null;
+        var sellerOrders = await db.SellerOrders.Where(x => x.OrderId == orderId).ToListAsync(cancellationToken);
+        foreach (var sellerOrder in sellerOrders) sellerOrder.Status = "Delivered";
+        var shipments = await db.Shipments.Where(x => sellerOrders.Select(s => s.Id).Contains(x.SellerOrderId)).ToListAsync(cancellationToken);
+        foreach (var shipment in shipments) { shipment.Status = "Delivered"; shipment.DeliveredAt = DateTime.UtcNow; }
+        await db.SaveChangesAsync(cancellationToken);
+        return order;
+    }
 
     public async Task<IReadOnlyList<SellerOrder>> ListForSellerAsync(long businessId, CancellationToken cancellationToken = default)
         => await db.SellerOrders.Where(x => x.ManufacturerBusinessId == businessId).OrderByDescending(x => x.Id).ToListAsync(cancellationToken);
@@ -19,6 +32,9 @@ public sealed class EfOrderService(MarketplaceDbContext db) : IOrderService
     {
         var order = await db.SellerOrders.SingleOrDefaultAsync(x => x.Id == sellerOrderId && x.ManufacturerBusinessId == businessId, cancellationToken);
         if (order is null) return null;
+        var parent = await db.Orders.SingleAsync(x => x.Id == order.OrderId, cancellationToken);
+        if (status == "Accepted" && !string.Equals(parent.PaymentStatus, "Paid", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("Seller orders can only be accepted after payment.");
         order.Status = status;
         order.RejectReason = reason;
         if (status == "Accepted") order.AcceptedAt = DateTime.UtcNow;

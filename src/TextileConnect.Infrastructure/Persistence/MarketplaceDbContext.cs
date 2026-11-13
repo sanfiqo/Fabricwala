@@ -24,6 +24,7 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
     public DbSet<CartItem> CartItems => Set<CartItem>();
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<SellerOrder> SellerOrders => Set<SellerOrder>();
+    public DbSet<OrderItem> OrderItems => Set<OrderItem>();
     public DbSet<Shipment> Shipments => Set<Shipment>();
     public DbSet<PayoutAccount> PayoutAccounts => Set<PayoutAccount>();
     public DbSet<Payment> Payments => Set<Payment>();

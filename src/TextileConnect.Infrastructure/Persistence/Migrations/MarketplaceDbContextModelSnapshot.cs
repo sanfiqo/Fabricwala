@@ -681,6 +681,31 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                     b.ToTable("Orders");
                 });
 
+            modelBuilder.Entity("TextileConnect.Domain.Orders.OrderItem", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("ProductId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<long>("SellerOrderId")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("UnitPrice")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SellerOrderId");
+
+                    b.ToTable("OrderItems");
+                });
+
             modelBuilder.Entity("TextileConnect.Domain.Orders.SellerOrder", b =>
                 {
                     b.Property<long>("Id")
@@ -718,6 +743,8 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("OrderId");
 
                     b.ToTable("SellerOrders");
                 });
@@ -955,6 +982,38 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Settlements");
+                });
+
+            modelBuilder.Entity("TextileConnect.Domain.Orders.OrderItem", b =>
+                {
+                    b.HasOne("TextileConnect.Domain.Orders.SellerOrder", "SellerOrder")
+                        .WithMany("Items")
+                        .HasForeignKey("SellerOrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("SellerOrder");
+                });
+
+            modelBuilder.Entity("TextileConnect.Domain.Orders.SellerOrder", b =>
+                {
+                    b.HasOne("TextileConnect.Domain.Orders.Order", "Order")
+                        .WithMany("SellerOrders")
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Order");
+                });
+
+            modelBuilder.Entity("TextileConnect.Domain.Orders.Order", b =>
+                {
+                    b.Navigation("SellerOrders");
+                });
+
+            modelBuilder.Entity("TextileConnect.Domain.Orders.SellerOrder", b =>
+                {
+                    b.Navigation("Items");
                 });
 #pragma warning restore 612, 618
         }
