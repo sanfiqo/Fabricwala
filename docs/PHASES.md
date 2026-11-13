@@ -126,7 +126,7 @@ One agent per folder at a time. A [WEB] task starts only after its [BE] task is 
 - [ ] P10.12 [WEB] Report a problem screen + claim status
 - [x] P10.13 [BE] Notification center: list, unread count, mark read (in-app channel)
 - [ ] P10.14 [WEB] Notification center screen + bell badge
-- [ ] P10.15 [BE] Seller storefront endpoint: business profile, banner, about, city, rating, products
+- [x] P10.15 [BE] Seller storefront endpoint: business profile, banner, about, city, rating, products
 - [ ] P10.16 [WEB] Storefront screen
 
 ### Manufacturer

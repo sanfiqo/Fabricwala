@@ -111,6 +111,7 @@ app.MapLandedCostEndpoints();
 app.MapInvoiceEndpoints();
 app.MapReturnClaimEndpoints();
 app.MapNotificationEndpoints();
+app.MapStorefrontEndpoints();
 app.MapCartEndpoints();
 app.MapOrderEndpoints();
 app.MapPaymentEndpoints();
