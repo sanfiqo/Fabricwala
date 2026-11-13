@@ -418,6 +418,8 @@ on('POST', 'orders/:id/confirm-delivery', ({ db, params }) => {
   return publicOrder(o)
 })
 on('POST', 'payments', ({ db, body }) => {
+  // Test switch: localStorage tc_mock_payfail=1 makes payments fail, to see the failed screen.
+  if (typeof localStorage !== 'undefined' && localStorage.getItem('tc_mock_payfail') === '1') fail(402, 'Payment declined', 'PAYMENT_FAILED')
   const o = ownOrder(db, (body as { orderId: number }).orderId)
   o.paymentStatus = 'Paid'
   for (const so of o.sellerOrders) so.paymentStatus = 'Paid'

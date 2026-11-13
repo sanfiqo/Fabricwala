@@ -22,7 +22,7 @@ Format: `- [ ] id: task` then `- [x] id: task (commit)` or `- [!] id: BLOCKED re
 - [x] B2a: Search with filter sheet and live count
 - [x] B2b: Orders list, Track order
 - [x] B2c: Account, Notifications, Report a problem
-- [ ] B3: Checkout restyle, payment result states
+- [x] B3: Checkout restyle, payment result states
 - [ ] B4a: Seller Home, Seller Orders (accept, cannot do, ship with LR)
 - [ ] B4b: Seller Products (list, toggle), Add/Edit product, Payouts
 - [ ] B5: Admin (laptop layout): Home, Approvals, Review
@@ -55,3 +55,4 @@ Format: `- [ ] id: task` then `- [x] id: task (commit)` or `- [!] id: BLOCKED re
 - B2a done: Search page rebuilt (search pill, filter and active-filter chips, auto load more, skeleton grid, empty state with Clear). Filter sheet has sort, price presets, MOQ, material, season and a sticky button that shows the live result count (tested 10 -> 5). Also fixed: focus ring rule moved into the base layer (it was beating `outline-none`), and a saved `me = null` is never restored (it could log you out right after login).
 - B2b done: Orders list (Active / Delivered / Problems chips, "Needs your action" confirm card with auto-confirm date, skeleton, empty, error, offline from saved data) and Track order (headline, per-seller tabs, step bar that fills on open, timeline with current step pulsing twice, carrier and LR card, WhatsApp help, sticky confirm delivery). Links to `/shop/orders/:id/report` are built in B2c.
 - B2c done: Account (profile, business, addresses, language, help, demo switch, log out), Notifications (Today / Earlier, unread dots, optimistic read and mark-all, bell with dot on Home), Report a problem (reason chips, pieces, up to 3 photos shrunk on the phone, note, what happens next, sent state). Mock handlers for notifications and claims. Tested: seller marks order reached, shopkeeper sees confirm card, reports a problem with a photo. Backend requests added below.
+- B3 done: Checkout restyled (address radio cards, summary, sticky Place order). One Idempotency-Key per order attempt and per payment attempt (double tap makes 1 order, tested). Result screens: success, pending, failed (retry payment is manual, never automatic). Mock switch `localStorage tc_mock_payfail=1` shows the failed screen. Razorpay itself is still not wired (account blocked), so real mode ends in the pending screen.
