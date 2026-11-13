@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using TextileConnect.Domain.Businesses;
 using TextileConnect.Domain.Catalogue;
 using TextileConnect.Domain.Orders;
+using TextileConnect.Domain.Payments;
 
 namespace TextileConnect.Infrastructure.Persistence;
 
@@ -23,6 +24,11 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<SellerOrder> SellerOrders => Set<SellerOrder>();
     public DbSet<Shipment> Shipments => Set<Shipment>();
+    public DbSet<PayoutAccount> PayoutAccounts => Set<PayoutAccount>();
+    public DbSet<Payment> Payments => Set<Payment>();
+    public DbSet<Settlement> Settlements => Set<Settlement>();
+    public DbSet<Refund> Refunds => Set<Refund>();
+    public DbSet<Invoice> Invoices => Set<Invoice>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -75,5 +81,17 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
         builder.Entity<SellerOrder>().Property(x => x.CommissionRate).HasPrecision(5, 4);
         builder.Entity<Shipment>().HasKey(x => x.Id);
         builder.Entity<Shipment>().HasIndex(x => x.SellerOrderId).IsUnique();
+        builder.Entity<PayoutAccount>().HasKey(x => x.Id);
+        builder.Entity<PayoutAccount>().HasIndex(x => x.BusinessId).IsUnique();
+        builder.Entity<Payment>().HasKey(x => x.Id);
+        builder.Entity<Payment>().HasIndex(x => x.GatewayOrderId).IsUnique();
+        builder.Entity<Payment>().Property(x => x.Amount).HasPrecision(18, 2);
+        builder.Entity<Settlement>().HasKey(x => x.Id);
+        builder.Entity<Settlement>().Property(x => x.Amount).HasPrecision(18, 2);
+        builder.Entity<Settlement>().Property(x => x.CommissionAmount).HasPrecision(18, 2);
+        builder.Entity<Refund>().HasKey(x => x.Id);
+        builder.Entity<Refund>().Property(x => x.Amount).HasPrecision(18, 2);
+        builder.Entity<Invoice>().HasKey(x => x.Id);
+        builder.Entity<Invoice>().HasIndex(x => x.InvoiceNumber).IsUnique();
     }
 }

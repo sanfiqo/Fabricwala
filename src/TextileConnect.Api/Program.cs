@@ -11,6 +11,7 @@ using TextileConnect.Infrastructure.Businesses;
 using TextileConnect.Infrastructure.Catalogue;
 using TextileConnect.Application.Orders;
 using TextileConnect.Infrastructure.Orders;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,7 +21,8 @@ builder.Host.UseSerilog((context, configuration) => configuration
 
 // Add services to the container.
 
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddProblemDetails();
@@ -33,6 +35,7 @@ builder.Services.AddScoped<IBusinessDirectory, EfBusinessDirectory>();
 builder.Services.AddScoped<IProductDirectory, EfProductDirectory>();
 builder.Services.AddScoped<ICartService, EfCartService>();
 builder.Services.AddScoped<IOrderService, EfOrderService>();
+builder.Services.AddScoped<IAuthBusinessProfileReader, AuthBusinessProfileReader>();
 if (builder.Environment.IsDevelopment())
     builder.Services.AddSingleton<IFileStorage, DevelopmentFileStorage>();
 builder.Services.AddSanfiqoIdentity(builder.Configuration, builder.Environment);

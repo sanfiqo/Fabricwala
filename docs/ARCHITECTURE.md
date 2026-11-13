@@ -220,7 +220,8 @@ Example: 200 pcs at 300, freight 4,000 (20/pc), GST 5% (15) -> 335 per piece.
 | Landed cost | GET landed-cost?productId=&qty=&cityId= | Retailer |
 | Cart | GET cart, POST cart/items, PUT cart/items/{id}, DELETE cart/items/{id} | Retailer + Approved |
 | Orders | POST checkout, GET orders, GET orders/{id}, POST orders/{id}/confirm-delivery | Retailer |
-| Seller orders | GET seller/orders, POST seller/orders/{id}/accept, /reject, /dispatch, /status | Manufacturer |
+| Seller orders | GET seller/orders, GET seller/orders/{id}, POST seller/orders/{id}/accept, /reject, /dispatch, /status | Manufacturer |
+| Seller products | GET seller/products/{id} | Manufacturer |
 | Payments | POST payments, POST webhooks/razorpay | Retailer / gateway |
 | Notifications | GET notifications, POST notifications/{id}/read | Logged in |
 

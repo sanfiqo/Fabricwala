@@ -38,3 +38,5 @@ Handover: Phase 1 complete. Phase 2 complete except P2.3 migration tooling block
 2026-11-13 | P3.8 | done | split Identity/Businesses/Catalogue/Checkout/Payments tests; slab selection and price tamper coverage added; 14 tests passed
 2026-11-13 | P4.2 | done | EF cart service/API with business isolation; AddCart migration generated; 15 tests passed
 2026-11-13 | P4.4-P4.6 | done | EF retailer/seller order APIs, shipment status model and isolation tests; migration generated; 16 tests passed
+2026-11-13 | Contract alignment | done | enum-string JSON, auth csrf/me contract, cart totals view, seller detail endpoints and architecture update; 16 tests passed
+2026-11-13 | P5.3-P5.6 | done | payout, settlement, refund, invoice EF services and finance migration; 16 tests passed

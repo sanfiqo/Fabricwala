@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
 using System.Security.Claims;
 
 namespace Sanfiqo.Identity;
@@ -20,8 +21,9 @@ public static class SanfiqoAuthEndpoints
             if (string.IsNullOrWhiteSpace(ip)) return Results.BadRequest();
             try
             {
-                var challengeId = await authentication.RequestMobileCodeAsync(request.Mobile, ip, cancellationToken);
-                return Results.Ok(new { challengeId });
+                var challengeId = await authentication.RequestMobileCodeAsync(request.PhoneNumber, ip, cancellationToken);
+                httpContext.Response.Cookies.Append("tc_otp_challenge", challengeId.ToString(), new CookieOptions { HttpOnly = true, Secure = true, SameSite = SameSiteMode.Lax, MaxAge = TimeSpan.FromMinutes(5) });
+                return Results.NoContent();
             }
             catch (OtpRateLimitException) { return Results.StatusCode(StatusCodes.Status429TooManyRequests); }
             catch (OtpDeliveryUnavailableException) { return Results.StatusCode(StatusCodes.Status503ServiceUnavailable); }
@@ -31,7 +33,8 @@ public static class SanfiqoAuthEndpoints
             IMobileAuthentication authentication, UserManager<ApplicationUser> users,
             IUserClaimsPrincipalFactory<ApplicationUser> principals, CancellationToken cancellationToken) =>
         {
-            var result = await authentication.CompleteMobileSignInAsync(request.ChallengeId, request.Mobile,
+            var challengeId = request.ChallengeId ?? (Guid.TryParse(httpContext.Request.Cookies["tc_otp_challenge"], out var cookieId) ? cookieId : Guid.Empty);
+            var result = await authentication.CompleteMobileSignInAsync(challengeId, request.PhoneNumber,
                 request.Code, cancellationToken);
             if (result.Status != MobileAuthenticationStatus.Authenticated || result.UserId is null)
                 return Results.Unauthorized();
@@ -39,7 +42,11 @@ public static class SanfiqoAuthEndpoints
             if (user is null || !user.IsActive) return Results.Unauthorized();
             var principal = await principals.CreateAsync(user);
             await httpContext.SignInAsync(IdentityConstants.ApplicationScheme, principal);
-            return Results.Ok(new { userId = user.Id });
+            httpContext.Response.Cookies.Delete("tc_otp_challenge");
+            var roles = await users.GetRolesAsync(user);
+            var business = httpContext.RequestServices.GetService<IAuthBusinessProfileReader>() is { } reader
+                ? await reader.ReadAsync(user.Id, cancellationToken) : null;
+            return Results.Ok(new { userId = user.Id, phone = user.PhoneNumber, fullName = user.UserName, roles, business });
         });
 
         group.MapGet("/csrf", (IAntiforgery antiforgery, HttpContext httpContext) =>
@@ -48,7 +55,15 @@ public static class SanfiqoAuthEndpoints
             return Results.Ok(new { token = tokens.RequestToken });
         });
 
-        group.MapGet("/me", (ClaimsPrincipal principal) => Results.Ok(new { userId = principal.FindFirstValue(ClaimTypes.NameIdentifier) }))
+        group.MapGet("/me", async (ClaimsPrincipal principal, UserManager<ApplicationUser> users, IAuthBusinessProfileReader? reader) =>
+        {
+            var userId = principal.FindFirstValue(ClaimTypes.NameIdentifier);
+            var user = userId is null ? null : await users.FindByIdAsync(userId);
+            if (user is null) return Results.Unauthorized();
+            var roles = await users.GetRolesAsync(user);
+            var business = reader is null ? null : await reader.ReadAsync(user.Id);
+            return Results.Ok(new { userId = user.Id, phone = user.PhoneNumber, fullName = user.UserName, roles, business });
+        })
             .RequireAuthorization();
         group.MapPost("/logout", async (HttpContext httpContext) =>
         {
@@ -58,6 +73,6 @@ public static class SanfiqoAuthEndpoints
         return endpoints;
     }
 
-    public sealed record OtpRequest(string Mobile);
-    public sealed record OtpVerifyRequest(Guid ChallengeId, string Mobile, string Code);
+    public sealed record OtpRequest(string PhoneNumber);
+    public sealed record OtpVerifyRequest(string PhoneNumber, string Code, Guid? ChallengeId = null);
 }
