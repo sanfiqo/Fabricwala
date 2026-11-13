@@ -15,8 +15,7 @@ public static class IdentityPersistenceRegistration
         services.AddDbContext<ApplicationIdentityDbContext>((provider, options) =>
         {
             var configuration = provider.GetRequiredService<IConfiguration>();
-            var identityOptions = provider.GetRequiredService<IOptions<SanfiqoIdentityOptions>>().Value;
-            var value = configuration.GetConnectionString(identityOptions.ConnectionStringName);
+            var value = configuration.GetConnectionString("TextileConnect");
             if (string.IsNullOrWhiteSpace(value))
                 throw new InvalidOperationException("Application Identity persistence is not configured.");
 

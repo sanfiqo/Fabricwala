@@ -42,3 +42,4 @@ Handover: Phase 1 complete. Phase 2 complete except P2.3 migration tooling block
 2026-11-13 | P5.3-P5.6 | done | payout, settlement, refund, invoice EF services and finance migration; 16 tests passed
 2026-11-13 | P5.7-P5.8 | done | EF audit interceptor, auth/search rate-limit policies and frontend-origin CORS; 16 tests passed
 2026-11-13 | P7.1-P7.6 | done | backend EF foundations and endpoints for RFQ, disputes, reviews, favourites, group buys and logistics; 17 tests passed
+2026-11-13 | Config | done | Development-only appsettings.Local.json support; all EF contexts use ConnectionStrings:TextileConnect; 17 tests passed

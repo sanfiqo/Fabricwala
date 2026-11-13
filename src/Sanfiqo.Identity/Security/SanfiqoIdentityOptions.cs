@@ -4,7 +4,6 @@ public sealed class SanfiqoIdentityOptions
 {
     public const string SectionName = "SanfiqoIdentity";
 
-    public string ConnectionStringName { get; set; } = "TextileConnect";
     public string CookieName { get; set; } = ".AspNetCore.TextileConnect.Identity";
     public TimeSpan CookieLifetime { get; set; } = TimeSpan.FromHours(8);
     public bool CookieSlidingExpiration { get; set; }

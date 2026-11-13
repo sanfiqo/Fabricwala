@@ -18,7 +18,6 @@ public static class SanfiqoIdentityRegistration
     {
         services.AddOptions<SanfiqoIdentityOptions>()
             .Bind(configuration.GetSection(SanfiqoIdentityOptions.SectionName))
-            .Validate(options => !string.IsNullOrWhiteSpace(options.ConnectionStringName), "Identity connection string name is required.")
             .Validate(options => !string.IsNullOrWhiteSpace(options.CookieName), "Identity cookie name is required.")
             .ValidateOnStart();
         services.AddDataProtection().PersistKeysToDbContext<ApplicationIdentityDbContext>();
