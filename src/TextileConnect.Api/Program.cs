@@ -113,6 +113,7 @@ app.MapReturnClaimEndpoints();
 app.MapNotificationEndpoints();
 app.MapStorefrontEndpoints();
 app.MapSellerDashboardEndpoints();
+app.MapBulkProductEndpoints();
 app.MapCartEndpoints();
 app.MapOrderEndpoints();
 app.MapPaymentEndpoints();
