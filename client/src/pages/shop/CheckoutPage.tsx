@@ -93,7 +93,8 @@ export default function CheckoutPage() {
     </div>
   )
 
-  if (cart.isLoading) {
+  // A saved (offline) copy of an empty cart must not send you back while the real cart is still loading.
+  if (cart.isLoading || (cart.isFetching && (cart.data?.groups.length ?? 0) === 0)) {
     return (
       <div role="status" aria-label={S.app.loading}>
         {Top}
