@@ -1,0 +1,50 @@
+# NIGHT STATE
+
+## Morning report
+(written when the run stops)
+
+## Context (step 0)
+- Read: CLAUDE.md, CLAUDE_NIGHT_PROMPT.md, CLAUDE_CODE_UI_PROMPT.md, docs/UX_RULES.md (present now), docs/UI_MIGRATION.md, DECISIONS.md, docs/API_SCREENS.md.
+- Contract: only `client/docs/API_SCREENS.md` (an audit, no DTO shapes). No `openapi.json`, no `RUN_LOCAL.md`. API on localhost:5000/5001/7000 is not reachable. So: mock mode for every area, adapter layer per area, switch is one setting.
+- Test commands: `npm run build`, `npm run lint`, smoke script (scratchpad `run2.mjs`; becomes `npm run smoke` in D2).
+
+## Queue
+Format: `- [ ] id: task` then `- [x] id: task (commit)` or `- [!] id: BLOCKED reason`.
+
+### A. Foundation for real data
+- [x] A1: API layer (error codes EN+HI, timeout, safe GET retry, one 401 refresh, Idempotency-Key) (see Log for commit)
+- [ ] A2: Adapter per area + per-area mock/real switch, seed names
+- [ ] A3: Query keys per area, stale times, optimistic cart quantity and notification read
+- [ ] A4: Auth store, role guards, session expired screen
+
+### B. Screens
+- [ ] B1: Login, OTP, Business details (pincode lookup, GST check), Waiting for approval
+- [ ] B2a: Search with filter sheet and live count
+- [ ] B2b: Orders list, Track order
+- [ ] B2c: Account, Notifications, Report a problem
+- [ ] B3: Checkout restyle, payment result states
+- [ ] B4a: Seller Home, Seller Orders (accept, cannot do, ship with LR)
+- [ ] B4b: Seller Products (list, toggle), Add/Edit product, Payouts
+- [ ] B5: Admin (laptop layout): Home, Approvals, Review
+
+### C. Real flows (mock + adapter ready while API is unreachable)
+- [ ] C1: Auth, business, approval
+- [ ] C2: Catalog, cart
+- [ ] C3: Checkout, orders, tracking, delivery confirm
+- [ ] C4: Seller orders, products, payouts, admin approvals
+- [ ] C5: Notifications, report a problem, account
+
+### D. Proof
+- [ ] D1: `npm run e2e` full journey with screenshots in docs/e2e/
+- [ ] D2: `npm run smoke` every screen, EN 390, HI 360/390
+
+### E. Polish
+- [ ] E1: Screenshot compare Home, Product, Cart (POLISH_LIST.md refresh)
+- [ ] E2: Look and feel checks
+- [ ] E3: Advanced features (update prompt, font preload still open)
+- [ ] E4: Image slot `public/photos/<productId>-<n>.jpg`
+
+## Log
+- Step 0 done. Prompt section 6 (Nonstop mode) is not in CLAUDE_NIGHT_PROMPT.md on disk (file ends at section 5); I follow section 1 stop rules and keep going through the queue.
+- User rule: commit locally only; never push, reset --hard, clean, force push or delete a branch. If git needs approval: finish other work, retry once, then BLOCKED.
+- A1 done: ApiError now carries `code` and a friendly EN/HI message (raw server text kept in `serverMessage` only); 20 s timeout; one retry for GET on network error/502-504; one silent POST auth/refresh before treating a 401 as expired (skipped when the backend has no route); Idempotency-Key on checkout and payments (mock honours it). TODO in B3: CheckoutPage must pass one key per attempt so a double tap reuses it.

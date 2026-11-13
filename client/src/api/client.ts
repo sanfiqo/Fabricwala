@@ -36,10 +36,17 @@ export interface RequestOptions {
   query?: object
   body?: unknown
   form?: FormData
+  /** Sent as `Idempotency-Key`. Set automatically for checkout and payments. */
+  idempotencyKey?: string
 }
 
 /** Fired on any 401 so the auth layer can clear the session. */
 export const UNAUTHORIZED_EVENT = 'tc:unauthorized'
+
+const TIMEOUT_MS = 20_000
+const UPLOAD_TIMEOUT_MS = 60_000
+/** Calls that move money. A double tap or a retry must never do it twice, so the server gets a key. */
+const IDEMPOTENT = new Set(['checkout', 'payments'])
 
 let csrfToken: string | null = null
 let csrfPending: Promise<string> | null = null
@@ -70,20 +77,39 @@ function buildUrl(path: string, query?: object) {
   return qs ? `${url}?${qs}` : url
 }
 
+/** Reads the backend error body (ProblemDetails or `{ code, message }`). The text is kept for logs; users see the mapped message. */
 async function toError(res: Response): Promise<ApiError> {
-  let message = `Request failed (${res.status})`
+  let serverMessage = `Request failed (${res.status})`
   let fieldErrors: Record<string, string[]> | undefined
+  let code: string | undefined
   try {
-    const data = (await res.json()) as { detail?: string; title?: string; message?: string; errors?: Record<string, string[]> }
-    message = data.detail || data.message || data.title || message
+    const data = (await res.json()) as { code?: string; errorCode?: string; detail?: string; title?: string; message?: string; errors?: Record<string, string[]>; extensions?: { code?: string } }
+    serverMessage = data.detail || data.message || data.title || serverMessage
     fieldErrors = data.errors
+    code = data.code ?? data.errorCode ?? data.extensions?.code
   } catch {
     /* body is not JSON */
   }
-  return new ApiError(res.status, message, fieldErrors)
+  return new ApiError(res.status, serverMessage, fieldErrors, code)
 }
 
-async function send(method: Method, path: string, opts: RequestOptions, retry: boolean): Promise<Response> {
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
+
+/** fetch with a timeout. Network failure and timeout become ApiError (status 0) so screens show the offline or timeout message. */
+async function fetchWithTimeout(url: string, init: RequestInit, ms: number): Promise<Response> {
+  const ctl = new AbortController()
+  const timer = setTimeout(() => ctl.abort(), ms)
+  try {
+    return await fetch(url, { ...init, signal: ctl.signal })
+  } catch (e) {
+    if (e instanceof DOMException && e.name === 'AbortError') throw new ApiError(0, 'Request timed out', undefined, 'TIMEOUT')
+    throw new ApiError(0, 'Network error', undefined, 'NETWORK')
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
+async function send(method: Method, path: string, opts: RequestOptions, retryCsrf: boolean): Promise<Response> {
   const headers: Record<string, string> = { Accept: 'application/json' }
   let body: BodyInit | undefined
   if (opts.form) body = opts.form
@@ -91,11 +117,25 @@ async function send(method: Method, path: string, opts: RequestOptions, retry: b
     headers['Content-Type'] = 'application/json'
     body = JSON.stringify(opts.body)
   }
+  if (opts.idempotencyKey) headers['Idempotency-Key'] = opts.idempotencyKey
   if (method !== 'GET') headers['X-CSRF-TOKEN'] = await loadCsrf()
 
-  const res = await fetch(buildUrl(path, opts.query), { method, headers, body, credentials: 'include' })
+  // Only reads are retried (one more try on a network blip or 502/503/504). Writes are never replayed on their own.
+  const attempts = method === 'GET' ? 2 : 1
+  let res: Response | undefined
+  for (let i = 0; i < attempts; i++) {
+    try {
+      res = await fetchWithTimeout(buildUrl(path, opts.query), { method, headers, body, credentials: 'include' }, opts.form ? UPLOAD_TIMEOUT_MS : TIMEOUT_MS)
+      if (![502, 503, 504].includes(res.status)) break
+    } catch (e) {
+      if (i === attempts - 1) throw e
+    }
+    await sleep(400)
+  }
+  if (!res) throw new ApiError(0, 'Network error', undefined, 'NETWORK')
+
   // Token may be stale (e.g. after login the cookie changes): fetch a fresh one once.
-  if (method !== 'GET' && retry && res.status === 400) {
+  if (method !== 'GET' && retryCsrf && res.status === 400) {
     const text = await res.clone().text()
     if (/antiforgery|csrf/i.test(text)) {
       await loadCsrf(true)
@@ -105,12 +145,28 @@ async function send(method: Method, path: string, opts: RequestOptions, retry: b
   return res
 }
 
-export async function api<T>(method: Method, path: string, opts: RequestOptions = {}): Promise<T> {
-  if (USE_MOCKS) return mockRequest<T>(method, path, opts)
+/** One silent session refresh before giving up on a 401. Skipped if the backend has no refresh route. */
+let refreshUnsupported = false
+async function tryRefresh(): Promise<boolean> {
+  if (refreshUnsupported) return false
+  try {
+    const res = await fetchWithTimeout(`${API_BASE}/auth/refresh`, { method: 'POST', credentials: 'include', headers: { 'X-CSRF-TOKEN': await loadCsrf() } }, TIMEOUT_MS)
+    if (res.status === 404 || res.status === 405) refreshUnsupported = true // TODO(BE): see BACKEND_REQUESTS.md
+    return res.ok
+  } catch {
+    return false
+  }
+}
 
-  const res = await send(method, path, opts, true)
+export async function api<T>(method: Method, path: string, opts: RequestOptions = {}): Promise<T> {
+  const key = method === 'POST' && IDEMPOTENT.has(path.replace(/^\//, '')) ? (opts.idempotencyKey ?? crypto.randomUUID()) : opts.idempotencyKey
+  const o = { ...opts, idempotencyKey: key }
+  if (USE_MOCKS) return mockRequest<T>(method, path, o)
+
+  let res = await send(method, path, o, true)
+  if (res.status === 401 && !path.startsWith('auth/') && (await tryRefresh())) res = await send(method, path, o, true)
   if (!res.ok) {
-    if (res.status === 401) window.dispatchEvent(new Event(UNAUTHORIZED_EVENT))
+    if (res.status === 401 && path !== 'auth/me') window.dispatchEvent(new Event(UNAUTHORIZED_EVENT))
     throw await toError(res)
   }
   // Login/logout change the session, so the old CSRF token is no longer valid.

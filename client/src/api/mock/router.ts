@@ -16,8 +16,8 @@ interface Ctx {
 }
 type Handler = (ctx: Ctx) => unknown | Promise<unknown>
 
-const fail = (status: number, msg: string): never => {
-  throw new ApiError(status, msg)
+const fail = (status: number, msg: string, code?: string): never => {
+  throw new ApiError(status, msg, undefined, code)
 }
 const clone = <T,>(v: T): T => JSON.parse(JSON.stringify(v)) as T
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms))
@@ -26,20 +26,20 @@ const wait = (ms: number) => new Promise((r) => setTimeout(r, ms))
 function currentUser(db: Db): DbUser {
   const phone = getSession()
   const u = phone ? db.users.find((x) => x.phone === phone) : undefined
-  return u ?? fail(401, 'Please log in')
+  return u ?? fail(401, 'Please log in', 'NOT_LOGGED_IN')
 }
 function currentBusiness(db: Db): DbBusiness {
   const u = currentUser(db)
-  return db.businesses.find((b) => b.id === u.businessId) ?? fail(403, 'No business')
+  return db.businesses.find((b) => b.id === u.businessId) ?? fail(403, 'No business', 'NO_BUSINESS')
 }
 function requireApproved(db: Db, type: 'Retailer' | 'Manufacturer'): DbBusiness {
   const b = currentBusiness(db)
-  if (b.type !== type) fail(403, 'Not allowed for this account')
-  if (b.verificationStatus !== 'Approved') fail(403, 'Business is not approved yet')
+  if (b.type !== type) fail(403, 'Not allowed for this account', 'NOT_ALLOWED')
+  if (b.verificationStatus !== 'Approved') fail(403, 'Business is not approved yet', 'NOT_APPROVED')
   return b
 }
 function requireAdmin(db: Db) {
-  if (!currentUser(db).isAdmin) fail(403, 'Admin only')
+  if (!currentUser(db).isAdmin) fail(403, 'Admin only', 'NOT_ALLOWED')
 }
 function toMe(db: Db, u: DbUser): Me {
   const b = db.businesses.find((x) => x.id === u.businessId)
@@ -65,7 +65,7 @@ function freight(db: Db, p: DbProduct, qty: number, toCityId: number) {
 }
 
 function landedCost(db: Db, productId: number, qty: number, cityId: number): LandedCost {
-  const p = db.products.find((x) => x.id === productId) ?? fail(404, 'Product not found')
+  const p = db.products.find((x) => x.id === productId) ?? fail(404, 'Product not found', 'PRODUCT_NOT_FOUND')
   const price = slabPrice(p, qty)
   const f = freight(db, p, qty, cityId)
   const gst = (price * p.gstRate) / 100
@@ -141,12 +141,12 @@ const detail = (p: DbProduct): ProductDetail => {
 }
 
 function validateSlabs(moq: number, slabs: PriceSlab[]) {
-  if (!slabs.length) fail(422, 'Add at least one price slab')
+  if (!slabs.length) fail(422, 'Add at least one price slab', 'SLAB_NONE')
   const s = [...slabs].sort((a, b) => a.minQty - b.minQty)
-  if (s[0].minQty !== moq) fail(422, 'First slab must start at the MOQ')
+  if (s[0].minQty !== moq) fail(422, 'First slab must start at the MOQ', 'SLAB_FIRST')
   s.forEach((x, i) => {
-    if (x.maxQty !== null && x.maxQty < x.minQty) fail(422, 'Slab max must be above min')
-    if (i < s.length - 1 && (x.maxQty === null || x.maxQty + 1 !== s[i + 1].minQty)) fail(422, 'Price slabs overlap or leave a gap')
+    if (x.maxQty !== null && x.maxQty < x.minQty) fail(422, 'Slab max must be above min', 'SLAB_RANGE')
+    if (i < s.length - 1 && (x.maxQty === null || x.maxQty + 1 !== s[i + 1].minQty)) fail(422, 'Price slabs overlap or leave a gap', 'SLAB_OVERLAP')
   })
 }
 
@@ -179,7 +179,7 @@ const publicOrder = (o: DbOrder): Order => {
 }
 function findSellerOrder(db: Db, id: number, manufacturerId: number): DbSellerOrder {
   for (const o of db.orders) for (const so of o.sellerOrders) if (so.id === id && so.manufacturerId === manufacturerId) return so
-  return fail(404, 'Order not found')
+  return fail(404, 'Order not found', 'ORDER_NOT_FOUND')
 }
 
 // ---------- admin
@@ -196,10 +196,10 @@ const on = (method: string, pattern: string, h: Handler) =>
 // Auth
 on('GET', 'auth/csrf', () => ({ token: 'mock-token' }))
 on('POST', 'auth/otp/request', ({ body }) => {
-  if (!/^\d{10}$/.test(String(body.phoneNumber))) fail(400, 'Enter a valid mobile number')
+  if (!/^\d{10}$/.test(String(body.phoneNumber))) fail(400, 'Enter a valid mobile number', 'PHONE_INVALID')
 })
 on('POST', 'auth/otp/verify', ({ body, db }) => {
-  if (body.code !== '123456') fail(400, 'Wrong code. In demo mode use 123456.')
+  if (body.code !== '123456') fail(400, 'Wrong code. In demo mode use 123456.', 'OTP_INVALID')
   const phone = String(body.phoneNumber)
   let u = db.users.find((x) => x.phone === phone)
   if (!u) {
@@ -215,9 +215,9 @@ on('GET', 'auth/me', ({ db }) => toMe(db, currentUser(db)))
 // Business
 on('POST', 'businesses', ({ body, db }) => {
   const u = currentUser(db)
-  if (u.businessId) fail(409, 'You already have a business')
+  if (u.businessId) fail(409, 'You already have a business', 'BUSINESS_EXISTS')
   const input = body as CreateBusinessInput
-  if (db.businesses.some((b) => b.gstin && b.gstin === input.gstin)) fail(409, 'This GST number is already registered')
+  if (db.businesses.some((b) => b.gstin && b.gstin === input.gstin)) fail(409, 'This GST number is already registered', 'GST_DUPLICATE')
   const b: DbBusiness = {
     id: nextId(), type: input.type, displayName: input.displayName, legalName: input.legalName, gstin: input.gstin, pan: input.pan ?? null,
     phone: input.phone, email: input.email ?? null, verificationStatus: 'Pending', rejectionNote: null, addresses: [], documents: [],
@@ -278,7 +278,7 @@ on('GET', 'products', ({ db, query }) => {
   return { items: list.slice((page - 1) * pageSize, page * pageSize).map(summary), total: list.length, page, pageSize }
 })
 on('GET', 'products/:slug', ({ db, params }) => {
-  const p = db.products.find((x) => x.slug === params[0] && x.status === 'Active') ?? fail(404, 'Product not found')
+  const p = db.products.find((x) => x.slug === params[0] && x.status === 'Active') ?? fail(404, 'Product not found', 'PRODUCT_NOT_FOUND')
   return detail(p)
 })
 on('GET', 'landed-cost', ({ db, query }) => {
@@ -293,7 +293,7 @@ on('GET', 'seller/products', ({ db }) => {
 })
 const ownProduct = (db: Db, id: number) => {
   const b = requireApproved(db, 'Manufacturer')
-  return db.products.find((p) => p.id === id && p.sellerBusinessId === b.id) ?? fail(404, 'Product not found')
+  return db.products.find((p) => p.id === id && p.sellerBusinessId === b.id) ?? fail(404, 'Product not found', 'PRODUCT_NOT_FOUND')
 }
 on('GET', 'seller/products/:id', ({ db, params }) => detail(ownProduct(db, Number(params[0]))))
 const applyInput = (p: DbProduct, i: ProductInput) => {
@@ -345,8 +345,8 @@ on('GET', 'cart', ({ db }) => buildCart(db, requireApproved(db, 'Retailer')))
 on('POST', 'cart/items', ({ db, body }) => {
   const b = requireApproved(db, 'Retailer')
   const { variantId, quantity } = body as { variantId: number; quantity: number }
-  const p = db.products.find((x) => x.variants.some((v) => v.id === variantId)) ?? fail(404, 'Item not found')
-  if (p.status !== 'Active') fail(422, 'This product is not available')
+  const p = db.products.find((x) => x.variants.some((v) => v.id === variantId)) ?? fail(404, 'Item not found', 'ITEM_NOT_FOUND')
+  if (p.status !== 'Active') fail(422, 'This product is not available', 'PRODUCT_UNAVAILABLE')
   const items = (db.carts[b.id] ??= [])
   const ex = items.find((i) => i.variantId === variantId)
   if (ex) ex.quantity += quantity
@@ -355,7 +355,7 @@ on('POST', 'cart/items', ({ db, body }) => {
 })
 on('PUT', 'cart/items/:id', ({ db, params, body }) => {
   const b = requireApproved(db, 'Retailer')
-  const it = (db.carts[b.id] ?? []).find((i) => i.id === Number(params[0])) ?? fail(404, 'Item not found')
+  const it = (db.carts[b.id] ?? []).find((i) => i.id === Number(params[0])) ?? fail(404, 'Item not found', 'ITEM_NOT_FOUND')
   it.quantity = Math.max(1, Number((body as { quantity: number }).quantity))
   return buildCart(db, b)
 })
@@ -370,11 +370,11 @@ on('POST', 'checkout', ({ db, body }) => {
   const b = requireApproved(db, 'Retailer')
   const u = currentUser(db)
   const cart = buildCart(db, b)
-  if (!cart.groups.length) fail(422, 'Cart is empty')
-  const addr = b.addresses.find((a) => a.id === (body as { deliveryAddressId: number }).deliveryAddressId) ?? fail(422, 'Choose a delivery address')
+  if (!cart.groups.length) fail(422, 'Cart is empty', 'CART_EMPTY')
+  const addr = b.addresses.find((a) => a.id === (body as { deliveryAddressId: number }).deliveryAddressId) ?? fail(422, 'Choose a delivery address', 'ADDRESS_REQUIRED')
   const totals = new Map<number, number>()
   for (const g of cart.groups) for (const i of g.items) totals.set(i.productId, (totals.get(i.productId) ?? 0) + i.quantity)
-  for (const g of cart.groups) for (const i of g.items) if ((totals.get(i.productId) ?? 0) < i.moq) fail(422, `Minimum order for ${i.title} is ${i.moq}`)
+  for (const g of cart.groups) for (const i of g.items) if ((totals.get(i.productId) ?? 0) < i.moq) fail(422, `Minimum order for ${i.title} is ${i.moq}`, 'MOQ_NOT_MET')
   const orderId = nextId()
   const number = `TC-${new Date().getFullYear() % 100}${orderId}`
   const now = new Date().toISOString()
@@ -401,7 +401,7 @@ on('GET', 'orders', ({ db }) => {
 })
 const ownOrder = (db: Db, id: number) => {
   const b = requireApproved(db, 'Retailer')
-  return db.orders.find((o) => o.id === id && o.retailerId === b.id) ?? fail(404, 'Order not found')
+  return db.orders.find((o) => o.id === id && o.retailerId === b.id) ?? fail(404, 'Order not found', 'ORDER_NOT_FOUND')
 }
 on('GET', 'orders/:id', ({ db, params }) => publicOrder(ownOrder(db, Number(params[0]))))
 on('POST', 'orders/:id/confirm-delivery', ({ db, params }) => {
@@ -429,27 +429,27 @@ const sellerAction = (fn: (so: DbSellerOrder, body: Record<string, string>, db: 
 }
 on('GET', 'seller/orders/:id', ({ db, params }) => publicSeller(findSellerOrder(db, Number(params[0]), requireApproved(db, 'Manufacturer').id)))
 on('POST', 'seller/orders/:id/accept', sellerAction((so) => {
-  if (so.status !== 'PendingAcceptance') fail(409, 'Order is not waiting for acceptance')
-  if (so.paymentStatus !== 'Paid') fail(409, 'The shopkeeper has not paid yet')
+  if (so.status !== 'PendingAcceptance') fail(409, 'Order is not waiting for acceptance', 'ORDER_STATE')
+  if (so.paymentStatus !== 'Paid') fail(409, 'The shopkeeper has not paid yet', 'NOT_PAID')
   pushStatus(so, 'Accepted')
 }))
 on('POST', 'seller/orders/:id/reject', sellerAction((so, body) => {
-  if (so.status !== 'PendingAcceptance') fail(409, 'Order is not waiting for acceptance')
-  if (!body.reason?.trim()) fail(422, 'Give a reason')
+  if (so.status !== 'PendingAcceptance') fail(409, 'Order is not waiting for acceptance', 'ORDER_STATE')
+  if (!body.reason?.trim()) fail(422, 'Give a reason', 'REASON_REQUIRED')
   so.rejectReason = body.reason
   if (so.paymentStatus === 'Paid') so.paymentStatus = 'Refunded'
   pushStatus(so, 'Rejected', body.reason)
 }))
 on('POST', 'seller/orders/:id/dispatch', sellerAction((so, body) => {
-  if (so.status !== 'Accepted') fail(409, 'Accept the order first')
-  if (!body.lrNumber?.trim()) fail(422, 'LR number is required')
+  if (so.status !== 'Accepted') fail(409, 'Accept the order first', 'ORDER_STATE')
+  if (!body.lrNumber?.trim()) fail(422, 'LR number is required', 'LR_REQUIRED')
   so.shipment = { carrierName: body.carrierName ?? '', lrNumber: body.lrNumber, dispatchedAt: new Date().toISOString() }
   pushStatus(so, 'Dispatched')
 }))
 on('POST', 'seller/orders/:id/status', sellerAction((so, body) => {
   const next = body.status as SellerOrder['status']
   const ok = (next === 'ReachedKashmir' && so.status === 'Dispatched') || (next === 'Delivered' && ['Dispatched', 'ReachedKashmir'].includes(so.status))
-  if (!ok) fail(409, 'This status change is not allowed')
+  if (!ok) fail(409, 'This status change is not allowed', 'STATUS_NOT_ALLOWED')
   pushStatus(so, next)
 }))
 
@@ -461,9 +461,9 @@ on('GET', 'admin/businesses', ({ db, query }) => {
 })
 const review = (status: 'Approved' | 'Rejected'): Handler => ({ db, params, body }) => {
   requireAdmin(db)
-  const b = db.businesses.find((x) => x.id === Number(params[0])) ?? fail(404, 'Business not found')
+  const b = db.businesses.find((x) => x.id === Number(params[0])) ?? fail(404, 'Business not found', 'BUSINESS_NOT_FOUND')
   const note = (body as { note?: string } | undefined)?.note
-  if (status === 'Rejected' && !note?.trim()) fail(422, 'A note is required')
+  if (status === 'Rejected' && !note?.trim()) fail(422, 'A note is required', 'NOTE_REQUIRED')
   b.verificationStatus = status
   b.rejectionNote = status === 'Rejected' ? note! : null
   b.documents.forEach((d) => { if (d.status === 'Pending') d.status = status === 'Approved' ? 'Accepted' : 'Rejected' })
@@ -475,8 +475,8 @@ on('GET', 'admin/settings', ({ db }) => (requireAdmin(db), clone(db.settings)))
 on('PUT', 'admin/settings', ({ db, body }) => {
   requireAdmin(db)
   const s = body as Db['settings']
-  if (s.commissionDefaultRate < 0 || s.commissionDefaultRate > 50) fail(422, 'Commission must be between 0 and 50')
-  if (s.settlementAutoReleaseDays < 1) fail(422, 'Days must be at least 1')
+  if (s.commissionDefaultRate < 0 || s.commissionDefaultRate > 50) fail(422, 'Commission must be between 0 and 50', 'COMMISSION_RANGE')
+  if (s.settlementAutoReleaseDays < 1) fail(422, 'Days must be at least 1', 'DAYS_RANGE')
   db.settings = { ...s }
   return clone(db.settings)
 })
@@ -489,7 +489,7 @@ on('POST', 'admin/shipping-rates', ({ db, body }) => {
 })
 on('PUT', 'admin/shipping-rates/:id', ({ db, params, body }) => {
   requireAdmin(db)
-  const r = db.rates.find((x) => x.id === Number(params[0])) ?? fail(404, 'Rate not found')
+  const r = db.rates.find((x) => x.id === Number(params[0])) ?? fail(404, 'Rate not found', 'RATE_NOT_FOUND')
   Object.assign(r, body)
   return clone(r)
 })
@@ -499,8 +499,12 @@ on('DELETE', 'admin/shipping-rates/:id', ({ db, params }) => {
 })
 
 // ---------- entry
-export async function mockRequest<T>(method: string, path: string, opts: { query?: object; body?: unknown; form?: FormData }): Promise<T> {
+/** Same Idempotency-Key gives the same answer, like the real server: a double tap never places two orders. */
+const idem = new Map<string, unknown>()
+
+export async function mockRequest<T>(method: string, path: string, opts: { query?: object; body?: unknown; form?: FormData; idempotencyKey?: string }): Promise<T> {
   await wait(220)
+  if (opts.idempotencyKey && idem.has(opts.idempotencyKey)) return clone(idem.get(opts.idempotencyKey)) as T
   const db = getDb()
   const clean = path.replace(/^\//, '')
   for (const [m, re, handler] of routes) {
@@ -511,6 +515,7 @@ export async function mockRequest<T>(method: string, path: string, opts: { query
     for (const [k, v] of Object.entries(opts.query ?? {})) if (v !== undefined && v !== null && v !== '') query[k] = String(v)
     const result = await handler({ db, query, body: opts.body ?? {}, form: opts.form, params: match.slice(1) })
     if (method !== 'GET') saveDb()
+    if (opts.idempotencyKey) idem.set(opts.idempotencyKey, result)
     return (result === undefined ? undefined : clone(result)) as T
   }
   throw new ApiError(404, `Mock: no route for ${method} ${path}`)
