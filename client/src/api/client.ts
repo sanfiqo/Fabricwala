@@ -210,6 +210,8 @@ export async function api<T>(method: Method, path: string, opts: RequestOptions 
   if (path.startsWith('auth/')) csrfToken = null
   if (res.status === 204) return undefined as T
   const text = await res.text()
+  // CSV and other text answers (payout export) are returned as they are.
+  if (text && !(res.headers.get('content-type') ?? 'application/json').includes('json')) return text as T
   return (text ? JSON.parse(text) : undefined) as T
 }
 

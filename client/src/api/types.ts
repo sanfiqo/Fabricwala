@@ -377,3 +377,23 @@ export interface SellerDashboard {
   lowStock: Array<{ productId: number; title: string; variant: string; qty: number }>
   topProducts: Array<{ productId: number; title: string; pieces: number; amount: number }>
 }
+
+// ---- Payouts. TODO(BE): shape is my proposal (API_SCREENS.md: "partly"). Money is computed by the server.
+export interface PayoutRow {
+  id: number
+  orderNumber: string
+  buyer: string
+  placedAt: string
+  deliveredAt: string | null
+  /** What the seller gets (order value minus platform fee). */
+  amount: number
+  status: 'Paid' | 'Scheduled' | 'OnHold'
+  /** Paid date, or the date it will be released. */
+  date: string | null
+}
+export interface Payouts {
+  next: { amount: number; date: string | null }
+  onHold: number
+  paidThisMonth: number
+  rows: PayoutRow[]
+}

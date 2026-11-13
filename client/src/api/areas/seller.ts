@@ -7,6 +7,8 @@ export const sellerProductApi = {
   create: (input: ProductInput) => post<ProductDetail>('seller/products', input),
   update: (id: number, input: ProductInput) => put<ProductDetail>(`seller/products/${id}`, input),
   remove: (id: number) => del<void>(`seller/products/${id}`),
+  /** TODO(BE): on/off toggle contract is missing (API_SCREENS.md). Proposal: PUT seller/products/{id}/status { status: 'Active' | 'Inactive' }. */
+  setStatus: (id: number, status: 'Active' | 'Inactive') => put<ProductSummary>(`seller/products/${id}/status`, { status }),
   saveSlabs: (id: number, slabs: PriceSlab[]) => put<PriceSlab[]>(`seller/products/${id}/slabs`, { slabs }),
   addMedia: (id: number, file: File) => {
     const form = new FormData()

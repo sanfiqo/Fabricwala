@@ -38,3 +38,8 @@ Each item: endpoint, request, response, why. The frontend runs on mock data unti
 ## 9. Seller dashboard (B4a)
 - `GET /api/v1/seller/dashboard` returning `{ newOrders:{count,value,cities[],acceptBy}, toPack, salesThisMonth, salesChangePct, payoutDue, nextPayoutDate, rating, ratingCount, salesByMonth:[{month,amount}] (6 months), lowStock:[{productId,title,variant,qty}], topProducts:[{productId,title,pieces,amount}] }`. All money computed by the server.
 - Seller order list needs `commissionRate` and `commissionAmount` (already used) and a paged response.
+
+## 10. Seller products and payouts (B4b)
+- On/off toggle: `PUT /api/v1/seller/products/{id}/status` with `{ status: "Active" | "Inactive" }`, returns the product summary. Also needed: `GET /seller/products/{id}` and `PUT /seller/products/{id}` (update) — API_SCREENS.md says edit has no update endpoint.
+- Product summary needs a stock figure (`totalStock`) so "Low stock" does not depend on the dashboard.
+- `GET /api/v1/seller/payouts` returning `{ next:{amount,date}, onHold, paidThisMonth, rows:[{id,orderNumber,buyer,placedAt,deliveredAt,amount,status:"Paid"|"Scheduled"|"OnHold",date}] }`, and `?csv=true` returning `text/csv`. Linked bank account status is a separate missing endpoint (never return the account number).

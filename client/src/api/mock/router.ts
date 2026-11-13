@@ -332,6 +332,34 @@ on('GET', 'seller/dashboard', ({ db }) => {
   } satisfies import('../types').SellerDashboard
 })
 
+// Payouts (mock). The real numbers come from the server (a backend request).
+on('GET', 'seller/payouts', ({ db, query }) => {
+  const b = requireApproved(db, 'Manufacturer')
+  const mine = db.orders.flatMap((o) => o.sellerOrders.map((s) => ({ o, s }))).filter(({ s }) => s.manufacturerId === b.id && s.paymentStatus === 'Paid' && !['Rejected', 'Cancelled', 'PendingAcceptance'].includes(s.status))
+  const rows = mine.map(({ o, s }) => {
+    const reached = s.history.find((h) => h.status === 'ReachedKashmir')?.changedAt ?? null
+    const delivered = s.history.find((h) => h.status === 'Delivered')?.changedAt ?? reached
+    const status: 'Paid' | 'Scheduled' | 'OnHold' = s.status === 'Delivered' ? 'Paid' : s.status === 'ReachedKashmir' ? 'Scheduled' : 'OnHold'
+    const date = status === 'OnHold' ? null : new Date(new Date(delivered ?? s.placedAt).getTime() + (status === 'Scheduled' ? 7 * 86_400_000 : 0)).toISOString()
+    return { id: s.id, orderNumber: s.subOrderNumber, buyer: s.retailerName, placedAt: o.placedAt, deliveredAt: delivered, amount: s.subTotal - s.commissionAmount, status, date }
+  }).sort((a, c) => c.placedAt.localeCompare(a.placedAt))
+  if (query.csv) return ['Order,Shop,Amount,Status,Date', ...rows.map((r) => [r.orderNumber, r.buyer, r.amount, r.status, r.date ?? ''].join(','))].join('\n')
+  const sched = rows.filter((r) => r.status === 'Scheduled')
+  const month = new Date().getMonth()
+  return {
+    next: { amount: sched.reduce((a, r) => a + r.amount, 0), date: sched[0]?.date ?? null },
+    onHold: rows.filter((r) => r.status === 'OnHold').reduce((a, r) => a + r.amount, 0),
+    paidThisMonth: rows.filter((r) => r.status === 'Paid' && r.date && new Date(r.date).getMonth() === month).reduce((a, r) => a + r.amount, 0),
+    rows,
+  }
+})
+on('PUT', 'seller/products/:id/status', ({ db, params, body }) => {
+  const b = requireApproved(db, 'Manufacturer')
+  const p = db.products.find((x) => x.id === Number(params[0]) && x.sellerBusinessId === b.id) ?? fail(404, 'Product not found', 'PRODUCT_NOT_FOUND')
+  p.status = (body as { status: 'Active' | 'Inactive' }).status
+  return summary(p)
+})
+
 // Seller products
 on('GET', 'seller/products', ({ db }) => {
   const b = requireApproved(db, 'Manufacturer')

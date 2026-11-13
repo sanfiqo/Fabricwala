@@ -17,6 +17,7 @@ const SessionExpiredPage = lazy(() => import('@/pages/SessionExpiredPage'))
 const NotificationsPage = lazy(() => import('@/pages/NotificationsPage'))
 const ReportPage = lazy(() => import('@/pages/shop/ReportPage'))
 const SellerHome = lazy(() => import('@/pages/seller/SellerHome'))
+const PayoutsPage = lazy(() => import('@/pages/seller/PayoutsPage'))
 const AccountPage = lazy(() => import('@/pages/shop/AccountPage'))
 const OrdersPage = lazy(() => import('@/pages/shop/OrdersPage').then((m) => ({ default: m.OrdersPage })))
 const OrderDetailPage = lazy(() => import('@/pages/shop/OrdersPage').then((m) => ({ default: m.OrderDetailPage })))
@@ -76,6 +77,7 @@ export default function App() {
           <Route path="/seller" element={<SellerHome />} />
           <Route path="/seller/account" element={<AccountPage />} />
           <Route path="/seller/notifications" element={<NotificationsPage />} />
+          <Route path="/seller/payouts" element={<PayoutsPage />} />
           <Route path="/seller/products" element={<SellerProductsPage />} />
           <Route path="/seller/products/new" element={<ProductEditorPage />} />
           <Route path="/seller/products/:id" element={<ProductEditorPage />} />

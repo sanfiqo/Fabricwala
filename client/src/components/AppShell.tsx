@@ -1,7 +1,7 @@
 import { Suspense } from 'react'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Home, Inbox, LogOut, Package, Search, Settings, Truck, User, UserCheck } from 'lucide-react'
+import { Home, Inbox, LogOut, Package, Search, Settings, Truck, User, UserCheck, Wallet } from 'lucide-react'
 import { authApi, cartApi } from '@/api/endpoints'
 import { USE_MOCKS } from '@/api/client'
 import { areaOf, useMe, type Area } from '@/auth'
@@ -42,6 +42,7 @@ function tabsFor(area: Area | null): TabItem[] {
       { to: '/seller', label: S.nav.home, icon: Home, end: true },
       { to: '/seller/orders', label: S.nav.orders, icon: Inbox },
       { to: '/seller/products', label: S.nav.products, icon: Package },
+      { to: '/seller/payouts', label: S.nav.payouts, icon: Wallet },
     ]
   }
   if (area === 'Admin') {
