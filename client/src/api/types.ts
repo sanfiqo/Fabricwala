@@ -328,3 +328,11 @@ export interface ShippingRate {
   isActive: boolean
 }
 export type ShippingRateInput = Omit<ShippingRate, 'id'>
+
+export interface PincodeInfo {
+  pincode: string
+  cityId: number
+  cityName: string
+  stateId: number
+  stateName: string
+}

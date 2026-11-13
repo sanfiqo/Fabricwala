@@ -1,12 +1,33 @@
+import { useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
-import { Clock, ShieldAlert, XCircle } from 'lucide-react'
+import { Check, Clock, MessageCircle, ShieldAlert, XCircle } from 'lucide-react'
 import { homeFor, useMe } from '@/auth'
-import { Badge, Card, KeyValue, PageLoading } from '@/components/ui/misc'
 import { Button } from '@/components/ui/button'
-import { S, label } from '@/i18n'
-import { useState } from 'react'
+import { LinkButton, PageLoading } from '@/components/ui/misc'
+import { fmt, S } from '@/i18n'
+import { cn } from '@/lib/utils'
+import { waLink } from '@/lib/whatsapp'
 
+function Row({ ok, title, sub }: { ok: boolean; title: string; sub: string }) {
+  return (
+    <li className="flex items-center gap-3 border-t border-line px-4 py-3.5 first:border-t-0">
+      {ok ? (
+        <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-success text-white" aria-hidden>
+          <Check className="size-4" />
+        </span>
+      ) : (
+        <span className="size-7 shrink-0 rounded-full border-2 border-dashed border-line" aria-hidden />
+      )}
+      <span className="min-w-0 flex-1">
+        <span className="block text-[15px] font-medium">{title}</span>
+        <span className="block text-[13px] text-mute">{sub}</span>
+      </span>
+    </li>
+  )
+}
+
+/** Waiting for approval (also shows "not approved" and "on hold"). */
 export default function PendingPage() {
   const { data: me, isLoading } = useMe()
   const qc = useQueryClient()
@@ -25,34 +46,41 @@ export default function PendingPage() {
     await qc.invalidateQueries({ queryKey: ['me'] })
     setBusy(false)
   }
+  const waking = !rejected && !suspended
 
   return (
-    <div className="px-4 py-10 text-center">
-      <div className={`mx-auto flex size-24 items-center justify-center rounded-full ${rejected ? 'bg-bad-bg text-bad' : suspended ? 'bg-warn-bg text-warn' : 'bg-leaf-50 text-leaf-700'}`}>
-        <Icon className="size-12" />
-      </div>
-      <h1 className="mt-5 text-2xl font-extrabold text-navy-900">{title}</h1>
-      <p className="mx-auto mt-2 max-w-sm text-mute">{body}</p>
+    <div className="flex min-h-[80dvh] flex-col px-5 pt-14">
+      <span className={cn('flex size-[72px] items-center justify-center rounded-full border', rejected ? 'border-error/30 bg-error-bg text-error' : 'border-line bg-surface')} aria-hidden>
+        <Icon className="size-8" />
+      </span>
+      <h1 className="mt-5 text-balance text-[32px] font-semibold leading-[1.15] tracking-[-0.025em]">{title}</h1>
+      <p className="mt-2.5 text-base leading-relaxed text-mute">{body}</p>
 
       {rejected && b.rejectionNote && (
-        <Card className="mx-auto mt-5 max-w-sm border-bad/30 bg-bad-bg p-4 text-left">
-          <p className="text-sm font-bold text-bad">{S.pending.note}</p>
-          <p className="mt-1 text-ink">{b.rejectionNote}</p>
-        </Card>
+        <div role="note" className="mt-5 rounded-card bg-error-bg p-4">
+          <p className="text-sm font-medium text-error">{S.pending.note}</p>
+          <p className="mt-1">{b.rejectionNote}</p>
+        </div>
       )}
 
-      <Card className="mx-auto mt-6 max-w-sm p-4 text-left">
-        <KeyValue label={S.pending.business} value={b.displayName} />
-        <KeyValue label={S.reg.type} value={b.type === 'Retailer' ? S.reg.retailer : S.reg.manufacturer} />
-        <KeyValue
-          label={S.pending.status}
-          value={<Badge tone={rejected || suspended ? 'bad' : 'warn'}>{label(S.status, b.verificationStatus)}</Badge>}
-        />
-      </Card>
+      <ul className="mt-6 overflow-hidden rounded-card border border-line bg-surface">
+        <Row ok title={S.pending.mobileVerified} sub={`+91 ${me.phone}`} />
+        <Row ok title={S.pending.businessDetails} sub={b.displayName} />
+        <Row ok={false} title={S.pending.teamReview} sub={rejected ? S.status.Rejected : suspended ? S.status.Suspended : S.pending.inProgress} />
+      </ul>
 
-      <Button variant="outline" className="mt-6" onClick={() => void refresh()} loading={busy}>
-        {S.pending.refresh}
-      </Button>
+      {waking && b.type === 'Retailer' && <p className="mt-4 rounded-2xl bg-saving-bg p-3.5 text-sm leading-snug text-saving">{S.pending.tillThen}</p>}
+
+      <div className="mt-auto flex flex-col gap-2 pb-[max(22px,env(safe-area-inset-bottom))] pt-8">
+        {waking && b.type === 'Retailer' && <LinkButton to="/shop" className="min-h-14 w-full text-base">{S.pending.startBrowsing}</LinkButton>}
+        <Button variant={waking && b.type === 'Retailer' ? 'soft' : 'primary'} size="lg" block onClick={() => void refresh()} loading={busy}>
+          {S.pending.refresh}
+        </Button>
+        <a href={waLink(fmt(S.pending.waMsg, { name: b.displayName }))} target="_blank" rel="noreferrer" className="press flex min-h-12 items-center justify-center gap-2 font-medium">
+          <MessageCircle className="size-5" aria-hidden />
+          {S.pending.askWa}
+        </a>
+      </div>
     </div>
   )
 }

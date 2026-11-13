@@ -1,4 +1,5 @@
 import { forwardRef, useId, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react'
+import { CircleAlert } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const control =
@@ -22,7 +23,8 @@ export function Field({ label, hint, error, children, className }: FieldProps) {
       </label>
       {children(id, !!error)}
       {error ? (
-        <p role="alert" className="text-sm font-medium text-error">
+        <p role="alert" className="flex items-start gap-1.5 text-sm font-medium text-error">
+          <CircleAlert className="mt-0.5 size-4 shrink-0" aria-hidden />
           {error}
         </p>
       ) : hint ? (

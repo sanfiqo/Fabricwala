@@ -117,6 +117,12 @@ export default function ShopHome() {
         <CartLink />
       </header>
 
+      {me?.business && me.business.verificationStatus !== 'Approved' && (
+        <Link to="/pending" viewTransition className="mx-5 mt-4 block rounded-2xl bg-saving-bg p-3.5 text-sm leading-snug text-saving">
+          {S.pending.browseBanner}
+        </Link>
+      )}
+
       <div className="px-5 pt-[18px]">
         <p className="truncate text-[15px] text-mute">{fmt(S.home.greet, { name })}</p>
         <h1 className="mt-0.5 text-balance text-[30px] font-semibold leading-[1.2] tracking-[-0.02em]">{S.home.title}</h1>

@@ -18,7 +18,7 @@ Format: `- [ ] id: task` then `- [x] id: task (commit)` or `- [!] id: BLOCKED re
 - [x] A4: Auth store, role guards, session expired screen
 
 ### B. Screens
-- [ ] B1: Login, OTP, Business details (pincode lookup, GST check), Waiting for approval
+- [x] B1: Login, OTP, Business details (pincode lookup, GST check), Waiting for approval
 - [ ] B2a: Search with filter sheet and live count
 - [ ] B2b: Orders list, Track order
 - [ ] B2c: Account, Notifications, Report a problem
@@ -51,3 +51,4 @@ Format: `- [ ] id: task` then `- [x] id: task (commit)` or `- [!] id: BLOCKED re
 - A2 done: `src/api/areas/*.ts` (auth, business, catalog, cart, orders, seller, admin; payouts, notifications, account get added with their screens), `endpoints.ts` re-exports. `VITE_REAL_AREAS` / `VITE_MOCK_AREAS` (or localStorage tc_real_areas / tc_mock_areas) choose per area. Mock seed names now Sharma Textiles, Kapoor Knits, Shree Kurti House; mock db key bumped to v2.
 - A3 done: `src/api/keys.ts` (keys per area + STALE), per-area stale times in queryClient.ts, optimistic cart quantity with rollback (money stays as the server sent it). Notification read optimistic comes with B2c.
 - A4 done: guards already per role (Gate); added `/session-expired` screen, shown when a logged-in person gets a 401. No token storage: auth is the server cookie, so nothing is kept in JS. Tested by firing the 401 event.
+- B1 done: Login (+91 field, language pill, 6-box OTP with auto submit and WebOTP), Business details in 2 steps (type cards, pincode fills city and state, GST optional with live check, documents optional), Waiting for approval as a checklist. React Hook Form + Zod. Drafts in sessionStorage so a language switch or reload keeps typed data. Waiting shopkeepers can browse (Gate `allowPending`); ordering still needs approval. Backend requests: pincode lookup, owner name, WhatsApp code.

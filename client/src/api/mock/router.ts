@@ -213,6 +213,14 @@ on('POST', 'auth/logout', () => setSession(null))
 on('GET', 'auth/me', ({ db }) => toMe(db, currentUser(db)))
 
 // Business
+// Pincode lookup (mock): first three digits pick the city. The real one is a backend request.
+const PIN_PREFIX: Record<string, number> = { '190': 1, '191': 1, '180': 2, '181': 2, '192': 3, '193': 4, '141': 10, '395': 11, '132': 12, '110': 13 }
+on('GET', 'pincodes/:slug', ({ db, params }) => {
+  const cityId = PIN_PREFIX[params[0].slice(0, 3)] ?? fail(404, 'Pincode not found', 'NOT_FOUND')
+  const c = db.cities.find((x) => x.id === cityId)!
+  const st = db.states.find((x) => x.id === c.stateId)!
+  return { pincode: params[0], cityId: c.id, cityName: c.name, stateId: st.id, stateName: st.name }
+})
 on('POST', 'businesses', ({ body, db }) => {
   const u = currentUser(db)
   if (u.businessId) fail(409, 'You already have a business', 'BUSINESS_EXISTS')
@@ -282,7 +290,7 @@ on('GET', 'products/:slug', ({ db, params }) => {
   return detail(p)
 })
 on('GET', 'landed-cost', ({ db, query }) => {
-  requireApproved(db, 'Retailer')
+  currentBusiness(db) // prices are visible while waiting for approval; ordering is not
   return landedCost(db, Number(query.productId), Math.max(1, Number(query.qty)), Number(query.cityId))
 })
 

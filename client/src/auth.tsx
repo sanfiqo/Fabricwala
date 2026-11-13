@@ -60,7 +60,7 @@ export function useUnauthorizedListener() {
 }
 
 /** Route guard. `area` = require an approved user of that area; omitted = just be logged in. */
-export function Gate({ area }: { area?: Area }) {
+export function Gate({ area, allowPending }: { area?: Area; allowPending?: boolean }) {
   const { data: me, isLoading, error, refetch } = useMe()
   const loc = useLocation()
   if (isLoading) return <PageLoading />
@@ -68,7 +68,9 @@ export function Gate({ area }: { area?: Area }) {
   if (!me) return <Navigate to="/login" replace state={{ from: loc.pathname }} />
   if (area) {
     const home = homeFor(me)
-    const inArea = areaOf(me) === area && (area === 'Admin' || me.business?.verificationStatus === 'Approved')
+    const status = me.business?.verificationStatus
+    // Shopkeepers waiting for approval may look around (browse, see prices). Ordering needs approval.
+    const inArea = areaOf(me) === area && (area === 'Admin' || status === 'Approved' || (allowPending && area === 'Retailer' && status === 'Pending'))
     if (!inArea) return <Navigate to={home} replace />
   }
   return <Outlet />

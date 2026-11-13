@@ -48,16 +48,21 @@ export default function App() {
         </Route>
       </Route>
 
-      <Route element={<Gate area="Retailer" />}>
+      <Route element={<Gate area="Retailer" allowPending />}>
         <Route element={<AppShell />}>
           <Route path="/shop" element={<ShopHome />} />
           <Route path="/shop/products" element={<ProductListPage />} />
           <Route path="/shop/p/:slug" element={<ProductPage />} />
+          <Route path="/shop/account" element={<AccountPage />} />
+        </Route>
+      </Route>
+
+      <Route element={<Gate area="Retailer" />}>
+        <Route element={<AppShell />}>
           <Route path="/shop/cart" element={<CartPage />} />
           <Route path="/shop/checkout" element={<CheckoutPage />} />
           <Route path="/shop/orders" element={<OrdersPage />} />
           <Route path="/shop/orders/:id" element={<OrderDetailPage />} />
-          <Route path="/shop/account" element={<AccountPage />} />
         </Route>
       </Route>
 
