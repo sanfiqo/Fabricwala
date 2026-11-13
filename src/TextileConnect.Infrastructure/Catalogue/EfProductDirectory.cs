@@ -8,6 +8,17 @@ namespace TextileConnect.Infrastructure.Catalogue;
 public sealed class EfProductDirectory(MarketplaceDbContext db) : IProductDirectory
 {
     public Product Add(long businessId, Product product) { product.SellerBusinessId = businessId; db.Products.Add(product); db.SaveChanges(); return product; }
+    public ProductDetail AddAggregate(long businessId, Product product, IReadOnlyList<ProductVariant> variants, IReadOnlyList<PriceSlab> slabs)
+    {
+        product.SellerBusinessId = businessId;
+        var errors = PriceSlabRules.Validate(product, slabs);
+        if (errors.Count != 0) throw new ArgumentException(string.Join(" ", errors));
+        db.Products.Add(product); db.SaveChanges();
+        foreach (var variant in variants) { variant.ProductId = product.Id; db.ProductVariants.Add(variant); }
+        foreach (var slab in slabs) { slab.ProductId = product.Id; db.PriceSlabs.Add(slab); }
+        db.SaveChanges();
+        return new ProductDetail(product, variants, slabs, Array.Empty<ProductMedia>());
+    }
     public IReadOnlyList<Product> ListForSeller(long businessId) => db.Products.Where(x => x.SellerBusinessId == businessId && !x.IsDeleted).ToList();
     public Product? GetForSeller(long businessId, long productId) => db.Products.SingleOrDefault(x => x.Id == productId && x.SellerBusinessId == businessId && !x.IsDeleted);
     public Product? GetBySlug(string slug) => db.Products.SingleOrDefault(x => x.Slug == slug && x.Status == ProductStatus.Active && !x.IsDeleted);

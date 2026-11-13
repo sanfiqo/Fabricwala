@@ -6,6 +6,8 @@ using TextileConnect.Application.Businesses;
 using TextileConnect.Domain.Businesses;
 using TextileConnect.Application.Files;
 using TextileConnect.Infrastructure.Persistence;
+using Microsoft.AspNetCore.Identity;
+using Sanfiqo.Identity;
 
 namespace TextileConnect.Api;
 
@@ -48,9 +50,20 @@ public static class BusinessEndpoints
 
         var admin = app.MapGroup("/api/v1/admin/businesses").RequireAuthorization(p => p.RequireRole("Admin"));
         admin.MapGet("", (IBusinessDirectory directory) => Results.Ok(directory.ListPending()));
-        admin.MapPost("/{id:long}/approve", (long id, ClaimsPrincipal principal, IBusinessDirectory directory) =>
-            directory.SetVerification(id, VerificationStatus.Approved, null, principal.FindFirstValue(ClaimTypes.NameIdentifier)) is { } business
-                ? Results.Ok(business) : Results.NotFound());
+        admin.MapPost("/{id:long}/approve", async (long id, ClaimsPrincipal principal, IBusinessDirectory directory, MarketplaceDbContext db, UserManager<ApplicationUser> users) =>
+        {
+            var business = directory.SetVerification(id, VerificationStatus.Approved, null, principal.FindFirstValue(ClaimTypes.NameIdentifier));
+            if (business is null) return Results.NotFound();
+            var ownerId = db.BusinessUsers.Where(x => x.BusinessId == id && x.IsPrimary).Select(x => x.UserId).SingleOrDefault();
+            if (ownerId is not null && await users.FindByIdAsync(ownerId) is { } owner)
+            {
+                var targetRole = business.BusinessType.ToString();
+                var roles = await users.GetRolesAsync(owner);
+                foreach (var role in roles.Where(x => x != targetRole)) await users.RemoveFromRoleAsync(owner, role);
+                if (!roles.Contains(targetRole, StringComparer.Ordinal)) await users.AddToRoleAsync(owner, targetRole);
+            }
+            return Results.Ok(business);
+        });
         admin.MapPost("/{id:long}/reject", (long id, Rejection request, ClaimsPrincipal principal, IBusinessDirectory directory) =>
             directory.SetVerification(id, VerificationStatus.Rejected, request.Note, principal.FindFirstValue(ClaimTypes.NameIdentifier)) is { } business
                 ? Results.Ok(business) : Results.NotFound());

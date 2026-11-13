@@ -46,6 +46,8 @@ public static class SanfiqoAuthEndpoints
             var roles = await users.GetRolesAsync(user);
             var business = httpContext.RequestServices.GetService<IAuthBusinessProfileReader>() is { } reader
                 ? await reader.ReadAsync(user.Id, cancellationToken) : null;
+            if (business?.VerificationStatus == "Approved")
+                (principal.Identity as ClaimsIdentity)?.AddClaim(new Claim("business_approved", "true"));
             return Results.Ok(new { userId = user.Id, phone = user.PhoneNumber, fullName = user.UserName, roles, business });
         });
 

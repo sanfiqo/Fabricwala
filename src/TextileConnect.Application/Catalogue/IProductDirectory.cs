@@ -5,6 +5,7 @@ namespace TextileConnect.Application.Catalogue;
 public interface IProductDirectory
 {
     Product Add(long businessId, Product product);
+    ProductDetail AddAggregate(long businessId, Product product, IReadOnlyList<ProductVariant> variants, IReadOnlyList<PriceSlab> slabs);
     IReadOnlyList<Product> ListForSeller(long businessId);
     Product? GetForSeller(long businessId, long productId);
     Product? GetBySlug(string slug);

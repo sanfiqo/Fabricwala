@@ -98,7 +98,8 @@ public sealed class EfVerifiedMobileAccountStore : IVerifiedMobileAccountStore
                 // already be active; no legacy activation or role promotion is inferred.
                 var existingBootstrapAdmin = IsBootstrapAdmin(mobile.Value);
                 if (user is null || !user.IsActive || duplicateLegacyPhone
-                    || (!existingBootstrapAdmin && (userRoles.Count != 1 || !userRoles.Contains(UserRole, StringComparer.Ordinal)))
+                    || (!existingBootstrapAdmin && (userRoles.Count != 1 || !userRoles.Any(role =>
+                        role is SanfiqoRoleNames.Retailer or SanfiqoRoleNames.Manufacturer)))
                     || (existingBootstrapAdmin && !userRoles.Contains(SanfiqoRoleNames.Admin, StringComparer.Ordinal)))
                     return new(VerifiedMobileAccountStatus.Rejected);
                 return new(VerifiedMobileAccountStatus.ExistingUser, user.Id);
