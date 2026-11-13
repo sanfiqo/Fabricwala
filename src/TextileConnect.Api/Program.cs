@@ -114,6 +114,7 @@ app.MapNotificationEndpoints();
 app.MapStorefrontEndpoints();
 app.MapSellerDashboardEndpoints();
 app.MapBulkProductEndpoints();
+app.MapStockAlertEndpoints();
 app.MapCartEndpoints();
 app.MapOrderEndpoints();
 app.MapPaymentEndpoints();
