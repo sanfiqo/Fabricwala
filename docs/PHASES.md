@@ -117,7 +117,7 @@ One agent per folder at a time. A [WEB] task starts only after its [BE] task is 
 - [ ] P10.5 [WEB] Pincode/city picker on home; landed price everywhere uses it
 
 ### Retailer
-- [ ] P10.6 [BE] Search: full-text on title/description/material, filters (category, price range, MOQ, seller city, material, size, colour), sort (popular, price, newest), paging
+- [x] P10.6 [BE] Search: full-text on title/description/material, filters (category, price range, MOQ, seller city, material, size, colour), sort (popular, price, newest), paging
 - [ ] P10.7 [WEB] Search screen with filter bottom sheet and sort
 - [ ] P10.8 [BE] Address book: multiple delivery addresses, default address
 - [ ] P10.9 [BE] Invoices: GST-compliant PDF per SellerOrder (seller → retailer) and platform commission invoice (platform → seller); download endpoint

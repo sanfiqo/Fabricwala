@@ -10,7 +10,7 @@ public interface IProductDirectory
     Product? GetForSeller(long businessId, long productId);
     Product? GetBySlug(string slug);
     bool Remove(long businessId, long productId);
-    IReadOnlyList<Product> ListPublic(string? query, long? categoryId, decimal? minPrice, decimal? maxPrice, int page, int pageSize, out int total);
+    IReadOnlyList<Product> ListPublic(string? query, long? categoryId, decimal? minPrice, decimal? maxPrice, int? maxMoq, string? sort, int page, int pageSize, out int total);
     ProductDetail? GetDetail(string slug, bool sellerView = false);
 }
 
