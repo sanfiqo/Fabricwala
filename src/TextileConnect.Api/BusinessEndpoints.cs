@@ -27,6 +27,11 @@ public static class BusinessEndpoints
                 ? Results.Ok(business) : Results.NotFound());
         group.MapPost("/me/addresses", (BusinessAddress address, ClaimsPrincipal principal, IBusinessDirectory directory) =>
             Results.Ok(directory.AddAddress(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "", address)));
+        group.MapGet("/me/addresses", (ClaimsPrincipal principal, IBusinessDirectory directory) =>
+            Results.Ok(directory.ListAddresses(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "")));
+        group.MapPut("/me/addresses/{id:long}/default", (long id, ClaimsPrincipal principal, IBusinessDirectory directory) =>
+            directory.SetDefaultAddress(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "", id) is { } address
+                ? Results.Ok(address) : Results.NotFound());
         group.MapPost("/me/documents", async (IFormFile file, string docType, ClaimsPrincipal principal, IBusinessDirectory directory, IFileStorage storage, MarketplaceDbContext db, CancellationToken ct) =>
         {
             var business = directory.GetForUser(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "");
