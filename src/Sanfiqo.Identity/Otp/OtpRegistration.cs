@@ -11,6 +11,7 @@ public static class OtpRegistration
         IConfiguration configuration, string environmentName)
     {
         var policy = configuration.GetSection("Otp:Policy").Get<OtpPolicy>() ?? new OtpPolicy();
+        policy.DevFixedCode = configuration["Otp:DevFixedCode"];
         var identityOptions = new SanfiqoIdentityOptions();
         configuration.GetSection(SanfiqoIdentityOptions.SectionName).Bind(identityOptions);
         policy.StorageHmacKey = configuration[identityOptions.OtpStorageHmacKeyConfiguration] ?? policy.StorageHmacKey;
