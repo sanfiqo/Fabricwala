@@ -41,13 +41,13 @@ public static class SanfiqoAuthEndpoints
             var user = await users.FindByIdAsync(result.UserId);
             if (user is null || !user.IsActive) return Results.Unauthorized();
             var principal = await principals.CreateAsync(user);
-            await httpContext.SignInAsync(IdentityConstants.ApplicationScheme, principal);
-            httpContext.Response.Cookies.Delete("tc_otp_challenge");
             var roles = await users.GetRolesAsync(user);
             var business = httpContext.RequestServices.GetService<IAuthBusinessProfileReader>() is { } reader
                 ? await reader.ReadAsync(user.Id, cancellationToken) : null;
             if (business?.VerificationStatus == "Approved")
                 (principal.Identity as ClaimsIdentity)?.AddClaim(new Claim("business_approved", "true"));
+            await httpContext.SignInAsync(IdentityConstants.ApplicationScheme, principal);
+            httpContext.Response.Cookies.Delete("tc_otp_challenge");
             return Results.Ok(new { userId = user.Id, phone = user.PhoneNumber, fullName = user.UserName, roles, business });
         });
 
