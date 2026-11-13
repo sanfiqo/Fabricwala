@@ -71,3 +71,28 @@ export const rowsFromSlabs = (slabs: PriceSlab[]): SlabRow[] =>
 
 export const slabsFromRows = (rows: SlabRow[]): PriceSlab[] =>
   rows.map((r) => ({ minQty: Number(r.minQty), maxQty: r.maxQty.trim() === '' ? null : Number(r.maxQty), pricePerUnit: Number(r.price) }))
+
+// ---- Buyer side: which price applies, and what buying a little more would save.
+/** Slab that applies to a quantity. Below the first slab, the first slab's price is shown. */
+export function slabFor(slabs: PriceSlab[], qty: number): PriceSlab | undefined {
+  const sorted = [...slabs].sort((a, b) => a.minQty - b.minQty)
+  return [...sorted].reverse().find((s) => qty >= s.minQty) ?? sorted[0]
+}
+
+/** "Add N more, save X on each piece": the next cheaper slab above the current quantity. */
+export function nextSlabHint(slabs: PriceSlab[], qty: number): { more: number; saveEach: number } | null {
+  if (qty <= 0) return null
+  const sorted = [...slabs].sort((a, b) => a.minQty - b.minQty)
+  const cur = slabFor(sorted, qty)
+  const next = sorted.find((s) => s.minQty > qty)
+  if (!cur || !next || next.pricePerUnit >= cur.pricePerUnit) return null
+  return { more: next.minQty - qty, saveEach: cur.pricePerUnit - next.pricePerUnit }
+}
+
+/** Money saved against the first (highest) slab price at this quantity. */
+export function totalSaving(slabs: PriceSlab[], qty: number): number {
+  const sorted = [...slabs].sort((a, b) => a.minQty - b.minQty)
+  const cur = slabFor(sorted, qty)
+  if (!cur || !sorted[0] || qty < sorted[0].minQty) return 0
+  return Math.max(0, (sorted[0].pricePerUnit - cur.pricePerUnit) * qty)
+}

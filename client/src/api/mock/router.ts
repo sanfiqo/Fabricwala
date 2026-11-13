@@ -381,7 +381,7 @@ on('POST', 'checkout', ({ db, body }) => {
   const sellerOrders: DbSellerOrder[] = cart.groups.map((g, idx) => ({
     id: nextId(), orderId, orderNumber: number, subOrderNumber: `${number}-${String.fromCharCode(65 + idx)}`, manufacturerName: g.manufacturerName,
     retailerName: b.displayName, deliveryCity: addr.cityName, status: 'PendingAcceptance', paymentStatus: 'Pending', placedAt: now,
-    items: g.items.map((i) => ({ id: nextId(), productId: i.productId, title: i.title, size: i.size, colour: i.colour, quantity: i.quantity, unitPrice: i.unitPrice, gstRate: db.products.find((p) => p.id === i.productId)?.gstRate ?? 0, lineTotal: i.lineTotal })),
+    items: g.items.map((i) => ({ id: nextId(), variantId: i.variantId, productId: i.productId, title: i.title, size: i.size, colour: i.colour, quantity: i.quantity, unitPrice: i.unitPrice, gstRate: db.products.find((p) => p.id === i.productId)?.gstRate ?? 0, lineTotal: i.lineTotal })),
     subTotal: g.subTotal, shippingAmount: g.shippingAmount ?? 0, taxAmount: g.taxAmount, total: g.total, commissionRate: db.settings.commissionDefaultRate,
     commissionAmount: Math.round((g.subTotal * db.settings.commissionDefaultRate) / 100), history: [{ status: 'PendingAcceptance', note: null, changedAt: now }],
     shipment: null, manufacturerId: g.manufacturerId, retailerId: b.id,

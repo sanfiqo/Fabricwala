@@ -231,6 +231,8 @@ export interface Cart {
 }
 export interface OrderItem {
   id: number
+  /** Needed for "Order again". TODO(BE): include variantId in order item responses. */
+  variantId?: number
   productId: number
   title: string
   size: string

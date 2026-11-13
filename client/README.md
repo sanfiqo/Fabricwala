@@ -24,6 +24,18 @@ Log in with a demo number (shown on the login screen). The code is always `12345
 
 Mock data is kept in `localStorage` (`tc_mock_db_v1`). Clear site data to reset it.
 
+Switching without editing files: open **Account** and use the Demo mode switch, or add `?mock=1` (sample data) or `?mock=0` (real backend) to any URL. The page reloads.
+Language: Account has English and हिंदी. Text lives in `src/i18n/en.ts` and `src/i18n/hi.ts` (same keys).
+
+### Open on your phone (same Wi-Fi)
+
+```bash
+npm run dev -- --host
+```
+
+Open the `Network:` address it prints (for example `http://192.168.1.20:5173`). If the phone cannot connect, allow Node.js through Windows Firewall for private networks.
+Add `?perf=lite` to the URL to test the light motion profile that weak phones get automatically.
+
 ## Run against the real backend
 
 ```bash

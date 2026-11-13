@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils'
 
 const GSTIN = /^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/
 const MAX_FILE = 5 * 1024 * 1024
-const steps = [S.reg.stepType, S.reg.stepDetails, S.reg.stepAddress, S.reg.stepDocs]
+const getSteps = () => [S.reg.stepType, S.reg.stepDetails, S.reg.stepAddress, S.reg.stepDocs]
 
 interface Form {
   type: BusinessType
@@ -132,8 +132,8 @@ export default function RegisterPage() {
       <PageHeader title={S.reg.title} />
       <div className="px-4 pb-6 pt-4">
         <p className="text-mute">{S.reg.sub}</p>
-        <ol className="my-5 flex items-center gap-2" aria-label={fmt(S.reg.step, { n: step + 1, total: steps.length })}>
-          {steps.map((label, i) => (
+        <ol className="my-5 flex items-center gap-2" aria-label={fmt(S.reg.step, { n: step + 1, total: getSteps().length })}>
+          {getSteps().map((label, i) => (
             <li key={label} className="flex flex-1 flex-col items-center gap-1">
               <span className={cn('flex size-8 items-center justify-center rounded-full text-sm font-bold', i < step ? 'bg-leaf-600 text-white' : i === step ? 'bg-navy-900 text-white' : 'bg-navy-50 text-mute')}>
                 {i < step ? <Check className="size-4" /> : i + 1}

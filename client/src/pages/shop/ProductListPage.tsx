@@ -12,7 +12,7 @@ import { useCategories } from '@/hooks'
 import { fmt, S } from '@/i18n'
 import { MATERIALS, SEASONS } from '@/lib/constants'
 import { cn } from '@/lib/utils'
-import { SearchBar } from './ShopHome'
+import { SearchBox as SearchBar } from '@/components/SearchBox'
 
 const PAGE = 12
 const FILTER_KEYS = ['material', 'season', 'minPrice', 'maxPrice', 'maxMoq'] as const

@@ -190,7 +190,7 @@ function seedOrders(products: DbProduct[]): DbOrder[] {
     const so: DbSellerOrder = {
       id, orderId: id, orderNumber: `TC-24${1000 + id}`, subOrderNumber: `TC-24${1000 + id}-A`, manufacturerName: p.sellerName, retailerName: 'Shah Cloth House', deliveryCity: 'Srinagar',
       status, paymentStatus: pay, placedAt: placed, subTotal: sub, shippingAmount: ship, taxAmount: tax, total: sub + ship + tax, commissionRate: 3, commissionAmount: Math.round(sub * 0.03),
-      items: [{ id, productId, title: p.title, size: v.size, colour: v.colour, quantity: qty, unitPrice: unit, gstRate: p.gstRate, lineTotal: sub }],
+      items: [{ id, variantId: v.id, productId, title: p.title, size: v.size, colour: v.colour, quantity: qty, unitPrice: unit, gstRate: p.gstRate, lineTotal: sub }],
       history, rejectReason: status === 'Rejected' ? 'Out of stock' : null,
       shipment: ['Dispatched', 'ReachedKashmir', 'Delivered'].includes(status) ? { carrierName: 'VRL Logistics', lrNumber: `LR${770000 + id}`, dispatchedAt: placed } : null,
       manufacturerId: p.sellerBusinessId, retailerId: 201,

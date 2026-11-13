@@ -1,23 +1,27 @@
+import { lazy, Suspense } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { useMe, homeFor, useUnauthorizedListener, Gate } from '@/auth'
 import { AppShell } from '@/components/AppShell'
 import { PageLoading, LinkButton, EmptyState } from '@/components/ui/misc'
 import { S } from '@/i18n'
-import LoginPage from '@/pages/LoginPage'
-import RegisterPage from '@/pages/RegisterPage'
-import PendingPage from '@/pages/PendingPage'
-import ShopHome from '@/pages/shop/ShopHome'
-import ProductListPage from '@/pages/shop/ProductListPage'
-import ProductPage from '@/pages/shop/ProductPage'
-import CartPage from '@/pages/shop/CartPage'
-import CheckoutPage from '@/pages/shop/CheckoutPage'
-import { OrdersPage, OrderDetailPage } from '@/pages/shop/OrdersPage'
-import SellerProductsPage from '@/pages/seller/SellerProductsPage'
-import ProductEditorPage from '@/pages/seller/ProductEditorPage'
-import AdminBusinessesPage from '@/pages/admin/AdminBusinessesPage'
-import AdminSettingsPage from '@/pages/admin/AdminSettingsPage'
-import AdminShippingPage from '@/pages/admin/AdminShippingPage'
-import { SellerOrdersPage, SellerOrderDetailPage } from '@/pages/seller/SellerOrdersPage'
+const LoginPage = lazy(() => import('@/pages/LoginPage'))
+const RegisterPage = lazy(() => import('@/pages/RegisterPage'))
+const PendingPage = lazy(() => import('@/pages/PendingPage'))
+const ShopHome = lazy(() => import('@/pages/shop/ShopHome'))
+const ProductListPage = lazy(() => import('@/pages/shop/ProductListPage'))
+const ProductPage = lazy(() => import('@/pages/shop/ProductPage'))
+const CartPage = lazy(() => import('@/pages/shop/CartPage'))
+const CheckoutPage = lazy(() => import('@/pages/shop/CheckoutPage'))
+const AccountPage = lazy(() => import('@/pages/shop/AccountPage'))
+const OrdersPage = lazy(() => import('@/pages/shop/OrdersPage').then((m) => ({ default: m.OrdersPage })))
+const OrderDetailPage = lazy(() => import('@/pages/shop/OrdersPage').then((m) => ({ default: m.OrderDetailPage })))
+const SellerProductsPage = lazy(() => import('@/pages/seller/SellerProductsPage'))
+const ProductEditorPage = lazy(() => import('@/pages/seller/ProductEditorPage'))
+const AdminBusinessesPage = lazy(() => import('@/pages/admin/AdminBusinessesPage'))
+const AdminSettingsPage = lazy(() => import('@/pages/admin/AdminSettingsPage'))
+const AdminShippingPage = lazy(() => import('@/pages/admin/AdminShippingPage'))
+const SellerOrdersPage = lazy(() => import('@/pages/seller/SellerOrdersPage').then((m) => ({ default: m.SellerOrdersPage })))
+const SellerOrderDetailPage = lazy(() => import('@/pages/seller/SellerOrdersPage').then((m) => ({ default: m.SellerOrderDetailPage })))
 
 function RootRedirect() {
   const { data: me, isLoading } = useMe()
@@ -28,6 +32,7 @@ function RootRedirect() {
 export default function App() {
   useUnauthorizedListener()
   return (
+    <Suspense fallback={<PageLoading />}>
     <Routes>
       <Route path="/" element={<RootRedirect />} />
       <Route path="/login" element={<LoginPage />} />
@@ -48,6 +53,7 @@ export default function App() {
           <Route path="/shop/checkout" element={<CheckoutPage />} />
           <Route path="/shop/orders" element={<OrdersPage />} />
           <Route path="/shop/orders/:id" element={<OrderDetailPage />} />
+          <Route path="/shop/account" element={<AccountPage />} />
         </Route>
       </Route>
 
@@ -71,5 +77,6 @@ export default function App() {
 
       <Route path="*" element={<EmptyState title={S.app.notFound} action={<LinkButton to="/">{S.app.goHome}</LinkButton>} />} />
     </Routes>
+    </Suspense>
   )
 }

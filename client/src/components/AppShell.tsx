@@ -1,39 +1,39 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { Suspense } from 'react'
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { ClipboardList, Home, LogOut, Package, Settings, ShoppingCart, Truck, UserCheck, Inbox, type LucideIcon } from 'lucide-react'
+import { ClipboardList, Home, Inbox, LogOut, Package, Search, Settings, Truck, User, UserCheck } from 'lucide-react'
 import { authApi, cartApi } from '@/api/endpoints'
 import { USE_MOCKS } from '@/api/client'
 import { areaOf, useMe, type Area } from '@/auth'
+import { FloatingTabBar, type TabItem } from '@/components/FloatingTabBar'
+import { OfflineBanner } from '@/components/OfflineBanner'
+import { PageLoading } from '@/components/ui/misc'
 import { S } from '@/i18n'
 import { cn } from '@/lib/utils'
 
 export function BrandMark({ className }: { className?: string }) {
   return (
-    <span className={cn('flex size-9 items-center justify-center rounded-xl bg-navy-900', className)} aria-hidden>
+    <span className={cn('flex size-10 items-center justify-center rounded-full bg-ink', className)} aria-hidden>
       <svg viewBox="0 0 24 24" className="size-5">
-        <path d="M4 5h16v3h-6.5v11h-3V8H4z" fill="#fff" />
-        <rect x="4" y="20" width="16" height="1.6" rx=".8" fill="#2f9e6b" />
+        <path d="M4 5h16v3h-6.5v11h-3V8H4z" fill="var(--color-background)" />
       </svg>
     </span>
   )
 }
 
-interface NavItem {
-  to: string
-  label: string
-  icon: LucideIcon
-  end?: boolean
-  badge?: number
+/** Number of items in the cart (for the badge). Shared by the header and the shell. */
+export function useCartCount(enabled = true) {
+  const cart = useQuery({ queryKey: ['cart'], queryFn: cartApi.get, enabled })
+  return cart.data?.groups.reduce((a, g) => a + g.items.length, 0) ?? 0
 }
 
-function useNav(area: Area | null): NavItem[] {
-  const cart = useQuery({ queryKey: ['cart'], queryFn: cartApi.get, enabled: area === 'Retailer' })
+function tabsFor(area: Area | null): TabItem[] {
   if (area === 'Retailer') {
-    const count = cart.data?.groups.reduce((a, g) => a + g.items.length, 0) ?? 0
     return [
       { to: '/shop', label: S.nav.home, icon: Home, end: true },
-      { to: '/shop/cart', label: S.nav.cart, icon: ShoppingCart, badge: count },
+      { to: '/shop/products', label: S.nav.search, icon: Search },
       { to: '/shop/orders', label: S.nav.orders, icon: ClipboardList },
+      { to: '/shop/account', label: S.nav.account, icon: User },
     ]
   }
   if (area === 'Manufacturer') {
@@ -52,12 +52,17 @@ function useNav(area: Area | null): NavItem[] {
   return []
 }
 
+/** Screens that have their own bottom action bar hide the floating menu (as in the design files). */
+const NO_TABS = [/^\/shop\/p\//, /^\/shop\/cart/, /^\/shop\/checkout/]
+
 export function AppShell() {
   const { data: me } = useMe()
   const qc = useQueryClient()
   const nav = useNavigate()
+  const { pathname } = useLocation()
   const area = me ? areaOf(me) : null
-  const items = useNav(area)
+  const items = tabsFor(area)
+  const showTabs = items.length > 0 && !NO_TABS.some((r) => r.test(pathname))
 
   const logout = async () => {
     try {
@@ -69,50 +74,36 @@ export function AppShell() {
   }
 
   return (
-    <div className="mx-auto flex min-h-dvh max-w-2xl flex-col bg-white">
-      <header className="sticky top-0 z-30 flex items-center gap-3 bg-navy-900 px-4 py-2.5 text-white">
-        <BrandMark className="bg-white/10" />
-        <div className="min-w-0 flex-1 leading-tight">
-          <p className="truncate text-base font-extrabold">{S.app.name}</p>
-          <p className="truncate text-xs text-white/70">{me?.business?.displayName ?? me?.fullName ?? me?.phone}</p>
-        </div>
-        <button type="button" onClick={() => void logout()} aria-label={S.nav.logout} className="flex size-11 items-center justify-center rounded-full hover:bg-white/10">
-          <LogOut className="size-5" />
-        </button>
-      </header>
-      {USE_MOCKS && <p className="bg-warn-bg px-4 py-1 text-center text-xs font-semibold text-warn">{S.app.demo}</p>}
-      <main className="flex-1 pb-28">
-        <Outlet />
-      </main>
-      {items.length > 0 && (
-        <nav className="safe-b fixed inset-x-0 bottom-0 z-30 border-t border-line bg-white" aria-label="Main">
-          <div className="mx-auto flex max-w-2xl">
-            {items.map((i) => (
-              <NavLink
-                key={i.to}
-                to={i.to}
-                end={i.end}
-                className={({ isActive }) =>
-                  cn('relative flex min-h-16 flex-1 flex-col items-center justify-center gap-0.5 text-xs font-bold', isActive ? 'text-navy-900' : 'text-mute')
-                }
-              >
-                {({ isActive }) => (
-                  <>
-                    <span className={cn('absolute top-0 h-1 w-10 rounded-b-full', isActive ? 'bg-leaf-600' : 'bg-transparent')} />
-                    <span className="relative">
-                      <i.icon className="size-6" />
-                      {!!i.badge && (
-                        <span className="absolute -right-2.5 -top-1.5 flex min-w-5 items-center justify-center rounded-full bg-leaf-600 px-1 text-[11px] leading-5 text-white">{i.badge}</span>
-                      )}
-                    </span>
-                    {i.label}
-                  </>
-                )}
-              </NavLink>
-            ))}
-          </div>
-        </nav>
+    <div className="mx-auto min-h-dvh max-w-xl bg-background">
+      <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50 focus:rounded-full focus:bg-ink focus:px-4 focus:py-2 focus:text-background">
+        {S.app.skip}
+      </a>
+      <OfflineBanner />
+      {USE_MOCKS && (
+        <Link to={area === 'Retailer' ? '/shop/account' : '/'} className="block bg-saving-bg px-4 py-1.5 text-center text-xs text-saving">
+          {S.app.demo}
+        </Link>
       )}
+      {/* Shopkeeper screens draw their own header (see design files). Other roles keep a slim one until their screens are migrated. */}
+      {area !== 'Retailer' && (
+        <header className="flex items-center gap-3 px-4 pt-4">
+          <BrandMark />
+          <div className="min-w-0 flex-1 leading-tight">
+            <p className="truncate font-semibold">{S.app.name}</p>
+            <p className="truncate text-sm text-mute">{me?.business?.displayName ?? me?.fullName ?? me?.phone}</p>
+          </div>
+          <button type="button" onClick={() => void logout()} className="press flex min-h-12 items-center gap-2 rounded-full bg-soft px-4 text-sm font-medium">
+            <LogOut className="size-4" aria-hidden />
+            {S.nav.logout}
+          </button>
+        </header>
+      )}
+      <main id="main" className={cn(showTabs ? 'pb-32' : 'pb-6')}>
+        <Suspense fallback={<PageLoading />}>
+          <Outlet />
+        </Suspense>
+      </main>
+      {showTabs && <FloatingTabBar items={items} />}
     </div>
   )
 }

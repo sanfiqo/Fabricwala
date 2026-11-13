@@ -3,22 +3,27 @@ import { forwardRef, type ButtonHTMLAttributes } from 'react'
 import { Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition active:scale-[.98] disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-leaf-600',
+/** One charcoal pill per screen (primary). Everything else is soft, outline or ghost. */
+export const buttonVariants = cva(
+  'press inline-flex select-none items-center justify-center gap-2 rounded-pill font-medium disabled:pointer-events-none disabled:opacity-45',
   {
     variants: {
       variant: {
-        primary: 'bg-navy-900 text-white hover:bg-navy-800',
-        accent: 'bg-leaf-600 text-white hover:bg-leaf-700',
-        outline: 'border border-navy-900/25 bg-white text-navy-900 hover:bg-navy-50',
-        ghost: 'text-navy-900 hover:bg-navy-50',
-        danger: 'bg-bad text-white hover:opacity-90',
-        dangerOutline: 'border border-bad/40 bg-white text-bad hover:bg-bad-bg',
+        primary: 'bg-ink text-background hover:bg-ink/90',
+        /** Same as primary. Kept so screens that are not migrated yet keep working. */
+        accent: 'bg-ink text-background hover:bg-ink/90',
+        soft: 'bg-soft text-ink hover:bg-line',
+        outline: 'border border-line bg-surface text-ink hover:bg-soft',
+        ghost: 'text-ink hover:bg-soft',
+        danger: 'bg-error text-white hover:opacity-90',
+        dangerOutline: 'border border-error/40 bg-surface text-error hover:bg-error-bg',
       },
       size: {
-        md: 'min-h-12 px-5 text-base',
-        sm: 'min-h-10 px-4 text-sm',
+        md: 'min-h-12 px-6 text-base',
+        lg: 'min-h-14 px-6 text-base',
+        sm: 'min-h-11 px-4 text-sm',
         icon: 'size-12',
+        'icon-sm': 'size-11',
       },
       block: { true: 'w-full', false: '' },
     },

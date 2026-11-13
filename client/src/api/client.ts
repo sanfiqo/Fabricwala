@@ -4,7 +4,31 @@ import { mockRequest } from './mock/router'
 export { ApiError }
 
 export const API_BASE = '/api/v1'
-export const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === 'true'
+const MOCK_KEY = 'tc_use_mocks'
+
+/** Mock mode: `?mock=1` / `?mock=0` in the URL or the switch in Account wins over VITE_USE_MOCKS. */
+function readUseMocks(): boolean {
+  try {
+    const q = new URLSearchParams(window.location.search).get('mock')
+    if (q === '1' || q === '0') localStorage.setItem(MOCK_KEY, q === '1' ? 'true' : 'false')
+    const saved = localStorage.getItem(MOCK_KEY)
+    if (saved === 'true' || saved === 'false') return saved === 'true'
+  } catch {
+    /* storage blocked: use the env value */
+  }
+  return import.meta.env.VITE_USE_MOCKS === 'true'
+}
+export const USE_MOCKS = readUseMocks()
+
+/** Switch between sample data and the real backend. Reloads so every cache starts clean. */
+export function setUseMocks(on: boolean) {
+  try {
+    localStorage.setItem(MOCK_KEY, on ? 'true' : 'false')
+  } catch {
+    /* storage blocked */
+  }
+  window.location.assign('/')
+}
 
 type Method = 'GET' | 'POST' | 'PUT' | 'DELETE'
 export interface RequestOptions {
