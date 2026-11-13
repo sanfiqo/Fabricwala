@@ -49,3 +49,4 @@ Handover: Phase 1 complete. Phase 2 complete except P2.3 migration tooling block
 2026-11-13 | Contract payments | partial | Added authenticated payment-order endpoint with Development fake gateway and retailer-order isolation; build and 17 tests passed; webhook/admin settings/shipping/document DTOs remain
 2026-11-13 | P1.6 | done | Added Development-only configurable Bootstrap:AdminPhones promotion; build passed; 17 tests passed
 2026-11-13 | P2.3 | done | Dropped textileconnect_dev and reapplied all Identity/Marketplace migrations from zero; original PlatformSettings migration worked, repair migration removed; seeds logged States=1/Cities=12/Categories=8/PlatformSettings=4
+2026-11-13 | Contract admin/docs | partial | Added EF-backed admin settings and shipping CRUD plus private business-document upload route; build passed; 17 tests passed; signed document download and exact frontend shipping IDs remain

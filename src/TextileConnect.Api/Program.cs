@@ -94,6 +94,7 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapSanfiqoAuthEndpoints();
 app.MapBusinessEndpoints();
+app.MapAdminEndpoints();
 app.MapProductEndpoints();
 app.MapCartEndpoints();
 app.MapOrderEndpoints();

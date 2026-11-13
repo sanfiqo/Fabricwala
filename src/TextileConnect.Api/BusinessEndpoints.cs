@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using TextileConnect.Application.Businesses;
 using TextileConnect.Domain.Businesses;
+using TextileConnect.Application.Files;
+using TextileConnect.Infrastructure.Persistence;
 
 namespace TextileConnect.Api;
 
@@ -22,6 +24,17 @@ public static class BusinessEndpoints
                 ? Results.Ok(business) : Results.NotFound());
         group.MapPost("/me/addresses", (BusinessAddress address, ClaimsPrincipal principal, IBusinessDirectory directory) =>
             Results.Ok(directory.AddAddress(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "", address)));
+        group.MapPost("/me/documents", async (IFormFile file, string docType, ClaimsPrincipal principal, IBusinessDirectory directory, IFileStorage storage, MarketplaceDbContext db, CancellationToken ct) =>
+        {
+            var business = directory.GetForUser(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "");
+            if (business is null || file.Length == 0) return Results.BadRequest();
+            await using var stream = file.OpenReadStream();
+            var key = await storage.SavePrivateAsync(stream, file.FileName, ct);
+            if (!Enum.TryParse<BusinessDocumentType>(docType, true, out var type)) return Results.BadRequest();
+            var document = new BusinessDocument { BusinessId = business.Id, DocumentType = type, FileKey = key };
+            db.BusinessDocuments.Add(document); await db.SaveChangesAsync(ct);
+            return Results.Ok(new { document.Id, document.BusinessId, document.DocumentType, document.Status, url = $"/api/v1/businesses/me/documents/{document.Id}" });
+        });
         group.MapPost("/me/users", (StaffRequest request, ClaimsPrincipal principal, IBusinessDirectory directory) =>
             Results.Ok(directory.AddStaff(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "", request.UserId)));
 
