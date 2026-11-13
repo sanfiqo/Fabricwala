@@ -19,7 +19,7 @@ Format: `- [ ] id: task` then `- [x] id: task (commit)` or `- [!] id: BLOCKED re
 
 ### B. Screens
 - [x] B1: Login, OTP, Business details (pincode lookup, GST check), Waiting for approval
-- [ ] B2a: Search with filter sheet and live count
+- [x] B2a: Search with filter sheet and live count
 - [ ] B2b: Orders list, Track order
 - [ ] B2c: Account, Notifications, Report a problem
 - [ ] B3: Checkout restyle, payment result states
@@ -52,3 +52,4 @@ Format: `- [ ] id: task` then `- [x] id: task (commit)` or `- [!] id: BLOCKED re
 - A3 done: `src/api/keys.ts` (keys per area + STALE), per-area stale times in queryClient.ts, optimistic cart quantity with rollback (money stays as the server sent it). Notification read optimistic comes with B2c.
 - A4 done: guards already per role (Gate); added `/session-expired` screen, shown when a logged-in person gets a 401. No token storage: auth is the server cookie, so nothing is kept in JS. Tested by firing the 401 event.
 - B1 done: Login (+91 field, language pill, 6-box OTP with auto submit and WebOTP), Business details in 2 steps (type cards, pincode fills city and state, GST optional with live check, documents optional), Waiting for approval as a checklist. React Hook Form + Zod. Drafts in sessionStorage so a language switch or reload keeps typed data. Waiting shopkeepers can browse (Gate `allowPending`); ordering still needs approval. Backend requests: pincode lookup, owner name, WhatsApp code.
+- B2a done: Search page rebuilt (search pill, filter and active-filter chips, auto load more, skeleton grid, empty state with Clear). Filter sheet has sort, price presets, MOQ, material, season and a sticky button that shows the live result count (tested 10 -> 5). Also fixed: focus ring rule moved into the base layer (it was beating `outline-none`), and a saved `me = null` is never restored (it could log you out right after login).

@@ -1,27 +1,33 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { useInfiniteQuery } from '@tanstack/react-query'
-import { PackageSearch, SlidersHorizontal } from 'lucide-react'
+import { keepPreviousData, useInfiniteQuery, useQuery } from '@tanstack/react-query'
+import { PackageSearch, SlidersHorizontal, X } from 'lucide-react'
 import { productApi } from '@/api/endpoints'
 import type { ProductQuery } from '@/api/types'
-import { ProductCard } from '@/components/ProductCard'
+import { ProductCard, ProductCardSkeleton } from '@/components/ProductCard'
+import { SearchBox } from '@/components/SearchBox'
 import { Button } from '@/components/ui/button'
-import { Field, Input, Select } from '@/components/ui/field'
-import { EmptyState, ErrorState, PageHeader, PageLoading, Sheet } from '@/components/ui/misc'
-import { useCategories } from '@/hooks'
+import { Field, Input } from '@/components/ui/field'
+import { BackButton, Chip, EmptyState, ErrorState, Sheet } from '@/components/ui/misc'
+import { useCategories, useDebounced, useDeliveryCity } from '@/hooks'
 import { fmt, S } from '@/i18n'
 import { MATERIALS, SEASONS } from '@/lib/constants'
-import { cn } from '@/lib/utils'
-import { SearchBox as SearchBar } from '@/components/SearchBox'
+import { cn, money } from '@/lib/utils'
 
 const PAGE = 12
 const FILTER_KEYS = ['material', 'season', 'minPrice', 'maxPrice', 'maxMoq'] as const
+type FilterKey = (typeof FILTER_KEYS)[number]
+type Draft = Record<FilterKey, string> & { sort: string }
+
+const PRICE_PRESETS: Array<[string, string]> = [['', '300'], ['300', '600'], ['600', '1000'], ['1000', '']]
+const MOQ_PRESETS = ['30', '50', '100', '200']
 
 export default function ProductListPage() {
   const [params, setParams] = useSearchParams()
   const [open, setOpen] = useState(false)
-  const [draft, setDraft] = useState<Record<string, string>>({})
+  const [draft, setDraft] = useState<Draft>({ material: '', season: '', minPrice: '', maxPrice: '', maxMoq: '', sort: '' })
   const cats = useCategories()
+  const city = useDeliveryCity()
 
   const num = (k: string) => (params.get(k) ? Number(params.get(k)) : undefined)
   const query: ProductQuery = {
@@ -53,94 +59,182 @@ export default function ProductListPage() {
   const items = list.data?.pages.flatMap((p) => p.items) ?? []
   const total = list.data?.pages[0]?.total ?? 0
 
+  // Load the next page when the end of the list scrolls into view.
+  const sentinel = useRef<HTMLDivElement>(null)
+  const { hasNextPage, isFetchingNextPage, fetchNextPage } = list
+  useEffect(() => {
+    const el = sentinel.current
+    if (!el || !hasNextPage) return
+    const io = new IntersectionObserver((e) => e[0].isIntersecting && !isFetchingNextPage && void fetchNextPage(), { rootMargin: '300px' })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage, items.length])
+
   const openFilters = () => {
-    setDraft(Object.fromEntries(FILTER_KEYS.map((k) => [k, params.get(k) ?? ''])))
+    setDraft({ ...(Object.fromEntries(FILTER_KEYS.map((k) => [k, params.get(k) ?? ''])) as Record<FilterKey, string>), sort: params.get('sort') ?? '' })
     setOpen(true)
   }
-  const d = (k: string) => draft[k] ?? ''
-  const setD = (k: string, v: string) => setDraft((x) => ({ ...x, [k]: v }))
+  const setD = (k: keyof Draft, v: string) => setDraft((x) => ({ ...x, [k]: x[k] === v && k !== 'minPrice' && k !== 'maxPrice' ? '' : v }))
+
+  // Live count: how many products the filters in the sheet would show, before the person applies them.
+  const draftQuery = useDebounced(
+    useMemo<ProductQuery>(
+      () => ({
+        q: query.q,
+        categoryId: query.categoryId,
+        material: draft.material || undefined,
+        season: draft.season || undefined,
+        minPrice: draft.minPrice ? Number(draft.minPrice) : undefined,
+        maxPrice: draft.maxPrice ? Number(draft.maxPrice) : undefined,
+        maxMoq: draft.maxMoq ? Number(draft.maxMoq) : undefined,
+      }),
+      [query.q, query.categoryId, draft.material, draft.season, draft.minPrice, draft.maxPrice, draft.maxMoq],
+    ),
+    250,
+  )
+  const live = useQuery({ queryKey: ['products', 'count', draftQuery], queryFn: () => productApi.list({ ...draftQuery, pageSize: 1 }), enabled: open, placeholderData: keepPreviousData })
+
+  const apply = () => {
+    patch({ ...(Object.fromEntries(FILTER_KEYS.map((k) => [k, draft[k] || undefined])) as Record<string, string | undefined>), sort: draft.sort || undefined })
+    setOpen(false)
+  }
+  const clearAll = () => patch(Object.fromEntries([...FILTER_KEYS, 'q', 'categoryId'].map((k) => [k, undefined])))
+  const catName = cats.data?.find((c) => c.id === query.categoryId)?.name
+
+  const chips: Array<{ key: string; label: string; clear: Record<string, undefined> }> = []
+  if (query.categoryId && catName) chips.push({ key: 'cat', label: catName, clear: { categoryId: undefined } })
+  if (query.material) chips.push({ key: 'material', label: query.material, clear: { material: undefined } })
+  if (query.season) chips.push({ key: 'season', label: S.seasons[query.season as keyof typeof S.seasons] ?? query.season, clear: { season: undefined } })
+  if (query.minPrice || query.maxPrice)
+    chips.push({ key: 'price', label: `${query.minPrice ? money(query.minPrice) : '₹0'}–${query.maxPrice ? money(query.maxPrice) : '∞'}`, clear: { minPrice: undefined, maxPrice: undefined } })
+  if (query.maxMoq) chips.push({ key: 'moq', label: fmt(S.shop.moqUpTo, { n: query.maxMoq }), clear: { maxMoq: undefined } })
 
   return (
-    <div>
-      <PageHeader title={cats.data?.find((c) => c.id === query.categoryId)?.name ?? S.nav.home} back="/shop" />
-      <div className="space-y-3 px-4 pt-3">
-        <SearchBar key={query.q ?? ''} initial={query.q ?? ''} onSearch={(q) => patch({ q: q || undefined })} />
-
-        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
-          {[{ id: undefined, name: S.shop.all }, ...(cats.data ?? [])].map((c) => (
-            <button
-              key={c.id ?? 'all'}
-              type="button"
-              onClick={() => patch({ categoryId: c.id?.toString() })}
-              className={cn('min-h-10 shrink-0 rounded-full border px-4 text-sm font-bold', query.categoryId === c.id ? 'border-navy-900 bg-navy-900 text-white' : 'border-line text-navy-900')}
-            >
-              {c.name}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={openFilters}>
-            <SlidersHorizontal className="size-4" />
-            {S.shop.filters}
-            {activeFilters > 0 && <span className="rounded-full bg-leaf-600 px-1.5 text-xs text-white">{activeFilters}</span>}
-          </Button>
-          <label className="sr-only" htmlFor="sort">{S.shop.sort}</label>
-          <Select id="sort" value={query.sort} onChange={(e) => patch({ sort: e.target.value === 'new' ? undefined : e.target.value })} className="!min-h-10 flex-1 text-sm font-semibold">
-            <option value="new">{S.shop.sortNew}</option>
-            <option value="price-asc">{S.shop.sortPriceLow}</option>
-            <option value="price-desc">{S.shop.sortPriceHigh}</option>
-            <option value="moq-asc">{S.shop.sortMoq}</option>
-          </Select>
-        </div>
+    <div className="pb-4">
+      <div className="flex items-center gap-2 px-4 pt-5">
+        <BackButton to="/shop" className="!bg-transparent" />
+        <SearchBox key={query.q ?? ''} initial={query.q ?? ''} onSearch={(q) => patch({ q: q || undefined })} className="min-w-0 flex-1" />
       </div>
 
-      <div className="px-4 pt-4">
+      <div className="mt-3 flex gap-2 overflow-x-auto px-5 pb-1 [scrollbar-width:none]">
+        <button
+          type="button"
+          onClick={openFilters}
+          className={cn('press inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-chip border px-4 text-sm', activeFilters > 0 ? 'border-ink bg-ink text-background' : 'border-line bg-surface')}
+        >
+          <SlidersHorizontal className="size-4" aria-hidden />
+          {S.shop.filters}
+          {activeFilters > 0 && ` · ${activeFilters}`}
+        </button>
+        {chips.map((c) => (
+          <button key={c.key} type="button" onClick={() => patch(c.clear)} aria-label={`${c.label} — ${S.app.close}`} className="press inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-chip border border-line bg-surface px-3.5 text-sm">
+            {c.label}
+            <X className="size-3.5 text-mute" aria-hidden />
+          </button>
+        ))}
+        {[{ id: undefined, name: S.shop.all }, ...(cats.data ?? [])].filter((c) => c.id !== query.categoryId && c.id !== undefined).map((c) => (
+          <Chip key={c.id} onClick={() => patch({ categoryId: String(c.id) })} className="shrink-0">
+            {c.name}
+          </Chip>
+        ))}
+      </div>
+
+      <p className="px-5 pb-2.5 pt-3.5 text-[13px] text-mute" aria-live="polite">
+        {list.isLoading ? ' ' : fmt(S.shop.results, { n: total })}
+        {city.cityName ? ` · ${fmt(S.shop.landedIn, { city: city.cityName })}` : ''}
+      </p>
+
+      <section aria-label={S.shop.resultsLabel} className="px-5">
         {list.isLoading ? (
-          <PageLoading />
+          <div className="grid grid-cols-2 gap-3" role="status" aria-label={S.app.loading}>
+            {Array.from({ length: 6 }, (_, i) => <ProductCardSkeleton key={i} />)}
+          </div>
         ) : list.error ? (
           <ErrorState error={list.error} onRetry={() => void list.refetch()} />
         ) : items.length === 0 ? (
-          <EmptyState icon={<PackageSearch className="size-8" />} title={S.shop.noResults} sub={S.shop.noResultsSub} />
+          <EmptyState
+            icon={<PackageSearch className="size-8" />}
+            title={S.shop.noResults}
+            sub={S.shop.noResultsSub}
+            action={activeFilters > 0 || query.q || query.categoryId ? <Button variant="soft" onClick={clearAll}>{S.shop.clear}</Button> : undefined}
+          />
         ) : (
           <>
-            <p className="mb-3 text-sm font-semibold text-mute">{fmt(S.shop.results, { n: total })}</p>
-            <div className="grid grid-cols-2 gap-3">{items.map((p) => <ProductCard key={p.id} p={p} />)}</div>
-            {list.hasNextPage && (
-              <Button variant="outline" block className="mt-5" loading={list.isFetchingNextPage} onClick={() => void list.fetchNextPage()}>
-                {S.shop.all} +
+            <div className="grid grid-cols-2 gap-3">{items.map((p, i) => <ProductCard key={p.id} p={p} index={i} />)}</div>
+            <div ref={sentinel} className="h-px" />
+            {isFetchingNextPage && (
+              <div className="mt-3 grid grid-cols-2 gap-3" aria-hidden>
+                <ProductCardSkeleton />
+                <ProductCardSkeleton />
+              </div>
+            )}
+            {hasNextPage && !isFetchingNextPage && (
+              <Button variant="soft" block className="mt-4" onClick={() => void fetchNextPage()}>
+                {S.shop.loadMore}
               </Button>
             )}
           </>
         )}
-      </div>
+      </section>
 
       <Sheet open={open} onClose={() => setOpen(false)} title={S.shop.filters}>
-        <div className="space-y-4">
-          <Field label={S.shop.material}>
-            {(id) => (
-              <Select id={id} value={d('material')} onChange={(e) => setD('material', e.target.value)}>
-                <option value="">{S.shop.anyOption}</option>
-                {MATERIALS.map((m) => <option key={m} value={m}>{m}</option>)}
-              </Select>
-            )}
-          </Field>
-          <Field label={S.shop.season}>
-            {(id) => (
-              <Select id={id} value={d('season')} onChange={(e) => setD('season', e.target.value)}>
-                <option value="">{S.shop.anyOption}</option>
-                {SEASONS.map((m) => <option key={m} value={m}>{S.seasons[m]}</option>)}
-              </Select>
-            )}
-          </Field>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label={S.shop.minPrice}>{(id) => <Input id={id} inputMode="numeric" value={d('minPrice')} onChange={(e) => setD('minPrice', e.target.value.replace(/\D/g, ''))} />}</Field>
-            <Field label={S.shop.maxPrice}>{(id) => <Input id={id} inputMode="numeric" value={d('maxPrice')} onChange={(e) => setD('maxPrice', e.target.value.replace(/\D/g, ''))} />}</Field>
+        <div className="space-y-6">
+          <div>
+            <p className="mb-2 font-medium">{S.shop.sort}</p>
+            <div className="flex flex-wrap gap-2">
+              {([['', S.shop.sortNew], ['price-asc', S.shop.sortPriceLow], ['price-desc', S.shop.sortPriceHigh], ['moq-asc', S.shop.sortMoq]] as const).map(([v, l]) => (
+                <Chip key={v} active={draft.sort === v} onClick={() => setDraft((x) => ({ ...x, sort: v }))}>{l}</Chip>
+              ))}
+            </div>
           </div>
-          <Field label={S.shop.maxMoq}>{(id) => <Input id={id} inputMode="numeric" value={d('maxMoq')} onChange={(e) => setD('maxMoq', e.target.value.replace(/\D/g, ''))} />}</Field>
-          <div className="flex gap-3 pt-2">
-            <Button variant="outline" onClick={() => { patch(Object.fromEntries(FILTER_KEYS.map((k) => [k, undefined]))); setOpen(false) }}>{S.shop.clear}</Button>
-            <Button className="flex-1" onClick={() => { patch(Object.fromEntries(FILTER_KEYS.map((k) => [k, d(k) || undefined]))); setOpen(false) }}>{S.shop.apply}</Button>
+
+          <div>
+            <p className="mb-2 font-medium">{S.shop.pricePerPiece}</p>
+            <div className="mb-3 flex flex-wrap gap-2">
+              {PRICE_PRESETS.map(([lo, hi]) => (
+                <Chip key={lo + hi} active={draft.minPrice === lo && draft.maxPrice === hi} onClick={() => setDraft((x) => ({ ...x, minPrice: lo, maxPrice: hi }))}>
+                  {lo && hi ? `₹${lo}–₹${hi}` : hi ? fmt(S.shop.under, { n: `₹${hi}` }) : fmt(S.shop.above, { n: `₹${lo}` })}
+                </Chip>
+              ))}
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label={S.shop.minPrice}>{(id) => <Input id={id} inputMode="numeric" value={draft.minPrice} onChange={(e) => setD('minPrice', e.target.value.replace(/\D/g, ''))} />}</Field>
+              <Field label={S.shop.maxPrice}>{(id) => <Input id={id} inputMode="numeric" value={draft.maxPrice} onChange={(e) => setD('maxPrice', e.target.value.replace(/\D/g, ''))} />}</Field>
+            </div>
+          </div>
+
+          <div>
+            <p className="mb-2 font-medium">{S.shop.maxMoq}</p>
+            <div className="flex flex-wrap gap-2">
+              {MOQ_PRESETS.map((m) => (
+                <Chip key={m} active={draft.maxMoq === m} onClick={() => setD('maxMoq', m)}>{fmt(S.shop.moqUpTo, { n: m })}</Chip>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <p className="mb-2 font-medium">{S.shop.material}</p>
+            <div className="flex flex-wrap gap-2">
+              {MATERIALS.map((m) => (
+                <Chip key={m} active={draft.material === m} onClick={() => setD('material', m)}>{m}</Chip>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <p className="mb-2 font-medium">{S.shop.season}</p>
+            <div className="flex flex-wrap gap-2">
+              {SEASONS.map((m) => (
+                <Chip key={m} active={draft.season === m} onClick={() => setD('season', m)}>{S.seasons[m]}</Chip>
+              ))}
+            </div>
+          </div>
+
+          <div className="sticky bottom-0 z-10 -mx-5 -mb-6 flex gap-3 border-t border-line bg-surface px-5 pb-5 pt-3">
+            <Button variant="soft" onClick={() => setDraft({ material: '', season: '', minPrice: '', maxPrice: '', maxMoq: '', sort: '' })}>{S.shop.clear}</Button>
+            <Button className="flex-1" onClick={apply} aria-live="polite">
+              {live.data ? fmt(S.shop.showN, { n: live.data.total }) : S.shop.apply}
+            </Button>
           </div>
         </div>
       </Sheet>

@@ -34,7 +34,11 @@ export const persistOptions = {
   persister,
   maxAge: DAY,
   buster: 'v1',
-  dehydrateOptions: { shouldDehydrateQuery: (q: { state: { status: string }; queryKey: readonly unknown[] }) => q.state.status === 'success' && SAVED.has(String(q.queryKey[0])) },
+  dehydrateOptions: {
+    // A saved "not logged in" (me = null) must never come back: it would log someone out right after they log in.
+    shouldDehydrateQuery: (q: { state: { status: string; data: unknown }; queryKey: readonly unknown[] }) =>
+      q.state.status === 'success' && SAVED.has(String(q.queryKey[0])) && !(q.queryKey[0] === 'me' && q.state.data == null),
+  },
 }
 
 /** Call on log out so the next person on this phone never sees saved orders. */
