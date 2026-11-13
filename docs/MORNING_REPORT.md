@@ -1,14 +1,15 @@
 # Morning report
-- Phase 1 P1.1-P1.10 completed; 12 tests pass.
-- Phase 2 P2.1-P2.10 completed except P2.3, blocked on EF migration tooling/local MySQL setup.
-- Phase 3 P3.1-P3.8 completed with catalogue, slab, shipping, and landed-cost foundations.
-- Phase 4 completed: P4.1, P4.3, P4.7, P4.8; P4.2/P4.4/P4.5/P4.6 remain.
-- Phase 5 completed: P5.1/P5.2 payment gateway/signature foundation; P5.9 blocked: MSG91/WhatsApp accounts.
-- Phases 6-7 remain; no frontend was created and post-MVP features were not started.
-- Decisions: TextileConnect placeholder; manufacturer commission 2%; retailer fee 0%; auto-release 7 days.
-- Tests: `dotnet build TextileConnect.slnx --no-restore`; `dotnet test tests/TextileConnect.Tests/TextileConnect.Tests.csproj --no-build --no-restore`.
-- Configure secrets: `dotnet user-secrets set "ConnectionStrings:TextileConnect" "<mysql>" --project src/TextileConnect.Api`.
-- Also set `UserContacts:LookupHmacKey` and `Otp:StorageHmacKey` before starting the API.
-- Apply migrations after installing matching EF 10 tooling; no DB migration was run overnight.
-- Start API: `dotnet run --project src/TextileConnect.Api`; login via `/api/v1/auth/otp/request`, then `/otp/verify`.
-- Existing untracked `docs/ARCHITECTURE.md` was preserved; no user files were deleted.
+- Backend phases: P1 complete; P2 complete except P2.3 DB apply; P3/P4 complete; P5.1-P5.8 implemented; P5.9 blocked on accounts.
+- Phase 6 skipped: frontend is owned by `frontend/pwa`; no `client/` was created or edited.
+- Phase 7 backend foundations added for RFQ, disputes, reviews, favourites, group buys and logistics.
+- Contract alignment: string enums, `{ token }` CSRF, expanded auth/me, server cart totals, seller detail endpoints.
+- Migrations generated: Identity, Marketplace, Cart, Orders/Shipments, Finance, Audit, Community.
+- Blocked: local MySQL update fails at TLS credential authentication; seeds/DB verification were skipped.
+- API smoke run completed in Testing environment; no startup failure observed.
+- Tests: `dotnet build TextileConnect.slnx --no-restore`; `dotnet test tests/TextileConnect.Tests/TextileConnect.Tests.csproj --no-build --no-restore` (17 passed).
+- Secrets: `dotnet user-secrets set "ConnectionStrings:TextileConnect" "<mysql>" --project src/TextileConnect.Api`.
+- Also set `UserContacts:LookupHmacKey`, `Otp:StorageHmacKey`, and Razorpay keys before production use.
+- Apply DB: run `dotnet ef database update` for both Identity and Marketplace contexts after fixing MySQL TLS credentials.
+- Start API: `dotnet run --project src/TextileConnect.Api`; frontend proxy target remains `http://localhost:5000`.
+- Commits include `2782ecf`, `ec72662`, `6a9620a`, `f81d233`, `9f19457`, `90293aa`, `107555a`.
+- No uncommitted task changes remain.
