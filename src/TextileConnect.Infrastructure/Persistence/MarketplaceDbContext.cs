@@ -18,6 +18,7 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
     public DbSet<City> Cities => Set<City>();
     public DbSet<DeliveryZone> DeliveryZones => Set<DeliveryZone>();
     public DbSet<Category> Categories => Set<Category>();
+    public DbSet<HomeBanner> HomeBanners => Set<HomeBanner>();
     public DbSet<Product> Products => Set<Product>();
     public DbSet<ProductVariant> ProductVariants => Set<ProductVariant>();
     public DbSet<PriceSlab> PriceSlabs => Set<PriceSlab>();
@@ -70,6 +71,7 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
         });
         builder.Entity<Category>().HasKey(x => x.Id);
         builder.Entity<Category>().HasIndex(x => x.Slug).IsUnique();
+        builder.Entity<HomeBanner>(entity => { entity.HasKey(x => x.Id); entity.Property(x => x.ImageUrl).HasMaxLength(1000).IsRequired(); entity.Property(x => x.Link).HasMaxLength(1000); });
         builder.Entity<Product>(entity =>
         {
             entity.HasKey(x => x.Id);

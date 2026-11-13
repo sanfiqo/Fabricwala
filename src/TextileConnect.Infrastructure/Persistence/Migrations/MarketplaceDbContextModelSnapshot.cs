@@ -304,6 +304,38 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                     b.ToTable("DeliveryZoneRates");
                 });
 
+            modelBuilder.Entity("TextileConnect.Domain.Catalogue.HomeBanner", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("EndsAtUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("Link")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("StartsAtUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("HomeBanners");
+                });
+
             modelBuilder.Entity("TextileConnect.Domain.Catalogue.PlatformSetting", b =>
                 {
                     b.Property<string>("Key")

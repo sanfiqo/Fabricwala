@@ -119,6 +119,7 @@ app.MapPayoutEndpoints();
 app.MapAdminDashboardEndpoints();
 app.MapAdminReportEndpoints();
 app.MapProductModerationEndpoints();
+app.MapCategoryBannerEndpoints();
 app.MapCartEndpoints();
 app.MapOrderEndpoints();
 app.MapPaymentEndpoints();
