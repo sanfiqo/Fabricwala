@@ -64,7 +64,10 @@ if (!app.Environment.IsEnvironment("Testing"))
     await MarketplaceSeed.SeedAsync(seedScope.ServiceProvider.GetRequiredService<MarketplaceDbContext>());
 }
 
-app.UseExceptionHandler();
+if (app.Environment.IsDevelopment())
+    app.UseDeveloperExceptionPage();
+else
+    app.UseExceptionHandler();
 app.UseRateLimiter();
 app.UseCors("frontend");
 
