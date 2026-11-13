@@ -247,6 +247,28 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                     b.ToTable("Categories");
                 });
 
+            modelBuilder.Entity("TextileConnect.Domain.Catalogue.PlatformSetting", b =>
+                {
+                    b.Property<string>("Key")
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("UpdatedByUserId")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("varchar(4000)");
+
+                    b.HasKey("Key");
+
+                    b.ToTable("PlatformSettings");
+                });
+
             modelBuilder.Entity("TextileConnect.Domain.Catalogue.PriceSlab", b =>
                 {
                     b.Property<long>("Id")

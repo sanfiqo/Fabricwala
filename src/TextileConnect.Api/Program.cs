@@ -58,7 +58,11 @@ builder.Services.AddAuthorization(options => options.AddPolicy("ApprovedBusiness
 var app = builder.Build();
 
 if (!app.Environment.IsEnvironment("Testing"))
+{
     await SanfiqoRoleSeeder.SeedAsync(app.Services);
+    using var seedScope = app.Services.CreateScope();
+    await MarketplaceSeed.SeedAsync(seedScope.ServiceProvider.GetRequiredService<MarketplaceDbContext>());
+}
 
 app.UseExceptionHandler();
 app.UseRateLimiter();

@@ -3,8 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.Extensions.Options;
-using MySql.Data.MySqlClient;
 
 namespace Sanfiqo.Identity;
 
@@ -17,18 +15,9 @@ public static class IdentityPersistenceRegistration
             var configuration = provider.GetRequiredService<IConfiguration>();
             var value = configuration.GetConnectionString("TextileConnect");
             if (string.IsNullOrWhiteSpace(value))
-                throw new InvalidOperationException("Application Identity persistence is not configured.");
+                throw new InvalidOperationException("ConnectionStrings:TextileConnect is required.");
 
-            MySqlConnectionStringBuilder connection;
-            try { connection = new MySqlConnectionStringBuilder(value); }
-            catch { throw new InvalidOperationException("Application Identity configuration is invalid."); }
-            if (string.IsNullOrWhiteSpace(connection.Server)
-                || string.IsNullOrWhiteSpace(connection.Database)
-                || string.IsNullOrWhiteSpace(connection.UserID)
-                || string.IsNullOrWhiteSpace(connection.Password))
-                throw new InvalidOperationException("A complete application database connection is required.");
-
-            options.UseMySQL(connection.ConnectionString)
+            options.UseMySQL(value.Replace("SslMode=None", "SslMode=Disabled", StringComparison.OrdinalIgnoreCase))
                 // EF event messages can contain SQL/provider details even without parameter logging.
                 .UseLoggerFactory(NullLoggerFactory.Instance)
                 .EnableSensitiveDataLogging(false).EnableDetailedErrors(false);
