@@ -763,6 +763,68 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                     b.ToTable("OrderItems");
                 });
 
+            modelBuilder.Entity("TextileConnect.Domain.Orders.ReturnClaim", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("AdminDecision")
+                        .HasColumnType("longtext");
+
+                    b.Property<decimal?>("ApprovedRefundAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("varchar(2000)");
+
+                    b.Property<DateTime?>("ResolvedAtUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<long>("SellerOrderId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("SellerResponse")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("varchar(32)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SellerOrderId");
+
+                    b.ToTable("ReturnClaims");
+                });
+
+            modelBuilder.Entity("TextileConnect.Domain.Orders.ReturnClaimPhoto", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("FileKey")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<long>("ReturnClaimId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReturnClaimId");
+
+                    b.ToTable("ReturnClaimPhotos");
+                });
+
             modelBuilder.Entity("TextileConnect.Domain.Orders.SellerOrder", b =>
                 {
                     b.Property<long>("Id")
@@ -1052,6 +1114,26 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                     b.Navigation("SellerOrder");
                 });
 
+            modelBuilder.Entity("TextileConnect.Domain.Orders.ReturnClaim", b =>
+                {
+                    b.HasOne("TextileConnect.Domain.Orders.SellerOrder", "SellerOrder")
+                        .WithMany()
+                        .HasForeignKey("SellerOrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("SellerOrder");
+                });
+
+            modelBuilder.Entity("TextileConnect.Domain.Orders.ReturnClaimPhoto", b =>
+                {
+                    b.HasOne("TextileConnect.Domain.Orders.ReturnClaim", null)
+                        .WithMany("Photos")
+                        .HasForeignKey("ReturnClaimId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("TextileConnect.Domain.Orders.SellerOrder", b =>
                 {
                     b.HasOne("TextileConnect.Domain.Orders.Order", "Order")
@@ -1066,6 +1148,11 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("TextileConnect.Domain.Orders.Order", b =>
                 {
                     b.Navigation("SellerOrders");
+                });
+
+            modelBuilder.Entity("TextileConnect.Domain.Orders.ReturnClaim", b =>
+                {
+                    b.Navigation("Photos");
                 });
 
             modelBuilder.Entity("TextileConnect.Domain.Orders.SellerOrder", b =>

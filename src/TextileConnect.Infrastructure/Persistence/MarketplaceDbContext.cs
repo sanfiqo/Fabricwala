@@ -34,6 +34,8 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
     public DbSet<Refund> Refunds => Set<Refund>();
     public DbSet<Invoice> Invoices => Set<Invoice>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<ReturnClaim> ReturnClaims => Set<ReturnClaim>();
+    public DbSet<ReturnClaimPhoto> ReturnClaimPhotos => Set<ReturnClaimPhoto>();
     public DbSet<PlatformSetting> PlatformSettings => Set<PlatformSetting>();
     public DbSet<Enquiry> Enquiries => Set<Enquiry>(); public DbSet<Quotation> Quotations => Set<Quotation>(); public DbSet<Dispute> Disputes => Set<Dispute>(); public DbSet<Review> Reviews => Set<Review>(); public DbSet<Favourite> Favourites => Set<Favourite>(); public DbSet<GroupBuy> GroupBuys => Set<GroupBuy>(); public DbSet<GroupBuyParticipant> GroupBuyParticipants => Set<GroupBuyParticipant>(); public DbSet<LogisticsAssignment> LogisticsAssignments => Set<LogisticsAssignment>();
 
@@ -101,6 +103,8 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
         builder.Entity<SellerOrder>().Property(x => x.CommissionRate).HasPrecision(5, 4);
         builder.Entity<Shipment>().HasKey(x => x.Id);
         builder.Entity<Shipment>().HasIndex(x => x.SellerOrderId).IsUnique();
+        builder.Entity<ReturnClaim>(entity => { entity.HasKey(x => x.Id); entity.Property(x => x.Reason).HasMaxLength(2000).IsRequired(); entity.Property(x => x.Status).HasMaxLength(32).IsRequired(); entity.Property(x => x.ApprovedRefundAmount).HasPrecision(18, 2); });
+        builder.Entity<ReturnClaimPhoto>().HasKey(x => x.Id);
         builder.Entity<PayoutAccount>().HasKey(x => x.Id);
         builder.Entity<PayoutAccount>().HasIndex(x => x.BusinessId).IsUnique();
         builder.Entity<Payment>().HasKey(x => x.Id);

@@ -122,7 +122,7 @@ One agent per folder at a time. A [WEB] task starts only after its [BE] task is 
 - [x] P10.8 [BE] Address book: multiple delivery addresses, default address
 - [x] P10.9 [BE] Invoices: GST-compliant PDF per SellerOrder (seller → retailer) and platform commission invoice (platform → seller); download endpoint
 - [ ] P10.10 [WEB] Invoice download on order detail
-- [ ] P10.11 [BE] Return / damage claim flow on delivered SellerOrder: reason, photos, seller response, admin decision, partial refund
+- [x] P10.11 [BE] Return / damage claim flow on delivered SellerOrder: reason, photos, seller response, admin decision, partial refund
 - [ ] P10.12 [WEB] Report a problem screen + claim status
 - [ ] P10.13 [BE] Notification center: list, unread count, mark read (in-app channel)
 - [ ] P10.14 [WEB] Notification center screen + bell badge
