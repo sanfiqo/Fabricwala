@@ -61,6 +61,16 @@ public static class BusinessEndpoints
                 var roles = await users.GetRolesAsync(owner);
                 foreach (var role in roles.Where(x => x != targetRole)) await users.RemoveFromRoleAsync(owner, role);
                 if (!roles.Contains(targetRole, StringComparer.Ordinal)) await users.AddToRoleAsync(owner, targetRole);
+                var oldClaims = await users.GetClaimsAsync(owner);
+                var oldBusinessClaims = oldClaims.Where(x => BusinessClaimTypes.All.Contains(x.Type)).ToList();
+                if (oldBusinessClaims.Count != 0) await users.RemoveClaimsAsync(owner, oldBusinessClaims);
+                await users.AddClaimsAsync(owner,
+                [
+                    new Claim(BusinessClaimTypes.BusinessId, business.Id.ToString()),
+                    new Claim(BusinessClaimTypes.BusinessType, business.BusinessType.ToString()),
+                    new Claim(BusinessClaimTypes.Approved, "true")
+                ]);
+                await users.UpdateSecurityStampAsync(owner);
             }
             return Results.Ok(business);
         });

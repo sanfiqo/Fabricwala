@@ -8,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using System.Security.Claims;
 
 namespace Sanfiqo.Identity;
 
@@ -25,6 +26,7 @@ public static class SanfiqoIdentityRegistration
         services.AddOtpChallengeFoundation(configuration, environment.EnvironmentName);
         services.AddUserContactOwnership();
         services.AddScoped<IUserClaimsPrincipalFactory<ApplicationUser>, SanfiqoClaimsPrincipalFactory>();
+        services.Configure<SecurityStampValidatorOptions>(options => options.ValidationInterval = TimeSpan.Zero);
 
         services.AddAuthentication(options =>
         {
@@ -55,7 +57,19 @@ public static class SanfiqoIdentityRegistration
                 var userManager = context.HttpContext.RequestServices.GetRequiredService<UserManager<ApplicationUser>>();
                 var user = await userManager.GetUserAsync(context.Principal!);
                 if (user is null || !user.IsActive)
+                {
                     context.RejectPrincipal();
+                    return;
+                }
+
+                var currentStamp = await userManager.GetSecurityStampAsync(user);
+                var cookieStamp = context.Principal?.FindFirstValue(new IdentityOptions().ClaimsIdentity.SecurityStampClaimType);
+                if (SecurityStampRefreshPolicy.NeedsRenewal(cookieStamp, currentStamp))
+                {
+                    var factory = context.HttpContext.RequestServices.GetRequiredService<IUserClaimsPrincipalFactory<ApplicationUser>>();
+                    context.ReplacePrincipal(await factory.CreateAsync(user));
+                    context.ShouldRenew = true;
+                }
             };
         });
         services.AddAuthorization();

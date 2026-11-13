@@ -47,10 +47,10 @@ public static class SanfiqoAuthEndpoints
             if (business is not null)
             {
                 var identity = (ClaimsIdentity)principal.Identity!;
-                identity.AddClaim(new Claim("business_id", business.Id.ToString()));
-                identity.AddClaim(new Claim("business_type", business.Type));
+                identity.AddClaim(new Claim(BusinessClaimTypes.BusinessId, business.Id.ToString()));
+                identity.AddClaim(new Claim(BusinessClaimTypes.BusinessType, business.Type));
                 if (business.VerificationStatus == "Approved")
-                    identity.AddClaim(new Claim("business_approved", "true"));
+                    identity.AddClaim(new Claim(BusinessClaimTypes.Approved, "true"));
             }
             await httpContext.SignInAsync(IdentityConstants.ApplicationScheme, principal);
             httpContext.Response.Cookies.Delete("tc_otp_challenge");
