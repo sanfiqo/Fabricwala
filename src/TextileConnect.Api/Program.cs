@@ -108,6 +108,7 @@ app.MapBusinessEndpoints();
 app.MapAdminEndpoints();
 app.MapProductEndpoints();
 app.MapLandedCostEndpoints();
+app.MapInvoiceEndpoints();
 app.MapCartEndpoints();
 app.MapOrderEndpoints();
 app.MapPaymentEndpoints();
