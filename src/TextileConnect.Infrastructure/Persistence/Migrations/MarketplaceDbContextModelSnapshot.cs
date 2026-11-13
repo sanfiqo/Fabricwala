@@ -197,6 +197,33 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                     b.ToTable("Cities");
                 });
 
+            modelBuilder.Entity("TextileConnect.Domain.Businesses.DeliveryZone", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("varchar(120)");
+
+                    b.Property<string>("PincodePrefix")
+                        .IsRequired()
+                        .HasMaxLength(6)
+                        .HasColumnType("varchar(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PincodePrefix")
+                        .IsUnique();
+
+                    b.ToTable("DeliveryZones");
+                });
+
             modelBuilder.Entity("TextileConnect.Domain.Businesses.State", b =>
                 {
                     b.Property<long>("Id")
@@ -245,6 +272,36 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("Categories");
+                });
+
+            modelBuilder.Entity("TextileConnect.Domain.Catalogue.DeliveryZoneRate", b =>
+                {
+                    b.Property<long>("FromZoneId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("ToZoneId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("RateType")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<decimal>("MinCharge")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("Rate")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("TransitDays")
+                        .HasColumnType("int");
+
+                    b.HasKey("FromZoneId", "ToZoneId", "RateType");
+
+                    b.ToTable("DeliveryZoneRates");
                 });
 
             modelBuilder.Entity("TextileConnect.Domain.Catalogue.PlatformSetting", b =>

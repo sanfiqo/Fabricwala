@@ -8,21 +8,24 @@ public static class MarketplaceSeed
 {
     public static async Task SeedAsync(MarketplaceDbContext db, CancellationToken cancellationToken = default)
     {
-        var state = await db.States.SingleOrDefaultAsync(x => x.Code == "JK", cancellationToken);
-        if (state is null)
+        foreach (var stateData in IndiaMasterData.States)
         {
-            state = new State { Name = "Jammu and Kashmir", Code = "JK" };
-            db.States.Add(state);
-            await db.SaveChangesAsync(cancellationToken);
+            var state = await db.States.SingleOrDefaultAsync(x => x.Code == stateData.Code, cancellationToken);
+            if (state is null)
+            {
+                state = new State { Name = stateData.Name, Code = stateData.Code };
+                db.States.Add(state);
+                await db.SaveChangesAsync(cancellationToken);
+            }
+
+            foreach (var cityName in stateData.Cities)
+                if (!await db.Cities.AnyAsync(x => x.StateId == state.Id && x.Name == cityName, cancellationToken))
+                    db.Cities.Add(new City { StateId = state.Id, Name = cityName, IsDeliveryZone = true, IsSourcingHub = cityName is "Surat" or "Delhi" or "Ludhiana" or "Panipat" or "Jaipur" or "Tiruppur" or "Ahmedabad" or "Mumbai" });
         }
 
-        var delivery = new HashSet<string>(MasterDataSeed.KashmirDeliveryCities, StringComparer.OrdinalIgnoreCase);
-        var hubs = new HashSet<string>(MasterDataSeed.SourcingHubs, StringComparer.OrdinalIgnoreCase);
-        foreach (var cityName in delivery.Concat(hubs).Distinct(StringComparer.OrdinalIgnoreCase))
-        {
-            if (!await db.Cities.AnyAsync(x => x.StateId == state.Id && x.Name == cityName, cancellationToken))
-                db.Cities.Add(new City { StateId = state.Id, Name = cityName, IsDeliveryZone = delivery.Contains(cityName), IsSourcingHub = hubs.Contains(cityName) });
-        }
+        foreach (var zoneData in IndiaMasterData.Zones)
+            if (!await db.DeliveryZones.AnyAsync(x => x.PincodePrefix == zoneData.Prefix, cancellationToken))
+                db.DeliveryZones.Add(new DeliveryZone { Name = zoneData.Name, PincodePrefix = zoneData.Prefix });
 
         foreach (var name in CategorySeed.Names)
         {
@@ -43,6 +46,6 @@ public static class MarketplaceSeed
                 db.PlatformSettings.Add(new PlatformSetting { Key = setting.Key, Value = setting.Value });
 
         await db.SaveChangesAsync(cancellationToken);
-        Console.WriteLine($"Marketplace seed counts: States={await db.States.CountAsync(cancellationToken)}, Cities={await db.Cities.CountAsync(cancellationToken)}, Categories={await db.Categories.CountAsync(cancellationToken)}, PlatformSettings={await db.PlatformSettings.CountAsync(cancellationToken)}");
+        Console.WriteLine($"Marketplace seed counts: States={await db.States.CountAsync(cancellationToken)}, Cities={await db.Cities.CountAsync(cancellationToken)}, Zones={await db.DeliveryZones.CountAsync(cancellationToken)}, Categories={await db.Categories.CountAsync(cancellationToken)}, PlatformSettings={await db.PlatformSettings.CountAsync(cancellationToken)}");
     }
 }

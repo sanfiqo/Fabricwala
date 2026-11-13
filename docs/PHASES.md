@@ -112,7 +112,7 @@ One agent per folder at a time. A [WEB] task starts only after its [BE] task is 
 - [x] P10.2 [BE] Claims refresh after admin approval/rejection without logout (security stamp / cookie re-validation) + test
 
 ### All India
-- [ ] P10.3 [BE] Replace Kashmir-specific data: seed all Indian states + major cities; delivery zones by pincode (zone table: pincode prefix → zone; rate per zone pair, PerKg/PerPiece, min charge, transit days)
+- [x] P10.3 [BE] Replace Kashmir-specific data: seed all Indian states + major cities; delivery zones by pincode (zone table: pincode prefix → zone; rate per zone pair, PerKg/PerPiece, min charge, transit days)
 - [ ] P10.4 [BE] Landed cost uses retailer pincode → zone; "shipping on request" when no rate
 - [ ] P10.5 [WEB] Pincode/city picker on home; landed price everywhere uses it
 
