@@ -13,6 +13,8 @@ using TextileConnect.Application.Orders;
 using TextileConnect.Infrastructure.Orders;
 using TextileConnect.Application.Community;
 using TextileConnect.Infrastructure.Community;
+using TextileConnect.Application.Payments;
+using TextileConnect.Infrastructure.Payments;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.RateLimiting;
 
@@ -52,6 +54,10 @@ builder.Services.AddScoped<ICommunityService, EfCommunityService>();
 builder.Services.AddScoped<IAuthBusinessProfileReader, AuthBusinessProfileReader>();
 if (builder.Environment.IsDevelopment())
     builder.Services.AddSingleton<IFileStorage, DevelopmentFileStorage>();
+if (builder.Environment.IsDevelopment())
+    builder.Services.AddSingleton<IPaymentGateway, DevelopmentPaymentGateway>();
+else
+    builder.Services.AddHttpClient<IPaymentGateway, RazorpayPaymentGateway>();
 builder.Services.AddSanfiqoIdentity(builder.Configuration, builder.Environment);
 builder.Services.AddAuthorization(options => options.AddPolicy("ApprovedBusiness",
     policy => policy.RequireAuthenticatedUser().AddRequirements(new ApprovedBusinessRequirement())));
@@ -91,6 +97,7 @@ app.MapBusinessEndpoints();
 app.MapProductEndpoints();
 app.MapCartEndpoints();
 app.MapOrderEndpoints();
+app.MapPaymentEndpoints();
 app.MapCommunityEndpoints();
 app.MapHealthChecks("/api/v1/health");
 
