@@ -292,3 +292,21 @@ html[data-perf="lite"] [data-slot="dialog-overlay"] {
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
 }
+
+/* Order tracking: the progress bar fills step by step when the page opens; the current step pulses twice, then stops. */
+@keyframes fill-x {
+  from {
+    transform: scaleX(0);
+  }
+}
+.fill-x {
+  transform-origin: left;
+  animation: fill-x 300ms var(--ease-out-soft) both;
+  animation-delay: calc(var(--i, 0) * 90ms);
+}
+.pulse-twice {
+  animation: pulse-soft 1.2s ease-in-out 2;
+}
+html[data-perf="lite"] .fill-x {
+  animation: none;
+}
