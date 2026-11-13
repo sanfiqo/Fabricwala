@@ -1,4 +1,5 @@
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
+import { preloadShopRoutes } from '@/preload'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { useMe, homeFor, useUnauthorizedListener, Gate } from '@/auth'
 import { AppShell } from '@/components/AppShell'
@@ -31,6 +32,7 @@ function RootRedirect() {
 
 export default function App() {
   useUnauthorizedListener()
+  useEffect(preloadShopRoutes, [])
   return (
     <Suspense fallback={<PageLoading />}>
     <Routes>

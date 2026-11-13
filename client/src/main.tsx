@@ -1,24 +1,14 @@
-import { StrictMode } from 'react'
+import { StrictMode, type ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { ApiError } from '@/api/client'
+import { useIsRestoring } from '@tanstack/react-query'
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
+import { queryClient, persistOptions } from '@/queryClient'
 import { ToastProvider } from '@/components/ui/toast'
 import { MotionRoot, initPerfProfile } from '@/motion'
 import { useLang } from '@/i18n'
 import App from './App'
 import './index.css'
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 30_000,
-      refetchOnWindowFocus: false,
-      // Do not hammer the server on client errors (401, 403, 404, 422).
-      retry: (count, err) => !(err instanceof ApiError && err.status < 500) && count < 2,
-    },
-  },
-})
 
 initPerfProfile()
 
@@ -31,14 +21,21 @@ function LangRoot() {
   return <RouterProvider key={lang} router={router} />
 }
 
+/** Saved data loads from the phone in one tick. Wait for it, or the login check would briefly see "no session" and bounce to /login. */
+function WaitForSavedData({ children }: { children: ReactNode }) {
+  return useIsRestoring() ? null : children
+}
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <QueryClientProvider client={queryClient}>
+    <PersistQueryClientProvider client={queryClient} persistOptions={persistOptions}>
       <ToastProvider>
         <MotionRoot>
-          <LangRoot />
+          <WaitForSavedData>
+            <LangRoot />
+          </WaitForSavedData>
         </MotionRoot>
       </ToastProvider>
-    </QueryClientProvider>
+    </PersistQueryClientProvider>
   </StrictMode>,
 )

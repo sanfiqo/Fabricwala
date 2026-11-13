@@ -182,7 +182,7 @@ export function LinkButton({ to, children, className }: { to: string; children: 
 
 export function KeyValue({ label, value, strong }: { label: ReactNode; value: ReactNode; strong?: boolean }) {
   return (
-    <div className={cn('flex items-baseline justify-between gap-4 py-2', strong && 'text-base font-semibold')}>
+    <div className={cn('flex items-baseline justify-between gap-4 py-2', strong && 'text-[17px] font-semibold')}>
       <span className={strong ? '' : 'text-mute'}>{label}</span>
       <span className={cn('text-right', !strong && 'font-medium')}>{value}</span>
     </div>

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Check, ChevronRight, MessageCircle, ShoppingBag } from 'lucide-react'
+import { Check, ChevronRight, MessageCircle } from 'lucide-react'
 import { cartApi, productApi } from '@/api/endpoints'
 import { CART_ADDED_EVENT, CartLink } from '@/components/HeaderButtons'
 import { LandedBreakdown } from '@/components/product/LandedBreakdown'
@@ -104,7 +104,7 @@ export default function ProductPage() {
       <Header />
 
       <div className="px-5 pt-2.5">
-        <h1 className="text-balance break-words text-[32px] font-semibold leading-[1.15] tracking-[-0.025em]">{p.title}</h1>
+        <h1 className="text-balance break-words text-[32px] font-semibold leading-[1.1] tracking-[-0.025em]">{p.title}</h1>
         <p className="mt-2 flex flex-wrap items-center gap-x-1.5 text-sm text-mute">
           <span className="font-medium text-ink">{p.sellerName}</span>
           <span>· {p.sellerCity}</span>
@@ -151,10 +151,16 @@ export default function ProductPage() {
 
       <StickyActionBar>
         <div className="flex items-center gap-2">
-          <Button variant="soft" size="sm" className="!min-h-11 px-3.5 text-[13px]" disabled={!active || active.stockQty <= 0} onClick={() => setActiveQty(activeQty + 50)}>
+          <Button variant="soft" size="sm" className="!min-h-11 px-3.5 text-[13px]" disabled={!active || active.stockQty <= 0} onClick={() => {
+              haptic()
+              setActiveQty(activeQty + 50)
+            }}>
             +50
           </Button>
-          <Button variant="soft" size="sm" className="!min-h-11 px-3.5 text-[13px]" disabled={!active || active.stockQty <= 0} onClick={() => setActiveQty(activeQty + 100)}>
+          <Button variant="soft" size="sm" className="!min-h-11 px-3.5 text-[13px]" disabled={!active || active.stockQty <= 0} onClick={() => {
+              haptic()
+              setActiveQty(activeQty + 100)
+            }}>
             +100
           </Button>
           <span className="flex-1" />
@@ -179,7 +185,6 @@ export default function ProductPage() {
             </>
           ) : (
             <>
-              <ShoppingBag className="size-5" aria-hidden />
               {total > 0 && unitPrice ? (
                 <span>
                   {S.product.addToCart} · <CountUp value={unitPrice * total} format={money} />

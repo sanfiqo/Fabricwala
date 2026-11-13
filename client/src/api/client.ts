@@ -24,6 +24,7 @@ export const USE_MOCKS = readUseMocks()
 export function setUseMocks(on: boolean) {
   try {
     localStorage.setItem(MOCK_KEY, on ? 'true' : 'false')
+    localStorage.removeItem('tc_query_cache') // saved copies belong to the other mode
   } catch {
     /* storage blocked */
   }

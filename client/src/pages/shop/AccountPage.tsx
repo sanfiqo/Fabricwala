@@ -6,6 +6,7 @@ import { setUseMocks, USE_MOCKS } from '@/api/client'
 import { useMe } from '@/auth'
 import { Button } from '@/components/ui/button'
 import { Badge, Card, PageHeader, Segmented } from '@/components/ui/misc'
+import { clearSavedData } from '@/queryClient'
 import { label, LANGS, S, setLang, useLang } from '@/i18n'
 
 /** Language, business details, demo-mode switch and log out. */
@@ -21,6 +22,7 @@ export default function AccountPage() {
       await authApi.logout()
     } finally {
       qc.clear()
+      clearSavedData()
       nav('/login', { replace: true })
     }
   }

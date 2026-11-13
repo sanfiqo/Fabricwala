@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { clearSavedData } from '@/queryClient'
 import { authApi } from '@/api/endpoints'
 import { ApiError, UNAUTHORIZED_EVENT } from '@/api/client'
 import type { Me } from '@/api/types'
@@ -47,6 +48,7 @@ export function useUnauthorizedListener() {
     const h = () => {
       qc.setQueryData(['me'], null)
       qc.removeQueries({ predicate: (q) => q.queryKey[0] !== 'me' })
+      clearSavedData()
     }
     window.addEventListener(UNAUTHORIZED_EVENT, h)
     return () => window.removeEventListener(UNAUTHORIZED_EVENT, h)

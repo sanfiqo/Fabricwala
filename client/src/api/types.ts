@@ -110,6 +110,8 @@ export interface ProductSummary {
   sellerName: string
   sellerCity: string
   imageUrl: string | null
+  /** Tiny blurred preview for the blur-up placeholder. TODO(BE). */
+  imageLqip?: string | null
   moq: number
   unit: Unit
   priceFrom: number
@@ -120,6 +122,8 @@ export interface ProductSummary {
 export interface ProductMedia {
   id: number
   url: string
+  /** Tiny blurred preview. TODO(BE). */
+  lqip?: string | null
   mediaType: 'Image' | 'Video'
   sortOrder: number
 }

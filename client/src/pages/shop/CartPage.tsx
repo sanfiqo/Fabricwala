@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { AlertTriangle, MapPin, MessageCircle, ShoppingBag, X } from 'lucide-react'
@@ -6,13 +6,15 @@ import { cartApi } from '@/api/endpoints'
 import type { Cart, CartItem } from '@/api/types'
 import { useMe } from '@/auth'
 import { AddressSheet } from '@/components/AddressSheet'
+import { ProductImage } from '@/components/ProductImage'
+import { PullToRefresh } from '@/components/PullToRefresh'
 import { QtyStepper } from '@/components/QtyStepper'
 import { StickyActionBar } from '@/components/StickyActionBar'
 import { BackButton, Badge, EmptyState, ErrorState, KeyValue, LinkButton, Skeleton } from '@/components/ui/misc'
 import { useToast } from '@/components/ui/toast'
 import { useDebounced, useDeliveryAddress } from '@/hooks'
 import { fmt, S } from '@/i18n'
-import { CountUp, useMotion } from '@/motion'
+import { CountUp, haptic, useMotion } from '@/motion'
 import { clearReorderPrices, readReorderPrices } from '@/lib/reorder'
 import { money } from '@/lib/utils'
 import { waLink } from '@/lib/whatsapp'
@@ -53,6 +55,7 @@ function CartRow({ item, onChange, onRemove }: { item: CartItem; onChange: (q: n
   })
 
   const remove = () => {
+    haptic()
     if (still) return onRemove()
     setLeaving(true)
     window.setTimeout(onRemove, 180)
@@ -62,8 +65,14 @@ function CartRow({ item, onChange, onRemove }: { item: CartItem; onChange: (q: n
     <li
       className={`grid grid-cols-[76px_minmax(0,1fr)] gap-3 rounded-card bg-soft p-3 transition-[opacity,transform] duration-200 ${leaving ? '-translate-x-4 opacity-0' : ''}`}
     >
-      <Link to={`/shop/p/${item.slug}`} viewTransition aria-label={item.title} className="photo-shadow flex size-[76px] items-center justify-center">
-        {item.imageUrl && <img src={item.imageUrl} alt="" loading="lazy" width={76} height={76} className="relative z-[1] size-full object-contain mix-blend-multiply" />}
+      <Link
+        to={`/shop/p/${item.slug}`}
+        viewTransition
+        aria-label={item.title}
+        className="photo-slot size-[76px] items-start"
+        style={{ '--shadow-bottom': '2px', '--shadow-width': '60%', '--shadow-height': '8px' } as CSSProperties}
+      >
+        <ProductImage src={item.imageUrl} alt="" width={120} height={120} className="relative z-[1] mt-1 size-[62px] rounded-2xl" />
       </Link>
       <div className="flex min-w-0 flex-col gap-1">
         <p className="line-clamp-2 break-words text-[15px] font-medium leading-5">{item.title}</p>
@@ -159,6 +168,7 @@ export default function CartPage() {
 
   return (
     <div className="pb-48">
+      <PullToRefresh onRefresh={() => cart.refetch()} />
       <Header />
       <h1 className="mx-5 mt-1.5 text-[30px] font-semibold leading-[1.2] tracking-[-0.02em]">
         {fmt(S.cart.pieces, { n: pieces })}

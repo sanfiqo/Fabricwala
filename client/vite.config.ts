@@ -19,8 +19,8 @@ export default defineConfig(({ mode }) => {
           name: 'Textile Connect',
           short_name: 'TextileConnect',
           description: 'Wholesale textiles for Kashmir shopkeepers',
-          theme_color: '#0f2742',
-          background_color: '#ffffff',
+          theme_color: '#faf9f6',
+          background_color: '#faf9f6',
           display: 'standalone',
           start_url: '/',
           icons: [

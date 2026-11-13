@@ -23,7 +23,7 @@ export function VariantPicker({ variants, qtys, activeId, onPick }: Props) {
     <div className="space-y-5">
       <div>
         <p className="mb-2 text-[13px] text-mute">{fmt(S.product.colourLabel, { name: active.colour })}</p>
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap gap-2.5">
           {colours.map((c) => {
             const on = c === active.colour
             const hex = swatchFor(c)

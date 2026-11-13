@@ -1,7 +1,7 @@
 // The only place where durations and springs are defined. Screens must not invent their own.
 // Animate transform and opacity only.
 export const duration = {
-  tap: 0.1,
+  tap: 0.12,
   small: 0.2,
   sheet: 0.28,
   max: 0.35,

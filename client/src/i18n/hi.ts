@@ -188,6 +188,7 @@ export const hi: Dict = {
     addMore: '{n} पीस और लें, हर पीस पर {amt} बचाएं',
     addToCartTotal: 'कार्ट में डालें · {total}',
     photo: 'फोटो {i} / {n}',
+    photoCount: '{i} / {n}',
     inCart: '{n} चुने',
     lessQty: 'कम',
     moreQty: 'ज़्यादा',
@@ -229,7 +230,7 @@ export const hi: Dict = {
   home: {
     greet: 'नमस्ते, {name}',
     title: 'आज आपकी दुकान के लिए क्या चाहिए?',
-    searchPlaceholder: 'कपड़ा खोजें, जैसे जैकेट, कुर्ती',
+    searchPlaceholder: 'शॉल, कपड़ा खोजें…',
     filters: 'फ़िल्टर',
     landedIn: 'कीमत इस शहर तक की',
     lastOrder: 'पिछला ऑर्डर · {d}',
@@ -425,6 +426,20 @@ export const hi: Dict = {
     off: 'बंद',
   },
   units: { Piece: 'पीस', Set: 'सेट', Metre: 'मीटर', Kg: 'किलो' },
+  unitsShort: { Piece: 'पीस', Set: 'सेट', Metre: 'मी.', Kg: 'किलो' },
+  search: {
+    recent: 'हाल की खोज',
+    clearRecent: 'हटाएं',
+    suggestions: 'सुझाव',
+    mic: 'बोलें',
+  },
+  install: {
+    title: 'टेक्सटाइल कनेक्ट को फोन में जोड़ें',
+    sub: 'ऐप की तरह खुलता है और धीमे नेट पर भी चलता है।',
+    action: 'जोड़ें',
+    later: 'अभी नहीं',
+  },
+  pull: { release: 'छोड़ें, रिफ्रेश होगा', pull: 'रिफ्रेश के लिए खींचें', loading: 'रिफ्रेश हो रहा है…' },
   seasons: { All: 'साल भर', Summer: 'गर्मी', Winter: 'सर्दी' },
   docType: { GST: 'GST प्रमाणपत्र', PAN: 'PAN कार्ड', ShopLicence: 'दुकान का लाइसेंस', Udyam: 'उद्यम प्रमाणपत्र' },
 }

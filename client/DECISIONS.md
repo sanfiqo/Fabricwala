@@ -36,3 +36,13 @@ Short notes on choices made without asking. Newest at the bottom.
 - **Order again:** needs `variantId` on order items. Added as optional in `types.ts` and filled by the mock. `// TODO(BE)`: the real order response must include it. Without it, the button adds nothing and shows a message.
 - **Cart bottom bar** says "Checkout · total" and goes to the existing checkout page. The design says "Pay"; payment itself is not wired (P5.9).
 - **Tab bar:** all roles use the floating pill. It is hidden on Product, Cart and Checkout, which have their own bottom action bar (as in the design files). Seller and admin keep a slim header with Log out until their stages. Retailer has Account (new, minimal: language, demo switch, log out).
+
+## Stage A polish pass
+
+- **Comparison method and result:** `docs/POLISH_LIST.md` (every difference, fixed or kept with a reason). Before / after / design images: `docs/polish/side-*.png`.
+- **Bug fixed:** the global `font: inherit` rule was unlayered, so it beat Tailwind's font-size and weight on every `<button>`. It is now in `@layer base`, and the press-feedback rule too, so utility classes can override them.
+- **Bug fixed:** with the offline cache, a hard reload of any deep link bounced through `/login`. The app now waits for the saved data to restore before the login check runs (`WaitForSavedData` in `main.tsx`).
+- **Offline cache:** TanStack Query is persisted to `localStorage` (`tc_query_cache`, 24 h) for `me, categories, products, product, cart, orders, business-me` only. Queries use `networkMode: 'offlineFirst'`. Writes are not queued. Log out, a 401 and the mock switch clear it. The app shell itself is cached by the service worker (precache), which I have not been able to test on a phone yet.
+- **Photos:** all photos use `ProductImage` (fixed size, rounded, lazy, blur-up from an optional `lqip`, fade-in, broken-image fallback). `client/public/photos` does not exist, so the mock swatches stay.
+  - Send, per product: `main` 800x800 WebP (square, product centred with some margin), `card` 400x400 WebP, `thumb` 120x120 WebP, and an `lqip` about 20 px wide as a data URL (under 1 KB). Name them `<slug>-1.webp`, `<slug>-2.webp`, and so on. The API should return `url` (800) and, when it can, `srcSet` entries for 400 and 800, plus `lqip`. Marked `TODO(BE)` in `types.ts`.
+- **Search suggestions** call `GET products?q=&pageSize=4` after 250 ms of typing. Recent searches (6) are kept on the phone.

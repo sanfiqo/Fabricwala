@@ -1,13 +1,14 @@
 import { Suspense } from 'react'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { ClipboardList, Home, Inbox, LogOut, Package, Search, Settings, Truck, User, UserCheck } from 'lucide-react'
+import { Home, Inbox, LogOut, Package, Search, Settings, Truck, User, UserCheck } from 'lucide-react'
 import { authApi, cartApi } from '@/api/endpoints'
 import { USE_MOCKS } from '@/api/client'
 import { areaOf, useMe, type Area } from '@/auth'
 import { FloatingTabBar, type TabItem } from '@/components/FloatingTabBar'
 import { OfflineBanner } from '@/components/OfflineBanner'
 import { PageLoading } from '@/components/ui/misc'
+import { clearSavedData } from '@/queryClient'
 import { S } from '@/i18n'
 import { cn } from '@/lib/utils'
 
@@ -32,7 +33,7 @@ function tabsFor(area: Area | null): TabItem[] {
     return [
       { to: '/shop', label: S.nav.home, icon: Home, end: true },
       { to: '/shop/products', label: S.nav.search, icon: Search },
-      { to: '/shop/orders', label: S.nav.orders, icon: ClipboardList },
+      { to: '/shop/orders', label: S.nav.orders, icon: Package },
       { to: '/shop/account', label: S.nav.account, icon: User },
     ]
   }
@@ -69,6 +70,7 @@ export function AppShell() {
       await authApi.logout()
     } finally {
       qc.clear()
+      clearSavedData()
       nav('/login', { replace: true })
     }
   }
@@ -79,8 +81,8 @@ export function AppShell() {
         {S.app.skip}
       </a>
       <OfflineBanner />
-      {USE_MOCKS && (
-        <Link to={area === 'Retailer' ? '/shop/account' : '/'} className="block bg-saving-bg px-4 py-1.5 text-center text-xs text-saving">
+      {USE_MOCKS && area !== 'Retailer' && (
+        <Link to="/" className="block bg-saving-bg px-4 py-1.5 text-center text-xs text-saving">
           {S.app.demo}
         </Link>
       )}

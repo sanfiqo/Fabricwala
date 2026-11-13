@@ -87,11 +87,14 @@
 
   /* motion (mirrors src/motion/presets.ts) */
   --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
-  --duration-tap: 100ms;
+  --duration-tap: 120ms;
   --duration-small: 200ms;
   --duration-sheet: 280ms;
 }
 
+html {
+  background: var(--color-background); /* no white flash between pages */
+}
 html,
 body,
 #root {
@@ -109,11 +112,13 @@ body {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
-input,
-select,
-textarea,
-button {
-  font: inherit;
+@layer base {
+  input,
+  select,
+  textarea,
+  button {
+    font: inherit;
+  }
 }
 :focus-visible {
   outline: 2px solid var(--color-ink);
@@ -131,25 +136,31 @@ button {
   border-bottom: 2px dashed color-mix(in srgb, var(--color-ink) 18%, transparent);
 }
 
-/* Press feedback on every tappable thing: scale 0.97 in 100ms (same value as src/motion/presets.ts). */
-.press {
-  transition: transform var(--duration-tap) ease-out, background-color var(--duration-small) ease-out, opacity var(--duration-small) ease-out;
-}
-.press:active:not(:disabled) {
-  transform: scale(0.97);
+/* Press feedback on every button and card: scale 0.97 in 120 ms (same value as src/motion/presets.ts). */
+@layer base {
+  button:not(:disabled),
+  .press {
+    transition: transform var(--duration-tap) ease-out, background-color var(--duration-small) ease-out, opacity var(--duration-small) ease-out;
+  }
+  button:not(:disabled):active,
+  .press:active {
+    transform: scale(0.97);
+  }
 }
 
-/* Photo shadow: the product looks placed on a surface. Cheap: one blurred ellipse, no filter on the image. */
-.photo-shadow {
+/* Photo slot: rounded photo with a soft ellipse under it, so the item looks placed on a surface. Cheap: one blurred ellipse. */
+.photo-slot {
   position: relative;
+  display: flex;
+  justify-content: center;
 }
-.photo-shadow::after {
+.photo-slot::after {
   content: "";
   position: absolute;
-  bottom: 6%;
+  bottom: var(--shadow-bottom, 4px);
   left: 50%;
-  width: 55%;
-  height: 8%;
+  width: var(--shadow-width, 58%);
+  height: var(--shadow-height, 10px);
   transform: translateX(-50%);
   border-radius: 50%;
   background: rgb(28 27 25 / 0.16);
@@ -266,7 +277,7 @@ html[data-perf="lite"] .glass {
 html[data-perf="lite"] .skeleton::after {
   animation: none;
 }
-html[data-perf="lite"] .photo-shadow::after {
+html[data-perf="lite"] .photo-slot::after {
   filter: none;
 }
 html[data-perf="lite"] *,

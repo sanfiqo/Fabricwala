@@ -187,6 +187,7 @@ export const en = {
     addMore: 'Add {n} more, save {amt} on each piece',
     addToCartTotal: 'Add to cart · {total}',
     photo: 'Photo {i} of {n}',
+    photoCount: '{i} / {n}',
     inCart: '{n} chosen',
     lessQty: 'Less',
     moreQty: 'More',
@@ -228,7 +229,7 @@ export const en = {
   home: {
     greet: 'Namaste, {name}',
     title: 'What do you need for your shop today?',
-    searchPlaceholder: 'Search cloth, e.g. jackets, kurtis',
+    searchPlaceholder: 'Search shawls, fabric…',
     filters: 'Filters',
     landedIn: 'Prices landed in',
     lastOrder: 'Last order · {d}',
@@ -424,6 +425,20 @@ export const en = {
     off: 'Off',
   },
   units: { Piece: 'piece', Set: 'set', Metre: 'metre', Kg: 'kg' },
+  unitsShort: { Piece: 'pcs', Set: 'sets', Metre: 'm', Kg: 'kg' },
+  search: {
+    recent: 'Recent searches',
+    clearRecent: 'Clear',
+    suggestions: 'Suggestions',
+    mic: 'Speak',
+  },
+  install: {
+    title: 'Add Textile Connect to your phone',
+    sub: 'Opens like an app and works with a slow connection.',
+    action: 'Add',
+    later: 'Not now',
+  },
+  pull: { release: 'Release to refresh', pull: 'Pull to refresh', loading: 'Refreshing…' },
   seasons: { All: 'All year', Summer: 'Summer', Winter: 'Winter' },
   docType: { GST: 'GST certificate', PAN: 'PAN card', ShopLicence: 'Shop licence', Udyam: 'Udyam certificate' },
 } as const

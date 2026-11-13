@@ -13,7 +13,10 @@ import { useToast } from '@/components/ui/toast'
 import { useCategories, useDeliveryAddress, useLastOrder } from '@/hooks'
 import { fmt, S } from '@/i18n'
 import { saveReorderPrices } from '@/lib/reorder'
-import { cn, formatDate } from '@/lib/utils'
+import { haptic } from '@/motion'
+import { InstallPrompt } from '@/components/InstallPrompt'
+import { PullToRefresh } from '@/components/PullToRefresh'
+import { cn, formatShortDate } from '@/lib/utils'
 
 const initials = (name: string) =>
   name
@@ -49,6 +52,7 @@ function OrderAgainCard() {
       return { prices, failed }
     },
     onSuccess: async ({ prices, failed }) => {
+      haptic()
       saveReorderPrices(prices)
       await qc.invalidateQueries({ queryKey: ['cart'] })
       if (failed > 0) toast.error(S.home.orderAgainFail)
@@ -68,7 +72,7 @@ function OrderAgainCard() {
         <Package className="size-7" />
       </span>
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <span className="text-xs text-mute">{fmt(S.home.lastOrder, { d: formatDate(last.placedAt) })}</span>
+        <span className="text-xs text-mute">{fmt(S.home.lastOrder, { d: formatShortDate(last.placedAt) })}</span>
         <span className="line-clamp-2 text-sm font-medium">
           {item.quantity} {item.title}
           {more > 0 ? ` +${more}` : ''}
@@ -89,6 +93,7 @@ function OrderAgainCard() {
 
 export default function ShopHome() {
   const nav = useNavigate()
+  const qc = useQueryClient()
   const { data: me } = useMe()
   const cats = useCategories()
   const { addr } = useDeliveryAddress()
@@ -104,7 +109,8 @@ export default function ShopHome() {
 
   return (
     <div className="pb-4">
-      <header className="flex items-center justify-between px-5 pt-5">
+      <PullToRefresh onRefresh={() => Promise.all([qc.refetchQueries({ queryKey: ['products'] }), qc.refetchQueries({ queryKey: ['categories'] }), qc.refetchQueries({ queryKey: ['orders'] }), qc.refetchQueries({ queryKey: ['cart'] })])} />
+      <header className="flex items-center justify-between px-5 pt-[22px]">
         <Link to="/shop/account" viewTransition aria-label={S.home.menu} className="press flex size-[46px] items-center justify-center rounded-full bg-ink text-[15px] font-medium text-background">
           {initials(name)}
         </Link>
@@ -139,6 +145,7 @@ export default function ShopHome() {
       )}
 
       <OrderAgainCard />
+      <InstallPrompt />
 
       <nav aria-label={S.shop.categories} className="mt-5 flex gap-[22px] overflow-x-auto whitespace-nowrap border-b border-line px-5 text-[15px] [scrollbar-width:none]">
         {cats.isLoading ? (

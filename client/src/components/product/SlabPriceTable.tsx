@@ -2,7 +2,7 @@ import type { PriceSlab, Unit } from '@/api/types'
 import { S } from '@/i18n'
 import { cn, money } from '@/lib/utils'
 
-const slabLabel = (s: PriceSlab, unit: Unit) => (s.maxQty === null ? `${s.minQty}+ ${S.units[unit]}` : `${s.minQty}–${s.maxQty} ${S.units[unit]}`)
+const slabLabel = (s: PriceSlab, unit: Unit) => (s.maxQty === null ? `${s.minQty}+ ${S.unitsShort[unit]}` : `${s.minQty}–${s.maxQty} ${S.unitsShort[unit]}`)
 
 /** "Buy more, pay less". The slab for the current quantity is dark. Wraps to more rows when there are many slabs. */
 export function SlabPriceTable({ slabs, unit, qty }: { slabs: PriceSlab[]; unit: Unit; qty: number }) {
