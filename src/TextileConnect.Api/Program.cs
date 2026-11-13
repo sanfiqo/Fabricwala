@@ -118,6 +118,7 @@ app.MapStockAlertEndpoints();
 app.MapPayoutEndpoints();
 app.MapAdminDashboardEndpoints();
 app.MapAdminReportEndpoints();
+app.MapProductModerationEndpoints();
 app.MapCartEndpoints();
 app.MapOrderEndpoints();
 app.MapPaymentEndpoints();
