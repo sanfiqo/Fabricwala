@@ -18,11 +18,13 @@ public static class AdminEndpoints
             return Results.Ok(await SettingsAsync(db, ct));
         });
         admin.MapGet("/shipping-rates", async (MarketplaceDbContext db, CancellationToken ct) => Results.Ok(await db.ShippingRates.AsNoTracking().ToListAsync(ct)));
-        admin.MapPost("/shipping-rates", async (ShippingRate request, MarketplaceDbContext db, CancellationToken ct) =>
+        admin.MapPost("/shipping-rates", async (ShippingRateRequest request, MarketplaceDbContext db, CancellationToken ct) =>
         {
-            db.ShippingRates.Add(request); await db.SaveChangesAsync(ct); return Results.Ok(request);
+            if (!await CitiesExistAsync(db, request.FromCityId, request.ToCityId, ct)) return Results.BadRequest("Both cities must exist.");
+            var rate = request.ToEntity();
+            db.ShippingRates.Add(rate); await db.SaveChangesAsync(ct); return Results.Ok(rate);
         });
-        admin.MapPut("/shipping-rates/{fromCityId:long}/{toCityId:long}/{rateType}", async (long fromCityId, long toCityId, ShippingRateType rateType, ShippingRate request, MarketplaceDbContext db, CancellationToken ct) =>
+        admin.MapPut("/shipping-rates/{fromCityId:long}/{toCityId:long}/{rateType}", async (long fromCityId, long toCityId, ShippingRateType rateType, ShippingRateRequest request, MarketplaceDbContext db, CancellationToken ct) =>
         {
             var existing = await db.ShippingRates.SingleOrDefaultAsync(x => x.FromCityId == fromCityId && x.ToCityId == toCityId && x.RateType == rateType, ct);
             if (existing is null) return Results.NotFound();
@@ -44,5 +46,11 @@ public static class AdminEndpoints
         if (setting is null) db.PlatformSettings.Add(new Domain.Catalogue.PlatformSetting { Key = key, Value = value, UpdatedAtUtc = DateTime.UtcNow });
         else { setting.Value = value; setting.UpdatedAtUtc = DateTime.UtcNow; }
     }
+    private static Task<bool> CitiesExistAsync(MarketplaceDbContext db, long from, long to, CancellationToken ct)
+        => db.Cities.CountAsync(x => x.Id == from || x.Id == to, ct).ContinueWith(t => t.Result == 2, ct);
     public sealed record SettingsRequest(string CommissionDefaultRate, string SettlementAutoReleaseDays);
+    public sealed record ShippingRateRequest(long FromCityId, long ToCityId, ShippingRateType RateType, decimal Rate, decimal MinCharge, int TransitDays, bool IsActive = true)
+    {
+        public ShippingRate ToEntity() => new() { FromCityId = FromCityId, ToCityId = ToCityId, RateType = RateType, Rate = Rate, MinCharge = MinCharge, TransitDays = TransitDays, IsActive = IsActive };
+    }
 }

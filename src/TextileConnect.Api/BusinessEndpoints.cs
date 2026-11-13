@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using TextileConnect.Application.Businesses;
 using TextileConnect.Domain.Businesses;
 using TextileConnect.Application.Files;
@@ -28,12 +29,19 @@ public static class BusinessEndpoints
         {
             var business = directory.GetForUser(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "");
             if (business is null || file.Length == 0) return Results.BadRequest();
+            if (!Enum.TryParse<BusinessDocumentType>(docType, true, out var type)) return Results.BadRequest();
             await using var stream = file.OpenReadStream();
             var key = await storage.SavePrivateAsync(stream, file.FileName, ct);
-            if (!Enum.TryParse<BusinessDocumentType>(docType, true, out var type)) return Results.BadRequest();
             var document = new BusinessDocument { BusinessId = business.Id, DocumentType = type, FileKey = key };
             db.BusinessDocuments.Add(document); await db.SaveChangesAsync(ct);
             return Results.Ok(new { document.Id, document.BusinessId, document.DocumentType, document.Status, url = $"/api/v1/businesses/me/documents/{document.Id}" });
+        });
+        group.MapGet("/me/documents/{id:long}", async (long id, ClaimsPrincipal principal, ICurrentBusiness current, IFileStorage storage, MarketplaceDbContext db, CancellationToken ct) =>
+        {
+            var document = await db.BusinessDocuments.SingleOrDefaultAsync(x => x.Id == id && x.BusinessId == current.RequireBusinessId(), ct);
+            if (document is null) return Results.NotFound();
+            var stream = await storage.OpenPrivateAsync(document.FileKey, ct);
+            return Results.File(stream, "application/octet-stream", Path.GetFileName(document.FileKey));
         });
         group.MapPost("/me/users", (StaffRequest request, ClaimsPrincipal principal, IBusinessDirectory directory) =>
             Results.Ok(directory.AddStaff(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "", request.UserId)));
