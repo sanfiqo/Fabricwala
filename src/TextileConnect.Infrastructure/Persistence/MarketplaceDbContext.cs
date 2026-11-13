@@ -29,6 +29,7 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
     public DbSet<Settlement> Settlements => Set<Settlement>();
     public DbSet<Refund> Refunds => Set<Refund>();
     public DbSet<Invoice> Invoices => Set<Invoice>();
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -93,5 +94,8 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
         builder.Entity<Refund>().Property(x => x.Amount).HasPrecision(18, 2);
         builder.Entity<Invoice>().HasKey(x => x.Id);
         builder.Entity<Invoice>().HasIndex(x => x.InvoiceNumber).IsUnique();
+        builder.Entity<AuditLog>().HasKey(x => x.Id);
+        builder.Entity<AuditLog>().Property(x => x.Action).HasMaxLength(32).IsRequired();
+        builder.Entity<AuditLog>().Property(x => x.EntityName).HasMaxLength(200).IsRequired();
     }
 }

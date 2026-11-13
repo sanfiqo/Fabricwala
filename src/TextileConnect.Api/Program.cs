@@ -12,6 +12,7 @@ using TextileConnect.Infrastructure.Catalogue;
 using TextileConnect.Application.Orders;
 using TextileConnect.Infrastructure.Orders;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,6 +27,12 @@ builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.C
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddProblemDetails();
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddFixedWindowLimiter("auth", limiter => { limiter.PermitLimit = 10; limiter.Window = TimeSpan.FromMinutes(1); limiter.QueueLimit = 0; });
+    options.AddFixedWindowLimiter("search", limiter => { limiter.PermitLimit = 60; limiter.Window = TimeSpan.FromMinutes(1); limiter.QueueLimit = 0; });
+});
+builder.Services.AddCors(options => options.AddPolicy("frontend", policy => policy.WithOrigins(builder.Configuration["Cors:FrontendOrigin"] ?? "http://localhost:5173").AllowAnyHeader().AllowAnyMethod().AllowCredentials()));
 builder.Services.AddHealthChecks();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentBusiness, CurrentBusiness>();
@@ -48,6 +55,8 @@ if (!app.Environment.IsEnvironment("Testing"))
     await SanfiqoRoleSeeder.SeedAsync(app.Services);
 
 app.UseExceptionHandler();
+app.UseRateLimiter();
+app.UseCors("frontend");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

@@ -1,5 +1,4 @@
 using TextileConnect.Domain.Catalogue;
-using TextileConnect.Domain.Orders;
 using Microsoft.EntityFrameworkCore;
 using TextileConnect.Infrastructure.Orders;
 using TextileConnect.Infrastructure.Persistence;

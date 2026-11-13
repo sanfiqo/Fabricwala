@@ -11,7 +11,7 @@ public static class MarketplacePersistenceRegistration
     public static IServiceCollection AddMarketplacePersistence(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddDbContext<MarketplaceDbContext>(options =>
-            options.UseMySQL(configuration.GetConnectionString("TextileConnect")
+            options.AddInterceptors(new AuditSaveChangesInterceptor()).UseMySQL(configuration.GetConnectionString("TextileConnect")
                 ?? throw new InvalidOperationException("ConnectionStrings:TextileConnect is required.")));
         services.AddHttpClient<IPaymentGateway, RazorpayPaymentGateway>();
         return services;
