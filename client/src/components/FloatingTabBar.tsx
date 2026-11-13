@@ -12,11 +12,11 @@ export interface TabItem {
 }
 
 /** Floating pill menu. Content scrolls underneath it, so pages need bottom padding (pb-32). */
-export function FloatingTabBar({ items }: { items: TabItem[] }) {
+export function FloatingTabBar({ items, className }: { items: TabItem[]; className?: string }) {
   return (
     <nav
       aria-label={S.nav.main}
-      className="glass fixed bottom-[max(22px,env(safe-area-inset-bottom))] left-1/2 z-30 w-[min(calc(100%-48px),480px)] -translate-x-1/2 rounded-[34px] border border-white/90 p-1.5 shadow-nav"
+      className={cn('glass fixed bottom-[max(22px,env(safe-area-inset-bottom))] left-1/2 z-30 w-[min(calc(100%-48px),480px)] -translate-x-1/2 rounded-[34px] border border-white/90 p-1.5 shadow-nav', className)}
     >
       <ul className="grid gap-1" style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}>
         {items.map((i) => (

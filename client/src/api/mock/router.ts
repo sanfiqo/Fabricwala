@@ -530,6 +530,24 @@ on('POST', 'seller/orders/:id/status', sellerAction((so, body) => {
 }))
 
 // Admin
+// Admin dashboard (mock). The real one is computed on the server.
+on('GET', 'admin/dashboard', ({ db, query }) => {
+  requireAdmin(db)
+  const days = Number(query.days) || 1
+  const since = Date.now() - days * 86_400_000
+  const sos = db.orders.flatMap((o) => o.sellerOrders.map((s) => ({ o, s }))).filter(({ o }) => new Date(o.placedAt).getTime() >= since)
+  const pending = db.businesses.filter((b) => b.verificationStatus === 'Pending')
+  return {
+    days,
+    gmv: sos.reduce((a, { s }) => a + s.total, 0),
+    orders: sos.length,
+    commission: sos.reduce((a, { s }) => a + s.commissionAmount, 0),
+    newBusinesses: db.businesses.filter((b) => new Date(b.createdAt).getTime() >= since).length,
+    pendingApprovals: pending.length,
+    decisions: pending.slice(0, 5).map((b) => ({ kind: 'business' as const, title: b.displayName, sub: `${b.type === 'Manufacturer' ? 'Manufacturer' : 'Shopkeeper'} · ${b.documents.length} documents`, link: `/admin/businesses/${b.id}` })),
+  } satisfies import('../types').AdminDashboard
+})
+
 on('GET', 'admin/businesses', ({ db, query }) => {
   requireAdmin(db)
   const s = query.status as VerificationStatus | undefined

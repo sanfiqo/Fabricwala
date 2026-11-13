@@ -1,7 +1,8 @@
 import { del, get, post, put } from '../client'
-import type { AdminBusiness, PlatformSettings, ShippingRate, ShippingRateInput, VerificationStatus } from '../types'
+import type { AdminDashboard, AdminBusiness, PlatformSettings, ShippingRate, ShippingRateInput, VerificationStatus } from '../types'
 
 export const adminApi = {
+  dashboard: (days: number) => get<AdminDashboard>('admin/dashboard', { days }),
   businesses: (status?: VerificationStatus) => get<AdminBusiness[]>('admin/businesses', { status }),
   approve: (id: number) => post<AdminBusiness>(`admin/businesses/${id}/approve`),
   reject: (id: number, note: string) => post<AdminBusiness>(`admin/businesses/${id}/reject`, { note }),

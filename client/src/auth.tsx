@@ -35,7 +35,7 @@ export function areaOf(me: Me): Area | null {
 export function homeFor(me: Me | null | undefined): string {
   if (!me) return '/login'
   const area = areaOf(me)
-  if (area === 'Admin') return '/admin/businesses'
+  if (area === 'Admin') return '/admin'
   if (!me.business) return '/register'
   if (me.business.verificationStatus !== 'Approved') return '/pending'
   return area === 'Manufacturer' ? '/seller' : '/shop'

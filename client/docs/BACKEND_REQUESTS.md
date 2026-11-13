@@ -43,3 +43,8 @@ Each item: endpoint, request, response, why. The frontend runs on mock data unti
 - On/off toggle: `PUT /api/v1/seller/products/{id}/status` with `{ status: "Active" | "Inactive" }`, returns the product summary. Also needed: `GET /seller/products/{id}` and `PUT /seller/products/{id}` (update) — API_SCREENS.md says edit has no update endpoint.
 - Product summary needs a stock figure (`totalStock`) so "Low stock" does not depend on the dashboard.
 - `GET /api/v1/seller/payouts` returning `{ next:{amount,date}, onHold, paidThisMonth, rows:[{id,orderNumber,buyer,placedAt,deliveredAt,amount,status:"Paid"|"Scheduled"|"OnHold",date}] }`, and `?csv=true` returning `text/csv`. Linked bank account status is a separate missing endpoint (never return the account number).
+
+## 11. Admin (B5)
+- `GET /api/v1/admin/dashboard?days=1|7|30` returning `{ days, gmv, orders, commission, newBusinesses, pendingApprovals, decisions:[{kind:"business"|"claim",title,sub,link}] }` (today only one window).
+- GST check result on review: `GET /admin/businesses/{id}/gst-check` returning `{ valid, legalName, status }`. The client only shows a reminder to check the number until this exists.
+- Admin list of open problem reports (`GET /admin/claims?status=open`), then the decide route can be used from a review screen.

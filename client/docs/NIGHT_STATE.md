@@ -25,7 +25,7 @@ Format: `- [ ] id: task` then `- [x] id: task (commit)` or `- [!] id: BLOCKED re
 - [x] B3: Checkout restyle, payment result states
 - [x] B4a: Seller Home, Seller Orders (accept, cannot do, ship with LR)
 - [x] B4b: Seller Products (list, toggle), Add/Edit product, Payouts
-- [ ] B5: Admin (laptop layout): Home, Approvals, Review
+- [x] B5: Admin (laptop layout): Home, Approvals, Review
 
 ### C. Real flows (mock + adapter ready while API is unreachable)
 - [ ] C1: Auth, business, approval
@@ -58,3 +58,4 @@ Format: `- [ ] id: task` then `- [x] id: task (commit)` or `- [!] id: BLOCKED re
 - B3 done: Checkout restyled (address radio cards, summary, sticky Place order). One Idempotency-Key per order attempt and per payment attempt (double tap makes 1 order, tested). Result screens: success, pending, failed (retry payment is manual, never automatic). Mock switch `localStorage tc_mock_payfail=1` shows the failed screen. Razorpay itself is still not wired (account blocked), so real mode ends in the pending screen.
 - B4a done: Seller Home (headline, dark new-orders card with accept countdown, 4 stats, 6 month bars, low stock, best selling) and Seller Orders (New / To pack / Shipped / Done, order value, platform fee, You get, countdown chip, Cannot do it, Accept, Ship with LR number, detail page). Seller tabs: Home, Orders, My cloth (Payouts comes in B4b). Mock dashboard handler; backend request for `GET seller/dashboard` shape.
 - B4b done: Seller Products (search, All / Low stock / Draft chips, row with photo slot, price, MOQ, status, on/off switch with undo toast), Payouts (next payout card, on hold, paid this month, order by order, CSV download, 7 day rule), seller tabs now Home, Orders, My cloth, Payouts. Add/Edit product keeps all its logic (variants, slab validation, photos) and uses the new inputs, cards and buttons through the shared primitives; it was not re-laid-out screen by screen (see Morning report). Fixed a stale-language bug in the product status labels.
+- B5 done: Admin laptop layout (left sidebar from 1024px, floating tab bar on phones), Admin Home (needs a decision, Today / 7 / 30 days, 4 numbers), Approvals (table on laptop, cards on phone, search, status chips, Tab + Enter), Review page (details, documents, note, Approve, Reject needs a note of 5+ letters, Esc goes back). Settings and Freight keep their logic and use the new primitives. Tested at 1280 px in English and 360 px in Hindi.

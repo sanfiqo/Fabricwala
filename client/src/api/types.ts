@@ -397,3 +397,14 @@ export interface Payouts {
   paidThisMonth: number
   rows: PayoutRow[]
 }
+
+// ---- Admin dashboard. TODO(BE): shape is my proposal (API_SCREENS.md: one window only today).
+export interface AdminDashboard {
+  days: number
+  gmv: number
+  orders: number
+  commission: number
+  newBusinesses: number
+  pendingApprovals: number
+  decisions: Array<{ kind: 'business' | 'claim'; title: string; sub: string; link: string }>
+}

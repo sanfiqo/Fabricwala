@@ -18,6 +18,8 @@ const NotificationsPage = lazy(() => import('@/pages/NotificationsPage'))
 const ReportPage = lazy(() => import('@/pages/shop/ReportPage'))
 const SellerHome = lazy(() => import('@/pages/seller/SellerHome'))
 const PayoutsPage = lazy(() => import('@/pages/seller/PayoutsPage'))
+const AdminHome = lazy(() => import('@/pages/admin/AdminHome'))
+const AdminReviewPage = lazy(() => import('@/pages/admin/AdminReviewPage'))
 const AccountPage = lazy(() => import('@/pages/shop/AccountPage'))
 const OrdersPage = lazy(() => import('@/pages/shop/OrdersPage').then((m) => ({ default: m.OrdersPage })))
 const OrderDetailPage = lazy(() => import('@/pages/shop/OrdersPage').then((m) => ({ default: m.OrderDetailPage })))
@@ -88,7 +90,9 @@ export default function App() {
 
       <Route element={<Gate area="Admin" />}>
         <Route element={<AppShell />}>
+          <Route path="/admin" element={<AdminHome />} />
           <Route path="/admin/businesses" element={<AdminBusinessesPage />} />
+          <Route path="/admin/businesses/:id" element={<AdminReviewPage />} />
           <Route path="/admin/settings" element={<AdminSettingsPage />} />
           <Route path="/admin/shipping" element={<AdminShippingPage />} />
         </Route>
