@@ -435,6 +435,121 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
 
                     b.ToTable("CartItems");
                 });
+
+            modelBuilder.Entity("TextileConnect.Domain.Orders.Order", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("GrandTotal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("OrderNumber")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("varchar(64)");
+
+                    b.Property<string>("PaymentStatus")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("PlacedByUserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("varchar(450)");
+
+                    b.Property<long>("RetailerBusinessId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderNumber")
+                        .IsUnique();
+
+                    b.ToTable("Orders");
+                });
+
+            modelBuilder.Entity("TextileConnect.Domain.Orders.SellerOrder", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("AcceptedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<decimal>("CommissionRate")
+                        .HasPrecision(5, 4)
+                        .HasColumnType("decimal(5,4)");
+
+                    b.Property<DateTime?>("DeliveredAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("DispatchedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<long>("ManufacturerBusinessId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("OrderId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("RejectReason")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<decimal>("SubTotal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SellerOrders");
+                });
+
+            modelBuilder.Entity("TextileConnect.Domain.Orders.Shipment", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("CarrierName")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime?>("DeliveredAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("DispatchedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<long?>("LogisticsBusinessId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("LrNumber")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("ProofOfDeliveryKey")
+                        .HasColumnType("longtext");
+
+                    b.Property<long>("SellerOrderId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SellerOrderId")
+                        .IsUnique();
+
+                    b.ToTable("Shipments");
+                });
 #pragma warning restore 612, 618
         }
     }

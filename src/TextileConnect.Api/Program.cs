@@ -32,6 +32,7 @@ builder.Services.AddMarketplacePersistence(builder.Configuration);
 builder.Services.AddScoped<IBusinessDirectory, EfBusinessDirectory>();
 builder.Services.AddScoped<IProductDirectory, EfProductDirectory>();
 builder.Services.AddScoped<ICartService, EfCartService>();
+builder.Services.AddScoped<IOrderService, EfOrderService>();
 if (builder.Environment.IsDevelopment())
     builder.Services.AddSingleton<IFileStorage, DevelopmentFileStorage>();
 builder.Services.AddSanfiqoIdentity(builder.Configuration, builder.Environment);
@@ -63,6 +64,7 @@ app.MapSanfiqoAuthEndpoints();
 app.MapBusinessEndpoints();
 app.MapProductEndpoints();
 app.MapCartEndpoints();
+app.MapOrderEndpoints();
 app.MapHealthChecks("/api/v1/health");
 
 app.Run();

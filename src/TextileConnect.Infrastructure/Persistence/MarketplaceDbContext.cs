@@ -20,6 +20,9 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
     public DbSet<ProductMedia> ProductMedia => Set<ProductMedia>();
     public DbSet<ShippingRate> ShippingRates => Set<ShippingRate>();
     public DbSet<CartItem> CartItems => Set<CartItem>();
+    public DbSet<Order> Orders => Set<Order>();
+    public DbSet<SellerOrder> SellerOrders => Set<SellerOrder>();
+    public DbSet<Shipment> Shipments => Set<Shipment>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -62,5 +65,15 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
         builder.Entity<CartItem>().HasKey(x => x.Id);
         builder.Entity<CartItem>().HasIndex(x => new { x.RetailerBusinessId, x.VariantId }).IsUnique();
         builder.Entity<CartItem>().Property(x => x.AddedByUserId).HasMaxLength(450).IsRequired();
+        builder.Entity<Order>().HasKey(x => x.Id);
+        builder.Entity<Order>().Property(x => x.OrderNumber).HasMaxLength(64).IsRequired();
+        builder.Entity<Order>().HasIndex(x => x.OrderNumber).IsUnique();
+        builder.Entity<Order>().Property(x => x.PlacedByUserId).HasMaxLength(450).IsRequired();
+        builder.Entity<Order>().Property(x => x.GrandTotal).HasPrecision(18, 2);
+        builder.Entity<SellerOrder>().HasKey(x => x.Id);
+        builder.Entity<SellerOrder>().Property(x => x.SubTotal).HasPrecision(18, 2);
+        builder.Entity<SellerOrder>().Property(x => x.CommissionRate).HasPrecision(5, 4);
+        builder.Entity<Shipment>().HasKey(x => x.Id);
+        builder.Entity<Shipment>().HasIndex(x => x.SellerOrderId).IsUnique();
     }
 }

@@ -54,9 +54,9 @@ Source: old project, read-only. Only the files listed in the Step 2 prompt.
 - [x] P4.1 Domain: CartItem (business-level cart), Order, SellerOrder, OrderItem (snapshots), OrderStatusHistory
 - [x] P4.2 Cart API: get, add, update qty, remove
 - [x] P4.3 Checkout: validate MOQ, approved business, stock; compute slab price, shipping, GST, commission on server; split into SellerOrders
-- [ ] P4.4 Retailer API: list/get own orders with status timeline
-- [ ] P4.5 Seller API: list own SellerOrders, accept, reject (reason), dispatch (LR number)
-- [ ] P4.6 Shipments table + status updates (In transit, Reached Kashmir, Delivered) + retailer confirm delivery
+- [x] P4.4 Retailer API: list/get own orders with status timeline
+- [x] P4.5 Seller API: list own SellerOrders, accept, reject (reason), dispatch (LR number)
+- [x] P4.6 Shipments table + status updates (In transit, Reached Kashmir, Delivered) + retailer confirm delivery
 - [x] P4.7 Notifications table + `INotificationSender` (fake in Development); queue on every status change
 - [x] P4.8 Tests: checkout split by seller, price tamper rejected, isolation on orders
 
