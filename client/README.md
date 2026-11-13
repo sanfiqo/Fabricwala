@@ -22,7 +22,7 @@ Log in with a demo number (shown on the login screen). The code is always `12345
 | 9000000004 | New user, goes to business registration |
 | 9000000005 | Business waiting for approval |
 
-Mock data is kept in `localStorage` (`tc_mock_db_v1`). Clear site data to reset it.
+Mock data is kept in `localStorage` (`tc_mock_db_v2`). Clear site data to reset it.
 
 Switching without editing files: open **Account** and use the Demo mode switch, or add `?mock=1` (sample data) or `?mock=0` (real backend) to any URL. The page reloads.
 Language: Account has English and हिंदी. Text lives in `src/i18n/en.ts` and `src/i18n/hi.ts` (same keys).

@@ -20,6 +20,43 @@ function readUseMocks(): boolean {
 }
 export const USE_MOCKS = readUseMocks()
 
+// ---- Per area switch. Areas are the adapter files in ./areas (one file each).
+export type ApiArea = 'auth' | 'business' | 'catalog' | 'cart' | 'orders' | 'seller' | 'payouts' | 'notifications' | 'account' | 'admin'
+const AREA_PREFIXES: Array<[RegExp, ApiArea]> = [
+  [/^auth\//, 'auth'],
+  [/^(businesses|pincodes)/, 'business'],
+  [/^(categories|states|cities|products|landed-cost|banners|storefronts)/, 'catalog'],
+  [/^cart/, 'cart'],
+  [/^(checkout|payments|orders)/, 'orders'],
+  [/^seller\/payouts/, 'payouts'],
+  [/^seller/, 'seller'],
+  [/^notifications/, 'notifications'],
+  [/^(claims|seller-orders|favourites|reviews|account)/, 'account'],
+  [/^admin/, 'admin'],
+]
+export function areaOfPath(path: string): ApiArea {
+  const p = path.replace(/^\//, '')
+  return AREA_PREFIXES.find(([re]) => re.test(p))?.[1] ?? 'catalog'
+}
+function readAreaList(envValue: unknown, storageKey: string): Set<string> {
+  let raw = typeof envValue === 'string' ? envValue : ''
+  try {
+    raw = localStorage.getItem(storageKey) ?? raw
+  } catch {
+    /* storage blocked */
+  }
+  return new Set(raw.split(',').map((x) => x.trim()).filter(Boolean))
+}
+/** Areas forced to the real API even in demo mode (VITE_REAL_AREAS or localStorage tc_real_areas), and areas forced to sample data (VITE_MOCK_AREAS / tc_mock_areas). */
+const REAL_AREAS = readAreaList(import.meta.env.VITE_REAL_AREAS, 'tc_real_areas')
+const MOCK_AREAS = readAreaList(import.meta.env.VITE_MOCK_AREAS, 'tc_mock_areas')
+export function isMockFor(path: string): boolean {
+  const area = areaOfPath(path)
+  if (REAL_AREAS.has(area)) return false
+  if (MOCK_AREAS.has(area)) return true
+  return USE_MOCKS
+}
+
 /** Switch between sample data and the real backend. Reloads so every cache starts clean. */
 export function setUseMocks(on: boolean) {
   try {
@@ -161,7 +198,7 @@ async function tryRefresh(): Promise<boolean> {
 export async function api<T>(method: Method, path: string, opts: RequestOptions = {}): Promise<T> {
   const key = method === 'POST' && IDEMPOTENT.has(path.replace(/^\//, '')) ? (opts.idempotencyKey ?? crypto.randomUUID()) : opts.idempotencyKey
   const o = { ...opts, idempotencyKey: key }
-  if (USE_MOCKS) return mockRequest<T>(method, path, o)
+  if (isMockFor(path)) return mockRequest<T>(method, path, o)
 
   let res = await send(method, path, o, true)
   if (res.status === 401 && !path.startsWith('auth/') && (await tryRefresh())) res = await send(method, path, o, true)
