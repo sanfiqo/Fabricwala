@@ -4,6 +4,7 @@ using TextileConnect.Domain.Catalogue;
 using TextileConnect.Domain.Orders;
 using TextileConnect.Domain.Payments;
 using TextileConnect.Domain.Community;
+using TextileConnect.Domain.Notifications;
 
 namespace TextileConnect.Infrastructure.Persistence;
 
@@ -36,6 +37,7 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<ReturnClaim> ReturnClaims => Set<ReturnClaim>();
     public DbSet<ReturnClaimPhoto> ReturnClaimPhotos => Set<ReturnClaimPhoto>();
+    public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<PlatformSetting> PlatformSettings => Set<PlatformSetting>();
     public DbSet<Enquiry> Enquiries => Set<Enquiry>(); public DbSet<Quotation> Quotations => Set<Quotation>(); public DbSet<Dispute> Disputes => Set<Dispute>(); public DbSet<Review> Reviews => Set<Review>(); public DbSet<Favourite> Favourites => Set<Favourite>(); public DbSet<GroupBuy> GroupBuys => Set<GroupBuy>(); public DbSet<GroupBuyParticipant> GroupBuyParticipants => Set<GroupBuyParticipant>(); public DbSet<LogisticsAssignment> LogisticsAssignments => Set<LogisticsAssignment>();
 
@@ -105,6 +107,7 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
         builder.Entity<Shipment>().HasIndex(x => x.SellerOrderId).IsUnique();
         builder.Entity<ReturnClaim>(entity => { entity.HasKey(x => x.Id); entity.Property(x => x.Reason).HasMaxLength(2000).IsRequired(); entity.Property(x => x.Status).HasMaxLength(32).IsRequired(); entity.Property(x => x.ApprovedRefundAmount).HasPrecision(18, 2); });
         builder.Entity<ReturnClaimPhoto>().HasKey(x => x.Id);
+        builder.Entity<Notification>(entity => { entity.HasKey(x => x.Id); entity.Property(x => x.UserId).HasMaxLength(450).IsRequired(); entity.Property(x => x.Title).HasMaxLength(200).IsRequired(); entity.Property(x => x.Message).HasMaxLength(2000).IsRequired(); entity.HasIndex(x => new { x.UserId, x.IsRead, x.CreatedAtUtc }); });
         builder.Entity<PayoutAccount>().HasKey(x => x.Id);
         builder.Entity<PayoutAccount>().HasIndex(x => x.BusinessId).IsUnique();
         builder.Entity<Payment>().HasKey(x => x.Id);
