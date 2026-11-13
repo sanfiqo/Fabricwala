@@ -13,6 +13,7 @@ const ProductListPage = lazy(() => import('@/pages/shop/ProductListPage'))
 const ProductPage = lazy(() => import('@/pages/shop/ProductPage'))
 const CartPage = lazy(() => import('@/pages/shop/CartPage'))
 const CheckoutPage = lazy(() => import('@/pages/shop/CheckoutPage'))
+const SessionExpiredPage = lazy(() => import('@/pages/SessionExpiredPage'))
 const AccountPage = lazy(() => import('@/pages/shop/AccountPage'))
 const OrdersPage = lazy(() => import('@/pages/shop/OrdersPage').then((m) => ({ default: m.OrdersPage })))
 const OrderDetailPage = lazy(() => import('@/pages/shop/OrdersPage').then((m) => ({ default: m.OrderDetailPage })))
@@ -38,6 +39,7 @@ export default function App() {
     <Routes>
       <Route path="/" element={<RootRedirect />} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/session-expired" element={<SessionExpiredPage />} />
 
       <Route element={<Gate />}>
         <Route element={<AppShell />}>

@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Navigate, Outlet, useLocation } from 'react-router-dom'
+import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { clearSavedData } from '@/queryClient'
 import { authApi } from '@/api/endpoints'
@@ -44,15 +44,19 @@ export function homeFor(me: Me | null | undefined): string {
 /** Clears the cached session when any API call answers 401. */
 export function useUnauthorizedListener() {
   const qc = useQueryClient()
+  const nav = useNavigate()
   useEffect(() => {
     const h = () => {
+      const wasLoggedIn = !!qc.getQueryData(['me'])
       qc.setQueryData(['me'], null)
       qc.removeQueries({ predicate: (q) => q.queryKey[0] !== 'me' })
       clearSavedData()
+      // Someone who was logged in sees a calm "session ended" screen instead of a sudden login page.
+      if (wasLoggedIn) setTimeout(() => nav('/session-expired', { replace: true }), 0)
     }
     window.addEventListener(UNAUTHORIZED_EVENT, h)
     return () => window.removeEventListener(UNAUTHORIZED_EVENT, h)
-  }, [qc])
+  }, [qc, nav])
 }
 
 /** Route guard. `area` = require an approved user of that area; omitted = just be logged in. */

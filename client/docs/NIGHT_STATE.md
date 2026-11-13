@@ -14,8 +14,8 @@ Format: `- [ ] id: task` then `- [x] id: task (commit)` or `- [!] id: BLOCKED re
 ### A. Foundation for real data
 - [x] A1: API layer (error codes EN+HI, timeout, safe GET retry, one 401 refresh, Idempotency-Key) (see Log for commit)
 - [x] A2: Adapter per area + per-area mock/real switch, seed names
-- [ ] A3: Query keys per area, stale times, optimistic cart quantity and notification read
-- [ ] A4: Auth store, role guards, session expired screen
+- [x] A3: Query keys per area, stale times, optimistic cart quantity and notification read
+- [x] A4: Auth store, role guards, session expired screen
 
 ### B. Screens
 - [ ] B1: Login, OTP, Business details (pincode lookup, GST check), Waiting for approval
@@ -49,3 +49,5 @@ Format: `- [ ] id: task` then `- [x] id: task (commit)` or `- [!] id: BLOCKED re
 - User rule: commit locally only; never push, reset --hard, clean, force push or delete a branch. If git needs approval: finish other work, retry once, then BLOCKED.
 - A1 done: ApiError now carries `code` and a friendly EN/HI message (raw server text kept in `serverMessage` only); 20 s timeout; one retry for GET on network error/502-504; one silent POST auth/refresh before treating a 401 as expired (skipped when the backend has no route); Idempotency-Key on checkout and payments (mock honours it). TODO in B3: CheckoutPage must pass one key per attempt so a double tap reuses it.
 - A2 done: `src/api/areas/*.ts` (auth, business, catalog, cart, orders, seller, admin; payouts, notifications, account get added with their screens), `endpoints.ts` re-exports. `VITE_REAL_AREAS` / `VITE_MOCK_AREAS` (or localStorage tc_real_areas / tc_mock_areas) choose per area. Mock seed names now Sharma Textiles, Kapoor Knits, Shree Kurti House; mock db key bumped to v2.
+- A3 done: `src/api/keys.ts` (keys per area + STALE), per-area stale times in queryClient.ts, optimistic cart quantity with rollback (money stays as the server sent it). Notification read optimistic comes with B2c.
+- A4 done: guards already per role (Gate); added `/session-expired` screen, shown when a logged-in person gets a 401. No token storage: auth is the server cookie, so nothing is kept in JS. Tested by firing the 401 event.

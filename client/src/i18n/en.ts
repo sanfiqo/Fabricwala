@@ -226,6 +226,7 @@ export const en = {
     help: 'Need help? Ask on WhatsApp',
     waHelpMsg: 'Hello, I need help with my cart.',
   },
+  session: { title: 'Your session ended', body: 'For your safety we log you out after some time. Please log in again. Your cart is safe.', action: 'Log in again' },
   home: {
     greet: 'Namaste, {name}',
     title: 'What do you need for your shop today?',
