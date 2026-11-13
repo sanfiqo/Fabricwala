@@ -120,6 +120,7 @@ app.MapAdminDashboardEndpoints();
 app.MapAdminReportEndpoints();
 app.MapProductModerationEndpoints();
 app.MapCategoryBannerEndpoints();
+app.MapBusinessSuspensionEndpoints();
 app.MapCartEndpoints();
 app.MapOrderEndpoints();
 app.MapPaymentEndpoints();

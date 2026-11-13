@@ -143,7 +143,7 @@ One agent per folder at a time. A [WEB] task starts only after its [BE] task is 
 - [x] P10.25 [BE] Reports export CSV: orders, payments, settlements, businesses
 - [x] P10.26 [BE] Product moderation: list, flag, deactivate with reason; seller notified
 - [x] P10.27 [BE] Categories admin (tree, reorder) and home banners admin (image, link, start/end date)
-- [ ] P10.28 [BE] Suspend / reactivate business and user; suspended cannot log in or order
+- [x] P10.28 [BE] Suspend / reactivate business and user; suspended cannot log in or order
 - [ ] P10.29 [WEB] Admin screens for P10.24–P10.28
 
 ### Legal pages
