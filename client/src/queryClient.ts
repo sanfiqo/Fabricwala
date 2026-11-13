@@ -1,6 +1,7 @@
 import { QueryClient } from '@tanstack/react-query'
 import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister'
 import { ApiError } from '@/api/client'
+import { STALE } from '@/api/keys'
 
 const DAY = 24 * 60 * 60 * 1000
 
@@ -17,6 +18,12 @@ export const queryClient = new QueryClient({
     },
   },
 })
+
+// Stale times per area (see api/keys.ts). Anything not listed uses the 30 s default above.
+queryClient.setQueryDefaults(['categories'], { staleTime: STALE.master })
+queryClient.setQueryDefaults(['products'], { staleTime: STALE.catalog })
+queryClient.setQueryDefaults(['product'], { staleTime: STALE.catalog })
+for (const k of ['cart', 'orders', 'seller-orders', 'payouts', 'notifications']) queryClient.setQueryDefaults([k], { staleTime: STALE.live })
 
 const KEY = 'tc_query_cache'
 export const persister = createSyncStoragePersister({ storage: typeof window === 'undefined' ? undefined : window.localStorage, key: KEY, throttleTime: 1000 })

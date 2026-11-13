@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { AlertTriangle, MapPin, MessageCircle, ShoppingBag, X } from 'lucide-react'
 import { cartApi } from '@/api/endpoints'
+import { qk } from '@/api/keys'
 import type { Cart, CartItem } from '@/api/types'
 import { useMe } from '@/auth'
 import { AddressSheet } from '@/components/AddressSheet'
@@ -125,7 +126,21 @@ export default function CartPage() {
   const [oldPrices, setOldPrices] = useState(readReorderPrices)
   const cart = useQuery({ queryKey: ['cart'], queryFn: cartApi.get })
   const apply = (c: Cart) => qc.setQueryData(['cart'], c)
-  const update = useMutation({ mutationFn: (v: { id: number; q: number }) => cartApi.update(v.id, v.q), onSuccess: apply, onError: (e) => toast.error(e.message) })
+  // Optimistic: the row shows the new quantity at once. Money is never calculated here; totals stay as the server last sent them until its answer arrives.
+  const update = useMutation({
+    mutationFn: (v: { id: number; q: number }) => cartApi.update(v.id, v.q),
+    onMutate: async (v) => {
+      await qc.cancelQueries({ queryKey: qk.cart })
+      const before = qc.getQueryData<Cart>(qk.cart)
+      if (before) qc.setQueryData<Cart>(qk.cart, { ...before, groups: before.groups.map((g) => ({ ...g, items: g.items.map((i) => (i.id === v.id ? { ...i, quantity: v.q } : i)) })) })
+      return { before }
+    },
+    onSuccess: apply,
+    onError: (e, _v, ctx) => {
+      if (ctx?.before) qc.setQueryData(qk.cart, ctx.before)
+      toast.error(e.message)
+    },
+  })
   const remove = useMutation({ mutationFn: (id: number) => cartApi.remove(id), onSuccess: apply, onError: (e) => toast.error(e.message) })
 
   const removeWithUndo = (item: CartItem) =>
