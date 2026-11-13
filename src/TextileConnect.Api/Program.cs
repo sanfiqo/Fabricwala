@@ -26,6 +26,8 @@ if (builder.Environment.IsDevelopment())
     builder.Configuration.AddEnvironmentVariables();
 }
 
+ProductionSecretGuard.Validate(builder.Configuration, builder.Environment.EnvironmentName);
+
 builder.Host.UseSerilog((context, configuration) => configuration
     .ReadFrom.Configuration(context.Configuration)
     .Enrich.FromLogContext());
