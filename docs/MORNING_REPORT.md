@@ -1,15 +1,17 @@
 # Morning report
-- Backend phases: P1 complete; P2 complete except P2.3 DB apply; P3/P4 complete; P5.1-P5.8 implemented; P5.9 blocked on accounts.
-- Phase 6 skipped: frontend is owned by `frontend/pwa`; no `client/` was created or edited.
-- Phase 7 backend foundations added for RFQ, disputes, reviews, favourites, group buys and logistics.
-- Contract alignment: string enums, `{ token }` CSRF, expanded auth/me, server cart totals, seller detail endpoints.
-- Migrations generated: Identity, Marketplace, Cart, Orders/Shipments, Finance, Audit, Community.
-- Blocked: local MySQL update fails at TLS credential authentication; seeds/DB verification were skipped.
-- API smoke run completed in Testing environment; no startup failure observed.
-- Tests: `dotnet build TextileConnect.slnx --no-restore`; `dotnet test tests/TextileConnect.Tests/TextileConnect.Tests.csproj --no-build --no-restore` (17 passed).
-- Secrets: `dotnet user-secrets set "ConnectionStrings:TextileConnect" "<mysql>" --project src/TextileConnect.Api`.
-- Also set `UserContacts:LookupHmacKey`, `Otp:StorageHmacKey`, and Razorpay keys before production use.
-- Apply DB: run `dotnet ef database update` for both Identity and Marketplace contexts after fixing MySQL TLS credentials.
-- Start API: `dotnet run --project src/TextileConnect.Api`; frontend proxy target remains `http://localhost:5000`.
-- Commits include `2782ecf`, `ec72662`, `6a9620a`, `f81d233`, `9f19457`, `90293aa`, `107555a`.
-- No uncommitted task changes remain.
+- P1.1-P1.10: done; existing commits plus `a9e9af6`; real OTP verification succeeded with the Development fake.
+- P2.1-P2.2, P2.4-P2.10: done; EF persistence and tests present.
+- P2.3: done in `a561309`; migrations applied and seeds ran: States=1, Cities=12, Categories=8, PlatformSettings=4, Roles=3.
+- P3.1-P3.8: implemented in prior commits; real-flow revalidation remains incomplete.
+- P4.1-P4.8: implemented in prior commits; contract completion is partial in `4f0cc04`.
+- P5.1-P5.8: implemented in prior commits; P5.9 blocked because MSG91/WhatsApp accounts are unavailable.
+- P6 skipped; frontend is owned by `frontend/pwa`; no `client/` was created or edited.
+- P7.1-P7.6: backend foundations remain present; no frontend work was done.
+- API Development startup is fixed; `/api/v1/health` returned HTTP 200.
+- Real MySQL flow: OTP verify and retailer business creation succeeded; admin approval/manufacturer/product/cart/checkout was not completed.
+- Contract commits: `f8fc3d9` product, `4f0cc04` checkout/order, `02d219d` payment-order endpoint.
+- Remaining gaps: document/admin DTOs, settings/shipping CRUD, slab/media DTOs, webhook endpoint, complete real checkout flow.
+- Tests: build passes; 17 tests pass. Target 60+ was not reached.
+- Local config was not printed or committed. Production HMAC and Razorpay secrets remain required.
+- Commands: `dotnet ef database update` for both contexts; `dotnet test tests/TextileConnect.Tests/TextileConnect.Tests.csproj`.
+- Start API: `dotnet run --project src/TextileConnect.Api`; frontend proxy is owned by the frontend branch.
