@@ -9,6 +9,8 @@ using TextileConnect.Application.Catalogue;
 using TextileConnect.Infrastructure.Persistence;
 using TextileConnect.Infrastructure.Businesses;
 using TextileConnect.Infrastructure.Catalogue;
+using TextileConnect.Application.Orders;
+using TextileConnect.Infrastructure.Orders;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,6 +31,7 @@ builder.Services.AddSingleton<IAuthorizationHandler, ApprovedBusinessHandler>();
 builder.Services.AddMarketplacePersistence(builder.Configuration);
 builder.Services.AddScoped<IBusinessDirectory, EfBusinessDirectory>();
 builder.Services.AddScoped<IProductDirectory, EfProductDirectory>();
+builder.Services.AddScoped<ICartService, EfCartService>();
 if (builder.Environment.IsDevelopment())
     builder.Services.AddSingleton<IFileStorage, DevelopmentFileStorage>();
 builder.Services.AddSanfiqoIdentity(builder.Configuration, builder.Environment);
@@ -59,6 +62,7 @@ app.MapControllers();
 app.MapSanfiqoAuthEndpoints();
 app.MapBusinessEndpoints();
 app.MapProductEndpoints();
+app.MapCartEndpoints();
 app.MapHealthChecks("/api/v1/health");
 
 app.Run();

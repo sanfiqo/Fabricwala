@@ -407,6 +407,34 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
 
                     b.ToTable("ShippingRates");
                 });
+
+            modelBuilder.Entity("TextileConnect.Domain.Orders.CartItem", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("AddedByUserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("varchar(450)");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<long>("RetailerBusinessId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("VariantId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RetailerBusinessId", "VariantId")
+                        .IsUnique();
+
+                    b.ToTable("CartItems");
+                });
 #pragma warning restore 612, 618
         }
     }

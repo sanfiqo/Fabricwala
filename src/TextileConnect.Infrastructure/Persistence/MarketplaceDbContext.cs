@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using TextileConnect.Domain.Businesses;
 using TextileConnect.Domain.Catalogue;
+using TextileConnect.Domain.Orders;
 
 namespace TextileConnect.Infrastructure.Persistence;
 
@@ -18,6 +19,7 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
     public DbSet<PriceSlab> PriceSlabs => Set<PriceSlab>();
     public DbSet<ProductMedia> ProductMedia => Set<ProductMedia>();
     public DbSet<ShippingRate> ShippingRates => Set<ShippingRate>();
+    public DbSet<CartItem> CartItems => Set<CartItem>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -57,5 +59,8 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
         builder.Entity<ShippingRate>().HasKey(x => new { x.FromCityId, x.ToCityId, x.RateType });
         builder.Entity<ShippingRate>().Property(x => x.Rate).HasPrecision(18, 2);
         builder.Entity<ShippingRate>().Property(x => x.MinCharge).HasPrecision(18, 2);
+        builder.Entity<CartItem>().HasKey(x => x.Id);
+        builder.Entity<CartItem>().HasIndex(x => new { x.RetailerBusinessId, x.VariantId }).IsUnique();
+        builder.Entity<CartItem>().Property(x => x.AddedByUserId).HasMaxLength(450).IsRequired();
     }
 }

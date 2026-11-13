@@ -52,7 +52,7 @@ Source: old project, read-only. Only the files listed in the Step 2 prompt.
 
 ## Phase 4 — Cart and orders
 - [x] P4.1 Domain: CartItem (business-level cart), Order, SellerOrder, OrderItem (snapshots), OrderStatusHistory
-- [ ] P4.2 Cart API: get, add, update qty, remove
+- [x] P4.2 Cart API: get, add, update qty, remove
 - [x] P4.3 Checkout: validate MOQ, approved business, stock; compute slab price, shipping, GST, commission on server; split into SellerOrders
 - [ ] P4.4 Retailer API: list/get own orders with status timeline
 - [ ] P4.5 Seller API: list own SellerOrders, accept, reject (reason), dispatch (LR number)
