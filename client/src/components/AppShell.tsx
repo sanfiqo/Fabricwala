@@ -54,7 +54,7 @@ function tabsFor(area: Area | null): TabItem[] {
 }
 
 /** Screens that have their own bottom action bar hide the floating menu (as in the design files). */
-const NO_TABS = [/^\/shop\/p\//, /^\/shop\/cart/, /^\/shop\/checkout/]
+const NO_TABS = [/^\/shop\/p\//, /^\/shop\/cart/, /^\/shop\/checkout/, /^\/shop\/orders\/\d+\/report/]
 
 export function AppShell() {
   const { data: me } = useMe()

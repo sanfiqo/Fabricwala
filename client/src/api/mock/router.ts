@@ -1,6 +1,6 @@
 import { ApiError } from '../errors'
 import type {
-  AdminBusiness, AddressInput, Cart, CartGroup, CartItem, CreateBusinessInput, LandedCost, Me, Order, PaymentIntent, PriceSlab,
+  Claim, NotificationItem, AdminBusiness, AddressInput, Cart, CartGroup, CartItem, CreateBusinessInput, LandedCost, Me, Order, PaymentIntent, PriceSlab,
   ProductDetail, ProductInput, ProductQuery, ProductSummary, SellerOrder, ShippingRateInput, VerificationStatus,
 } from '../types'
 import {
@@ -505,6 +505,48 @@ on('DELETE', 'admin/shipping-rates/:id', ({ db, params }) => {
   requireAdmin(db)
   db.rates = db.rates.filter((x) => x.id !== Number(params[0]))
 })
+
+// ---------- Notifications and problem reports (mock; shapes are a backend request)
+const ago = (h: number) => new Date(Date.now() - h * 3_600_000).toISOString()
+function seedNotes(u: DbUser): NotificationItem[] {
+  if (u.isAdmin) return [{ id: nextId(), type: 'account', title: '2 businesses are waiting for approval', body: 'Open Approvals to review their documents.', createdAt: ago(1), isRead: false, link: '/admin/businesses' }]
+  const b = u.businessId
+  if (b === 101) return [
+    { id: nextId(), type: 'order', title: 'New order TC-241001', body: '100 Merino Wool Shawl, Plain. Reply within 24 hours.', createdAt: ago(2), isRead: false, link: '/seller/orders' },
+    { id: nextId(), type: 'payment', title: 'Payment received for TC-241002', body: 'You can accept the order now.', createdAt: ago(30), isRead: true, link: '/seller/orders' },
+  ]
+  return [
+    { id: nextId(), type: 'order', title: 'Your order TC-241003 is on the way', body: 'Kapoor Knits shipped 40 pieces.', createdAt: ago(3), isRead: false, link: '/shop/orders' },
+    { id: nextId(), type: 'order', title: 'Seller accepted order TC-241002', body: 'They are packing 120 pieces for you.', createdAt: ago(5), isRead: false, link: '/shop/orders' },
+    { id: nextId(), type: 'system', title: 'Welcome to Textile Connect', body: 'Prices you see are landed in your city: factory price, delivery and GST.', createdAt: ago(80), isRead: true, link: null },
+  ]
+}
+function notesFor(db: Db): NotificationItem[] {
+  const u = currentUser(db)
+  db.notifications ??= {}
+  db.notifications[u.phone] ??= seedNotes(u)
+  return db.notifications[u.phone]
+}
+on('GET', 'notifications', ({ db }) => clone([...notesFor(db)].sort((a, b) => b.createdAt.localeCompare(a.createdAt))))
+on('GET', 'notifications/unread-count', ({ db }) => ({ count: notesFor(db).filter((n) => !n.isRead).length }))
+on('POST', 'notifications/read-all', ({ db }) => {
+  notesFor(db).forEach((n) => (n.isRead = true))
+})
+on('POST', 'notifications/:id/read', ({ db, params }) => {
+  const n = notesFor(db).find((x) => x.id === Number(params[0]))
+  if (n) n.isRead = true
+})
+on('POST', 'seller-orders/:id/claims', ({ db, params, body }) => {
+  const b = requireApproved(db, 'Retailer')
+  const o = db.orders.find((x) => x.sellerOrders.some((s) => s.id === Number(params[0])) && x.retailerId === b.id) ?? fail(404, 'Order not found', 'ORDER_NOT_FOUND')
+  const so = o.sellerOrders.find((s) => s.id === Number(params[0]))!
+  if (so.status !== 'ReachedKashmir' && so.status !== 'Delivered') fail(409, 'Order is not delivered', 'ORDER_STATE')
+  const input = body as { reason: Claim['reason']; pieces: number; note?: string }
+  const claim = { id: nextId(), sellerOrderId: so.id, reason: input.reason, pieces: input.pieces, note: input.note, status: 'Open' as const, createdAt: new Date().toISOString() }
+  ;(db.claims ??= []).push(claim)
+  return clone(claim)
+})
+on('POST', 'claims/:id/photos', () => undefined)
 
 // ---------- entry
 /** Same Idempotency-Key gives the same answer, like the real server: a double tap never places two orders. */

@@ -1,4 +1,4 @@
-import type {
+import type { Claim, NotificationItem,
   BusinessAddress, BusinessDetail, Category, City, Order, PlatformSettings, PriceSlab, ProductDetail,
   SellerOrder, ShippingRate, State, Unit, Variant,
 } from '../types'
@@ -49,6 +49,8 @@ export interface Db {
   orders: DbOrder[]
   settings: PlatformSettings
   rates: ShippingRate[]
+  notifications?: Record<string, NotificationItem[]>
+  claims?: Array<Claim & { note?: string }>
 }
 
 const STORAGE_KEY = 'tc_mock_db_v2'

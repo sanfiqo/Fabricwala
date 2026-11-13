@@ -336,3 +336,29 @@ export interface PincodeInfo {
   stateId: number
   stateName: string
 }
+
+// ---- Notifications and problem reports. TODO(BE): shapes are my proposal, see BACKEND_REQUESTS.md.
+export interface NotificationItem {
+  id: number
+  type: 'order' | 'payment' | 'account' | 'system'
+  title: string
+  body: string
+  createdAt: string
+  isRead: boolean
+  /** In-app link to open, for example /shop/orders/12 */
+  link?: string | null
+}
+export type ClaimReason = 'Damaged' | 'WrongItem' | 'LessQuantity' | 'NotAsShown' | 'Other'
+export interface ClaimInput {
+  reason: ClaimReason
+  pieces: number
+  note?: string
+}
+export interface Claim {
+  id: number
+  sellerOrderId: number
+  reason: ClaimReason
+  pieces: number
+  status: 'Open' | 'SellerReplied' | 'Refunded' | 'Rejected'
+  createdAt: string
+}

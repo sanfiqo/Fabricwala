@@ -1,21 +1,45 @@
-import { useNavigate } from 'react-router-dom'
+import type { ReactNode } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
-import { LogOut } from 'lucide-react'
+import { Bell, ChevronRight, LogOut, MapPin, MessageCircle, Store } from 'lucide-react'
 import { authApi } from '@/api/endpoints'
 import { setUseMocks, USE_MOCKS } from '@/api/client'
 import { useMe } from '@/auth'
-import { Button } from '@/components/ui/button'
-import { Badge, Card, PageHeader, Segmented } from '@/components/ui/misc'
+import { Badge, Segmented } from '@/components/ui/misc'
+import { useMyBusiness, useUnreadCount } from '@/hooks'
 import { clearSavedData } from '@/queryClient'
-import { label, LANGS, S, setLang, useLang } from '@/i18n'
+import { fmt, label, LANGS, S, setLang, useLang } from '@/i18n'
+import { waLink } from '@/lib/whatsapp'
 
-/** Language, business details, demo-mode switch and log out. */
+const initials = (name: string) =>
+  name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w.charAt(0).toUpperCase())
+    .join('') || '·'
+
+function Card({ children, title }: { children: ReactNode; title?: string }) {
+  return (
+    <section aria-label={title} className="mx-5 mt-4 overflow-hidden rounded-card border border-line bg-surface">
+      {children}
+    </section>
+  )
+}
+const rowCls = 'press flex min-h-[60px] w-full items-center gap-3.5 border-t border-line px-4 py-3 text-left first:border-t-0'
+const iconCls = 'flex size-10 shrink-0 items-center justify-center rounded-full bg-soft'
+
+/** Profile, language, help, demo switch and log out. */
 export default function AccountPage() {
   const { data: me } = useMe()
+  const biz = useMyBusiness()
+  const unread = useUnreadCount()
   const lang = useLang()
   const qc = useQueryClient()
   const nav = useNavigate()
   const status = me?.business?.verificationStatus
+  const name = me?.business?.displayName ?? me?.fullName ?? '—'
+  const addrs = biz.data?.addresses.filter((a) => a.addressType === 'Delivery') ?? []
 
   const logout = async () => {
     try {
@@ -29,32 +53,59 @@ export default function AccountPage() {
 
   return (
     <div className="pb-4">
-      <PageHeader title={S.account.title} />
-      <div className="space-y-5 px-5 pt-4">
-        <Card className="p-4">
-          <p className="text-xs text-mute">{S.account.business}</p>
-          <p className="mt-0.5 break-words text-lg font-semibold">{me?.business?.displayName ?? me?.fullName ?? '—'}</p>
-          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm">
-            <span className="text-mute">{S.account.phone}</span>
-            <span className="font-medium tabular-nums">{me?.phone}</span>
-          </div>
+      <div className="flex items-center gap-3.5 px-5 pt-[26px]">
+        <span className="flex size-16 shrink-0 items-center justify-center rounded-full bg-ink text-xl font-medium text-background" aria-hidden>{initials(name)}</span>
+        <div className="min-w-0 flex-1">
+          <h1 className="break-words text-[22px] font-semibold leading-tight">{name}</h1>
+          <p className="text-[13px] text-mute">+91 {me?.phone}</p>
           {status && (
-            <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-sm">
-              <span className="text-mute">{S.account.status}</span>
-              <Badge tone={status === 'Approved' ? 'good' : status === 'Pending' ? 'warn' : 'bad'}>{label(S.status, status)}</Badge>
-            </div>
+            <Badge tone={status === 'Approved' ? 'good' : status === 'Pending' ? 'warn' : 'bad'} className="mt-1.5">
+              {label(S.status, status)}
+            </Badge>
           )}
-        </Card>
+        </div>
+      </div>
 
-        <section>
-          <h2 className="font-semibold">{S.account.language}</h2>
-          <p className="mb-2 text-sm text-mute">{S.account.languageSub}</p>
+      <Card title={S.account.businessInfo}>
+        <div className={rowCls.replace('press ', '')}>
+          <span className={iconCls} aria-hidden><Store className="size-5" /></span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[15px] font-medium">{S.account.businessInfo}</span>
+            <span className="block break-words text-[13px] text-mute">{biz.data?.legalName ?? name}{biz.data?.gstin ? ` · ${biz.data.gstin}` : ''}</span>
+          </span>
+        </div>
+        <div className={rowCls.replace('press ', '')}>
+          <span className={iconCls} aria-hidden><MapPin className="size-5" /></span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[15px] font-medium">{S.account.addressesTitle}</span>
+            <span className="block text-[13px] text-mute">{addrs.length === 0 ? S.address.none : addrs.map((a) => `${a.cityName} ${a.pincode}`).join(' · ')}</span>
+          </span>
+        </div>
+        <Link to="/shop/notifications" viewTransition className={rowCls}>
+          <span className={iconCls} aria-hidden><Bell className="size-5" /></span>
+          <span className="min-w-0 flex-1 text-[15px] font-medium">{S.account.notifications}</span>
+          {unread > 0 && <Badge tone="warn">{fmt(S.notif.newCount, { n: unread })}</Badge>}
+          <ChevronRight className="size-4 text-mute" aria-hidden />
+        </Link>
+      </Card>
+
+      <Card title={S.account.language}>
+        <div className="px-4 py-3.5">
+          <h2 className="font-medium">{S.account.language}</h2>
+          <p className="mb-2.5 text-[13px] text-mute">{S.account.languageSub}</p>
           <Segmented value={lang} onChange={setLang} options={LANGS.map((l) => ({ value: l, label: S.lang[l] }))} />
-        </section>
+        </div>
+      </Card>
 
-        <section>
-          <h2 className="font-semibold">{S.account.demo}</h2>
-          <p className="mb-2 text-sm text-mute">{S.account.demoSub}</p>
+      <Card title={S.account.helpTitle}>
+        <a href={waLink(S.cart.waHelpMsg)} target="_blank" rel="noreferrer" className={rowCls}>
+          <span className={iconCls} aria-hidden><MessageCircle className="size-5" /></span>
+          <span className="flex-1 text-[15px] font-medium">{S.account.helpTitle}: {S.account.helpWa}</span>
+          <ChevronRight className="size-4 text-mute" aria-hidden />
+        </a>
+        <div className="px-4 py-3.5">
+          <h2 className="font-medium">{S.account.demo}</h2>
+          <p className="mb-2.5 text-[13px] text-mute">{S.account.demoSub}</p>
           <Segmented
             value={USE_MOCKS ? 'on' : 'off'}
             onChange={(v) => {
@@ -65,13 +116,14 @@ export default function AccountPage() {
               { value: 'off', label: S.account.demoOff },
             ]}
           />
-        </section>
+        </div>
+      </Card>
 
-        <Button variant="soft" block onClick={() => void logout()}>
-          <LogOut className="size-5" aria-hidden />
-          {S.account.logout}
-        </Button>
-      </div>
+      <button type="button" onClick={() => void logout()} className="press mx-5 mt-4 flex min-h-12 w-[calc(100%-40px)] items-center justify-center gap-2 rounded-pill border border-line bg-surface font-medium text-error">
+        <LogOut className="size-5" aria-hidden />
+        {S.account.logout}
+      </button>
+      <p className="mt-3.5 text-center text-xs text-mute">{fmt(S.account.appVersion, { v: '1.0' })}</p>
     </div>
   )
 }

@@ -20,3 +20,17 @@ Each item: endpoint, request, response, why. The frontend runs on mock data unti
 - Owner name ("Your name") is in the design but not in `CreateBusinessInput`. Add `ownerName`.
 - GST and documents must be optional at signup. The client sends `gstin: ""` when it is empty.
 - Optional: send the OTP over WhatsApp (`POST /auth/otp/request` with `channel: "whatsapp"`).
+
+## 6. Notifications (B2c)
+- `GET /api/v1/notifications` returns a plain array of `{ id, type: "order"|"payment"|"account"|"system", title, body, createdAt, isRead, link? }`, newest first (a page is fine, the client reads `items` or the array).
+- `GET /api/v1/notifications/unread-count` returns `{ count }`. `POST /notifications/{id}/read` returns 204.
+- Missing today: `POST /api/v1/notifications/read-all`.
+- Titles and bodies should be sent in the user's language (`Accept-Language: en|hi`).
+
+## 7. Problem reports (B2c)
+- `POST /api/v1/seller-orders/{sellerOrderId}/claims` with `{ reason: "Damaged"|"WrongItem"|"LessQuantity"|"NotAsShown"|"Other", pieces, note? }`. Validate the reason, pieces (1 to ordered), note length (500). Return `{ id, sellerOrderId, reason, pieces, status, createdAt }`.
+- `POST /api/v1/claims/{id}/photos` (multipart `file`, at most 3, 5 MB each).
+- Admin needs a list endpoint for open reports (see API_SCREENS.md "Admin problem reports").
+
+## 8. Order items need `variantId` and an image (Home "Order again", Orders list)
+- `OrderItem.variantId` and `OrderItem.imageUrl`.

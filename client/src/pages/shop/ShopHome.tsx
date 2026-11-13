@@ -1,16 +1,16 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { MapPin, Package, SlidersHorizontal } from 'lucide-react'
+import { Bell, MapPin, Package, SlidersHorizontal } from 'lucide-react'
 import { cartApi, productApi } from '@/api/endpoints'
 import { useMe } from '@/auth'
 import { AddressSheet } from '@/components/AddressSheet'
-import { CartLink } from '@/components/HeaderButtons'
+import { CartLink, roundIcon } from '@/components/HeaderButtons'
 import { ProductCard, ProductCardSkeleton } from '@/components/ProductCard'
 import { SearchBox } from '@/components/SearchBox'
 import { Skeleton, EmptyState, ErrorState } from '@/components/ui/misc'
 import { useToast } from '@/components/ui/toast'
-import { useCategories, useDeliveryAddress, useLastOrder } from '@/hooks'
+import { useCategories, useDeliveryAddress, useLastOrder, useUnreadCount } from '@/hooks'
 import { fmt, S } from '@/i18n'
 import { saveReorderPrices } from '@/lib/reorder'
 import { haptic } from '@/motion'
@@ -97,6 +97,7 @@ export default function ShopHome() {
   const { data: me } = useMe()
   const cats = useCategories()
   const { addr } = useDeliveryAddress()
+  const unread = useUnreadCount()
   const [catId, setCatId] = useState<number | null>(null)
   const [changing, setChanging] = useState(false)
   const products = useQuery({
@@ -114,7 +115,13 @@ export default function ShopHome() {
         <Link to="/shop/account" viewTransition aria-label={S.home.menu} className="press flex size-[46px] items-center justify-center rounded-full bg-ink text-[15px] font-medium text-background">
           {initials(name)}
         </Link>
-        <CartLink />
+        <div className="flex gap-2">
+          <Link to="/shop/notifications" viewTransition aria-label={unread > 0 ? `${S.notif.bell}, ${fmt(S.notif.newCount, { n: unread })}` : S.notif.bell} className={roundIcon}>
+            <Bell className="size-5" aria-hidden />
+            {unread > 0 && <span className="absolute right-[11px] top-2.5 size-2 rounded-full border-2 border-surface bg-dot" aria-hidden />}
+          </Link>
+          <CartLink />
+        </div>
       </header>
 
       {me?.business && me.business.verificationStatus !== 'Approved' && (

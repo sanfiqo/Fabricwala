@@ -14,6 +14,8 @@ const ProductPage = lazy(() => import('@/pages/shop/ProductPage'))
 const CartPage = lazy(() => import('@/pages/shop/CartPage'))
 const CheckoutPage = lazy(() => import('@/pages/shop/CheckoutPage'))
 const SessionExpiredPage = lazy(() => import('@/pages/SessionExpiredPage'))
+const NotificationsPage = lazy(() => import('@/pages/NotificationsPage'))
+const ReportPage = lazy(() => import('@/pages/shop/ReportPage'))
 const AccountPage = lazy(() => import('@/pages/shop/AccountPage'))
 const OrdersPage = lazy(() => import('@/pages/shop/OrdersPage').then((m) => ({ default: m.OrdersPage })))
 const OrderDetailPage = lazy(() => import('@/pages/shop/OrdersPage').then((m) => ({ default: m.OrderDetailPage })))
@@ -54,6 +56,7 @@ export default function App() {
           <Route path="/shop/products" element={<ProductListPage />} />
           <Route path="/shop/p/:slug" element={<ProductPage />} />
           <Route path="/shop/account" element={<AccountPage />} />
+          <Route path="/shop/notifications" element={<NotificationsPage />} />
         </Route>
       </Route>
 
@@ -63,6 +66,7 @@ export default function App() {
           <Route path="/shop/checkout" element={<CheckoutPage />} />
           <Route path="/shop/orders" element={<OrdersPage />} />
           <Route path="/shop/orders/:id" element={<OrderDetailPage />} />
+          <Route path="/shop/orders/:id/report" element={<ReportPage />} />
         </Route>
       </Route>
 

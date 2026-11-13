@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, useSyncExternalStore } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { businessApi, masterApi, orderApi } from '@/api/endpoints'
+import { businessApi, masterApi, notificationApi, orderApi } from '@/api/endpoints'
 import type { BusinessAddress, Order } from '@/api/types'
 
 export function useCategories() {
@@ -78,4 +78,10 @@ export function useDebounced<T>(value: T, ms = 400): T {
     return () => clearTimeout(t)
   }, [value, ms])
   return v
+}
+
+/** Number of unread notifications, for the bell. Refreshes every minute while the app is open. */
+export function useUnreadCount() {
+  const q = useQuery({ queryKey: ['notifications', 'unread'], queryFn: notificationApi.unread, refetchInterval: 60_000, staleTime: 0 })
+  return q.data?.count ?? 0
 }
