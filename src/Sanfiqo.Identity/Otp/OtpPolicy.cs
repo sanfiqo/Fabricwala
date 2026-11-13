@@ -2,6 +2,7 @@ namespace Sanfiqo.Identity;
 
 using System.Security.Cryptography;
 using System.Text;
+using System.Globalization;
 
 /// <summary>Approved user challenge rules. IP thresholds must be configured before issuing challenges.</summary>
 public sealed class OtpPolicy
@@ -15,6 +16,18 @@ public sealed class OtpPolicy
     public int MobileSendsPer24Hours { get; set; } = 10;
     public int? IpSendsPer15Minutes { get; set; }
     public int? IpSendsPer24Hours { get; set; }
+    public string? DevFixedCode { get; set; }
+    public bool RelaxRateLimits { get; set; }
+
+    public string CreateCode(string environmentName)
+    {
+        if (string.Equals(environmentName, "Development", StringComparison.OrdinalIgnoreCase)
+            && DevFixedCode is { Length: 6 } fixedCode
+            && fixedCode.All(char.IsDigit))
+            return fixedCode;
+
+        return RandomNumberGenerator.GetInt32(0, 1_000_000).ToString("D6", CultureInfo.InvariantCulture);
+    }
 
     public IReadOnlyList<string> Validate(bool requireIpLimits = false)
     {

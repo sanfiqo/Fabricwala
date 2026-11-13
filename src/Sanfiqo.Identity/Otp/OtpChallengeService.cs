@@ -1,6 +1,5 @@
 using System.Globalization;
 using System.Net;
-using System.Security.Cryptography;
 using Sanfiqo.Identity;
 
 namespace Sanfiqo.Identity;
@@ -8,7 +7,8 @@ namespace Sanfiqo.Identity;
 public sealed class OtpChallengeService(
     IOtpChallengeStore store,
     IOtpDelivery delivery,
-    OtpPolicy policy) : IOtpChallenges
+    OtpPolicy policy,
+    Microsoft.Extensions.Hosting.IHostEnvironment environment) : IOtpChallenges
 {
     public async Task<Guid> RequestMobileCodeAsync(string mobileE164, string clientIp, CancellationToken cancellationToken = default)
     {
@@ -19,7 +19,7 @@ public sealed class OtpChallengeService(
         if (policy.Validate(requireIpLimits: true).Count != 0)
             throw new OtpDeliveryUnavailableException();
 
-        var code = RandomNumberGenerator.GetInt32(0, 1_000_000).ToString("D6", CultureInfo.InvariantCulture);
+        var code = policy.CreateCode(environment.EnvironmentName);
         var now = DateTimeOffset.UtcNow;
         var reservation = Guid.NewGuid();
         await store.ReserveAsync(reservation, mobileE164, parsedIp.ToString(), code, policy, now, cancellationToken);

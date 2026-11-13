@@ -40,11 +40,11 @@ public sealed class EfOtpChallengeStore : IOtpChallengeStore
         var ipEvents = events.Where(x => FixedEquals(x.IpHash, ipHash)).ToArray();
         var mobile24HourCount = mobileEvents.Count(x => x.OccurredAtUtc > retentionStart);
         var ip24HourCount = ipEvents.Count(x => x.OccurredAtUtc > retentionStart);
-        if (mobileEvents.Length > 0 && mobileEvents[0].OccurredAtUtc > utcNow - policy.ResendCooldown
+        if (!policy.RelaxRateLimits && (mobileEvents.Length > 0 && mobileEvents[0].OccurredAtUtc > utcNow - policy.ResendCooldown
             || mobileEvents.Count(x => x.OccurredAtUtc > utcNow.AddMinutes(-15)) >= policy.MobileSendsPer15Minutes
             || mobile24HourCount >= policy.MobileSendsPer24Hours
             || ipEvents.Count(x => x.OccurredAtUtc > utcNow.AddMinutes(-15)) >= policy.IpSendsPer15Minutes
-            || ip24HourCount >= policy.IpSendsPer24Hours)
+            || ip24HourCount >= policy.IpSendsPer24Hours))
             throw new OtpRateLimitException();
 
         _db.OtpSendEvents.Add(new OtpSendEvent
