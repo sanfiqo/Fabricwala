@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using Sanfiqo.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using MySql.Data.MySqlClient;
 
 namespace Sanfiqo.Identity;
@@ -17,11 +18,13 @@ public sealed class EfVerifiedMobileAccountStore : IVerifiedMobileAccountStore
     private readonly UserContactCryptography _cryptography;
     private readonly IUserContactProofProtector _proofProtector;
     private readonly IEnumerable<IMobileAuthenticationWriteManifest> _writeManifests;
+    private readonly IConfiguration _configuration;
 
     public EfVerifiedMobileAccountStore(ApplicationIdentityDbContext db,
         UserManager<ApplicationUser> users, RoleManager<ApplicationRole> roles,
         UserContactCryptography cryptography, IUserContactProofProtector proofProtector,
-        IEnumerable<IMobileAuthenticationWriteManifest>? writeManifests = null)
+        IEnumerable<IMobileAuthenticationWriteManifest>? writeManifests = null,
+        IConfiguration? configuration = null)
     {
         _db = db;
         _users = users;
@@ -29,6 +32,7 @@ public sealed class EfVerifiedMobileAccountStore : IVerifiedMobileAccountStore
         _cryptography = cryptography;
         _proofProtector = proofProtector;
         _writeManifests = writeManifests ?? Array.Empty<IMobileAuthenticationWriteManifest>();
+        _configuration = configuration ?? new ConfigurationBuilder().Build();
     }
 
     public async Task<VerifiedMobileAccountResult> CompleteAsync(NormalizedUserContact mobile,
@@ -92,8 +96,10 @@ public sealed class EfVerifiedMobileAccountStore : IVerifiedMobileAccountStore
 
                 // OTP alone must never enter manufacturer/admin scope. Existing users must
                 // already be active; no legacy activation or role promotion is inferred.
+                var existingBootstrapAdmin = IsBootstrapAdmin(mobile.Value);
                 if (user is null || !user.IsActive || duplicateLegacyPhone
-                    || userRoles.Count != 1 || !userRoles.Contains(UserRole, StringComparer.Ordinal))
+                    || (!existingBootstrapAdmin && (userRoles.Count != 1 || !userRoles.Contains(UserRole, StringComparer.Ordinal)))
+                    || (existingBootstrapAdmin && !userRoles.Contains(SanfiqoRoleNames.Admin, StringComparer.Ordinal)))
                     return new(VerifiedMobileAccountStatus.Rejected);
                 return new(VerifiedMobileAccountStatus.ExistingUser, user.Id);
             }
@@ -106,10 +112,12 @@ public sealed class EfVerifiedMobileAccountStore : IVerifiedMobileAccountStore
                 return new(VerifiedMobileAccountStatus.Rejected);
             }
 
-            var role = await _roles.FindByNameAsync(UserRole);
+            var bootstrapAdmin = IsBootstrapAdmin(mobile.Value);
+            var roleName = bootstrapAdmin ? SanfiqoRoleNames.Admin : UserRole;
+            var role = await _roles.FindByNameAsync(roleName);
             if (role is null)
             {
-                var userRole = new ApplicationRole { Id = Guid.NewGuid().ToString("D"), Name = UserRole };
+                var userRole = new ApplicationRole { Id = Guid.NewGuid().ToString("D"), Name = roleName };
                 _writeManifests.TrackBeforeWrite("SharedRole", userRole.Id);
                 var createRole = await _roles.CreateAsync(userRole);
                 if (!createRole.Succeeded)
@@ -137,7 +145,7 @@ public sealed class EfVerifiedMobileAccountStore : IVerifiedMobileAccountStore
                 return new(VerifiedMobileAccountStatus.Unavailable);
             }
 
-            var addRole = await _users.AddToRoleAsync(newUser, UserRole);
+            var addRole = await _users.AddToRoleAsync(newUser, roleName);
             if (!addRole.Succeeded)
             {
                 await transaction.RollbackAsync(CancellationToken.None);
@@ -178,6 +186,11 @@ public sealed class EfVerifiedMobileAccountStore : IVerifiedMobileAccountStore
                 : VerifiedMobileAccountStatus.Unavailable);
         }
     }
+
+    private bool IsBootstrapAdmin(string mobile)
+        => (_configuration.GetSection("Bootstrap:AdminPhones").Get<string[]>() ?? Array.Empty<string>())
+            .Any(phone => UserContactNormalizer.TryNormalize(UserContactKind.Mobile, phone, out var normalized)
+                && normalized.Value == mobile);
 
     private static bool IsDuplicateKey(Exception exception)
     {
