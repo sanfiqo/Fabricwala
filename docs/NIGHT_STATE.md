@@ -47,7 +47,7 @@ Pending: night run in progress.
 - [x] C3. Open problem report holds payout. `56250cb`
 
 ### D. Frontend handoff
-- [x] D1. Export `docs/openapi.json`; preserve DTO names/log any renames. `COMMIT`
+- [x] D1. Export `docs/openapi.json`; preserve DTO names/log any renames. `2640d7e`
 - [ ] D2. Development-only design seed businesses/products/admin.
 - [ ] D3. Local run guide: base URL, development users/OTP, user-secrets names only.
 - [ ] D4. Development-only localhost:5173 and LAN frontend CORS.
