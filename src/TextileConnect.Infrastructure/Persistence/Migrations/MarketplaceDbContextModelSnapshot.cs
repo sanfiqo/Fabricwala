@@ -1059,10 +1059,16 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<int>("Pieces")
+                        .HasColumnType("int");
+
                     b.Property<string>("Reason")
                         .IsRequired()
                         .HasMaxLength(2000)
                         .HasColumnType("varchar(2000)");
+
+                    b.Property<int>("ReasonCode")
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("ResolvedAtUtc")
                         .HasColumnType("datetime(6)");

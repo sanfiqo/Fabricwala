@@ -5,6 +5,10 @@ public sealed class ReturnClaim
     public long Id { get; set; }
     public long SellerOrderId { get; set; }
     public SellerOrder? SellerOrder { get; set; }
+    public ClaimReason ReasonCode { get; set; } = ClaimReason.Other;
+    /// <summary>How many pieces are affected.</summary>
+    public int Pieces { get; set; }
+    /// <summary>The note written by the retailer.</summary>
     public required string Reason { get; set; }
     public string Status { get; set; } = "Submitted";
     public string? SellerResponse { get; set; }
