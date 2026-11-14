@@ -117,6 +117,7 @@ app.MapLandedCostEndpoints();
 app.MapInvoiceEndpoints();
 app.MapReturnClaimEndpoints();
 app.MapNotificationEndpoints();
+app.MapAccountEndpoints();
 app.MapStorefrontEndpoints();
 app.MapSellerDashboardEndpoints();
 app.MapBulkProductEndpoints();
