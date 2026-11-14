@@ -50,7 +50,7 @@ Pending: night run in progress.
 - [x] D1. Export `docs/openapi.json`; preserve DTO names/log any renames. `2640d7e`
 - [x] D2. Development-only design seed businesses/products/admin. `bd30ec6`
 - [x] D3. Local run guide: base URL, development users/OTP, user-secrets names only. `64578c5`
-- [x] D4. Development-only localhost:5173 and LAN frontend CORS. `COMMIT`
+- [x] D4. Development-only localhost:5173 and LAN frontend CORS. `25a501f`
 
 ### E. Only after A-D
 - [ ] E1. Admin orders/claims/businesses/moderation/payouts/commission lists.
