@@ -6,16 +6,22 @@ current API covers the complete screen contract, not merely whether one related 
 The prompt lists **23 screens** in section 2. The follow-up adds **15 not-yet-designed
 screens**, for **38 screens audited**.
 
+Night audit A1: the night prompt mentions **33** additional screens, but section 2
+of the referenced prompt names only the 23 designed screens. The existing audit
+supplies 15 additional named screens. All 38 named screens are retained below;
+the remaining 18 unnamed screens cannot be mapped without a screen list. This is
+an input gap, not evidence that those screens have working endpoints.
+
 | Area | Screen | Endpoint(s) | Request DTO / query | Response DTO / shape | Status |
 |---|---|---|---|---|---|
 | Retailer | Home | `GET /api/v1/categories`; `GET /api/v1/products`; `GET /api/v1/banners` | Product query: `q`, `categoryId`, `minPrice`, `maxPrice`, `maxMoq`, `sort`, `page`, `pageSize` | Category/banner entities; paged anonymous product list using `ProductSummaryResponse` | partly |
 | Retailer | Product | `GET /api/v1/products/{slug}`; `GET /api/v1/landed-cost` | `productId`, `qty`, `cityId`, optional `pincode` | `ProductDetailResponse`; `LandedCostResponse` | partly |
-| Retailer | Cart | `GET /api/v1/cart`; `POST/PUT/DELETE /api/v1/cart/items...` | `CartRequest(VariantId, Quantity)` | `CartResponse` | exists |
+| Retailer | Cart | `GET /api/v1/cart`; `POST/PUT/DELETE /api/v1/cart/items...` | `CartRequest(VariantId, Quantity)` | `CartResponse`; no next-tier savings contract | partly |
 | Retailer | Checkout | `POST /api/v1/checkout`; `POST /api/v1/payments` | `CheckoutRequest(DeliveryAddressId)`; `PaymentRequest(OrderId)` | `OrderResponse`; payment result | partly |
 | Retailer | Orders list | `GET /api/v1/orders` | None | list of `OrderResponse` | partly |
 | Retailer | Track order | `GET /api/v1/orders/{id}`; `POST /api/v1/orders/{id}/confirm-delivery` | Order id | `OrderResponse` with `SellerOrderResponse`, history, shipment | partly |
 | Retailer | Search + filters | `GET /api/v1/products` | Supports query, category, price, MOQ, sort, paging; no material/size/colour/seller-city filters | Paged `ProductSummaryResponse` list | partly |
-| Retailer | Account | `GET /api/v1/auth/me`; `GET/PUT /api/v1/businesses/me`; address routes | `BusinessUpdate`; address entity | Auth profile/business/address shapes | exists |
+| Retailer | Account | `GET /api/v1/auth/me`; `GET/PUT /api/v1/businesses/me`; address routes | `BusinessUpdate`; address entity | Auth profile/business/address shapes; language preference missing | partly |
 | Retailer | Notifications | `GET /api/v1/notifications`; `GET /unread-count`; `POST /{id}/read` | Page query; notification id | Anonymous paged list; `{ count }`; notification entity | partly |
 | Retailer | Report a problem | `POST /api/v1/seller-orders/{sellerOrderId}/claims`; photo upload route | `ClaimRequest(Reason)`; individual photo upload | Return-claim entity / photo count | partly |
 | Auth | Login (mobile) | `POST /api/v1/auth/otp/request` | `OtpRequest(PhoneNumber)` | `204`; challenge cookie | exists |
@@ -28,12 +34,12 @@ screens**, for **38 screens audited**.
 | Seller | Add product | `POST /api/v1/seller/products`; bulk template/preview/import/image routes | `ProductInput`; multipart bulk/image upload | `ProductDetailResponse`; `BulkPreview`; anonymous import/image results | partly |
 | Seller | Payouts | `GET /api/v1/seller/payouts?csv=true` | Optional `csv` query | Anonymous payout rows or CSV: seller order, amount, commission, status, settled date | partly |
 | Admin | Home | `GET /api/v1/admin/dashboard` | Optional `days` (one window only) | Anonymous dashboard: window, GMV, orders, commission, new businesses, pending approvals | partly |
-| Admin | Approvals list | `GET /api/v1/admin/businesses`; approve/reject routes | `Rejection(Note)` for rejection | Business list/entity | exists |
+| Admin | Approvals list | `GET /api/v1/admin/businesses`; approve/reject routes | `Rejection(Note)` for rejection; no status/page query | Pending-only business list/entity | partly |
 | Admin | Review | Business/document routes; approve/reject routes | `Rejection(Note)`; document id | Business/document entities; no GST-check result endpoint | partly |
 | Admin | Problem reports | `POST /api/v1/admin/claims/{claimId}/decide` | `AdminDecision(Decision, RefundAmount, Note)` | Return-claim entity | partly |
-| Retailer | Category list | `GET /api/v1/categories` | None | Category seed list | exists |
+| Retailer | Category list | `GET /api/v1/categories` | None | Category name list; no id/slug/tree contract | partly |
 | Retailer | Seller profile | `GET /api/v1/storefronts/{businessId}` | Business id | Storefront anonymous shape with business, rating, review count, products | exists |
-| Retailer | Address book | `GET/POST /api/v1/businesses/me/addresses`; default-address route | Address entity; address id | Address entity/list | exists |
+| Retailer | Address book | `GET/POST /api/v1/businesses/me/addresses`; default-address route | Address entity; address id | Address entity/list; edit/delete missing | partly |
 | Retailer | Payment success/failed | `POST /api/v1/payments`; payment webhook | `PaymentRequest(OrderId)`; webhook payload | Anonymous payment result; webhook response | partly |
 | Retailer | Order detail | `GET /api/v1/orders/{id}` | Order id | `OrderResponse` | partly |
 | Retailer | Reorder | No endpoint found | None | No response contract | missing |
@@ -49,8 +55,8 @@ screens**, for **38 screens audited**.
 
 ## Summary
 
-- Exists: **10**
-- Partly: **24**
+- Exists: **6**
+- Partly: **28**
 - Missing: **4**
 
 ## Missing capabilities inside partly covered screens
@@ -72,6 +78,12 @@ screens**, for **38 screens audited**.
 
 ## Gaps
 
+Unspecified screens | the referenced inputs name only 15 of the claimed 33 additional screens; 18 screen identities are unspecified | unknown
+Cart | next-tier quantity and add-more savings data are absent | small
+Account | en/hi language preference is absent | small
+Approvals list | only pending businesses; no status filter or paging | medium
+Category list | names only; category ids, slugs and tree are absent | small
+Address book | address edit and delete are absent | medium
 Home | no explicit best-sellers contract; current product response is a generic list | medium
 Product | landed price is a separate call and product details omit required presentation fields | medium
 Checkout | no visible `Idempotency-Key` contract; payment and checkout responses are not documented DTOs | big

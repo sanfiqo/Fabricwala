@@ -14,10 +14,10 @@ Pending: night run in progress.
 
 ## Queue
 
-- [x] 0. Read rules, contracts and phases; create state; baseline build/tests. Commit recorded in next checkpoint.
+- [x] 0. Read rules, contracts and phases; create state; baseline build/tests. `50b5235`.
 
 ### A. Contract
-- [ ] A1. Audit Gaps and rows for the not-yet-designed screens.
+- [x] A1. Audit Gaps and rows for all 38 named screens; document 18 unspecified screen identities. Commit recorded in next checkpoint.
 - [ ] A2. Stable `{ code, message, fields? }` errors everywhere; document codes.
 
 ### B. Core journey
@@ -64,3 +64,5 @@ Pending: night run in progress.
 - 0: Source audit names 23 designed plus 15 additional screens (38 total); the night prompt refers to 33 additional screens, but its referenced section does not name them. A1 will audit every named screen, document the discrepancy, and leave unidentified screens explicitly unspecified.
 - 0: `docs/PHASES.md` already marks backend P10 tasks complete; night queue is authoritative for this run. No frontend tasks or real-service setup will be attempted.
 - 0: Created requested branch from backend `master` at `d0aa587`; baseline green. Existing dependency advisory and nullable warnings are recorded above; do not count the early-return MySQL test as database proof.
+- A1: Verified endpoint registrations against all 38 named rows. Corrected Cart, Account, Approvals, Category list and Address book to partly covered (6 exists / 28 partly / 4 missing, counted from table); added explicit gaps. The input summary counts were off by one. Unnamed screens are an input gap and will not be invented; continue with the explicit backend queue.
+- Resume 2026-11-14: User explicitly requested nonstop execution and section 6. The saved night prompt ends at section 5; no section 6 is present. Continue without questions using the existing written hard stops; retain completed step 0 and finish interrupted A1 rather than recreate history.
