@@ -59,6 +59,7 @@ builder.Services.AddSingleton<IAuthorizationHandler, ApprovedBusinessHandler>();
 builder.Services.AddMarketplacePersistence(builder.Configuration);
 builder.Services.AddScoped<IBusinessDirectory, EfBusinessDirectory>();
 builder.Services.AddScoped<IProductDirectory, EfProductDirectory>();
+builder.Services.AddScoped<IProductPricing, EfProductPricing>();
 builder.Services.AddScoped<ICartService, EfCartService>();
 builder.Services.AddScoped<IOrderService, EfOrderService>();
 builder.Services.AddScoped<ICheckoutService, EfCheckoutService>();

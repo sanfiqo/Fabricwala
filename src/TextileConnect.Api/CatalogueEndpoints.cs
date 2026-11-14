@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 using TextileConnect.Application.Common;
+using TextileConnect.Application.Businesses;
+using TextileConnect.Application.Catalogue;
 using TextileConnect.Application.Files;
 using TextileConnect.Infrastructure.Persistence;
 
@@ -19,16 +21,28 @@ public static class CatalogueEndpoints
                 .Skip((current - 1) * size).Take(size).Select(x => new CategoryResponse(x.Id, x.ParentId, x.Name, x.Slug, x.SortOrder)).ToListAsync(ct),
                 await query.CountAsync(ct), current, size));
         });
-        app.MapGet("/api/v1/products", async ([AsParameters] CatalogueQuery query, MarketplaceDbContext db, CancellationToken ct)
-            => !query.IsValid ? Results.BadRequest() : Results.Ok(await new CatalogueReader(db).ListAsync(query, ct))).RequireRateLimiting("search");
-        app.MapGet("/api/v1/home", async (MarketplaceDbContext db, CancellationToken ct) =>
+        app.MapGet("/api/v1/products", async ([AsParameters] CatalogueQuery query, MarketplaceDbContext db, IProductPricing pricing, ICurrentBusiness current, CancellationToken ct)
+            => !query.IsValid ? Results.BadRequest() : Results.Ok(await WithQuotesAsync(await new CatalogueReader(db).ListAsync(query, ct), query.Pincode, pricing, current, ct))).RequireRateLimiting("search");
+        app.MapGet("/api/v1/home", async (string? pincode, MarketplaceDbContext db, IProductPricing pricing, ICurrentBusiness current, CancellationToken ct) =>
         {
             var categories = await db.Categories.AsNoTracking().Where(x => x.IsActive).OrderBy(x => x.SortOrder).ThenBy(x => x.Id).Take(100)
                 .Select(x => new CategoryResponse(x.Id, x.ParentId, x.Name, x.Slug, x.SortOrder)).ToListAsync(ct);
-            return Results.Ok(new HomeResponse(categories, await new CatalogueReader(db).ListAsync(new(Sort: "popular", PageSize: 12), ct)));
+            var products = await new CatalogueReader(db).ListAsync(new(Sort: "popular", PageSize: 12), ct);
+            return Results.Ok(new HomeResponse(categories, await WithQuotesAsync(products, pincode, pricing, current, ct)));
         }).RequireRateLimiting("search");
-        app.MapGet("/api/v1/products/{slug}", async (string slug, MarketplaceDbContext db, CancellationToken ct)
-            => await new CatalogueReader(db).DetailAsync(slug, ct) is { } product ? Results.Ok(product) : Results.NotFound());
+        app.MapGet("/api/v1/products/{slug}", async (string slug, int? qty, string? pincode, MarketplaceDbContext db, IProductPricing pricing, ICurrentBusiness current, CancellationToken ct) =>
+        {
+            var product = await new CatalogueReader(db).DetailAsync(slug, ct);
+            if (product is null) return Results.NotFound();
+            if (qty.HasValue && (qty < product.Moq || qty > 1_000_000)) return Results.BadRequest();
+            var destination = await pricing.DestinationAsync(pincode, null, current.BusinessId, ct);
+            if (destination is not null)
+            {
+                var quotes = await pricing.QuoteAsync([new(product.Id, qty ?? product.Moq)], destination, ct);
+                product = product with { LandedCost = LandedCostResponse.From(quotes[product.Id]) };
+            }
+            return Results.Ok(product);
+        });
         app.MapGet("/api/v1/products/{slug}/media/{mediaId:long}", async (string slug, long mediaId, MarketplaceDbContext db, IFileStorage storage, HttpContext context, CancellationToken ct) =>
         {
             var media = await (from product in new CatalogueReader(db).PublicProducts
@@ -47,5 +61,14 @@ public static class CatalogueEndpoints
             }
             catch (FileNotFoundException) { return Results.NotFound(); }
         });
+    }
+
+    private static async Task<PagedResponse<ProductSummaryResponse>> WithQuotesAsync(PagedResponse<ProductSummaryResponse> page,
+        string? pincode, IProductPricing pricing, ICurrentBusiness current, CancellationToken ct)
+    {
+        var destination = await pricing.DestinationAsync(pincode, null, current.BusinessId, ct);
+        if (destination is null) return page;
+        var quotes = await pricing.QuoteAsync(page.Items.Select(x => new ProductQuantity(x.Id, x.Moq)).ToArray(), destination, ct);
+        return page with { Items = page.Items.Select(x => x with { LandedCost = LandedCostResponse.From(quotes[x.Id]) }).ToList() };
     }
 }

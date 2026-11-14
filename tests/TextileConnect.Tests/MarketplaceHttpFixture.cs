@@ -21,6 +21,8 @@ using Sanfiqo.Identity;
 using TextileConnect.Api;
 using TextileConnect.Application.Businesses;
 using TextileConnect.Application.Files;
+using TextileConnect.Application.Catalogue;
+using TextileConnect.Infrastructure.Catalogue;
 using TextileConnect.Infrastructure.Businesses;
 using TextileConnect.Infrastructure.Persistence;
 
@@ -51,6 +53,7 @@ public sealed class MarketplaceHttpFixture(WebApplication app) : IAsyncDisposabl
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddScoped<ICurrentBusiness, CurrentBusiness>();
         builder.Services.AddScoped<IBusinessDirectory, EfBusinessDirectory>();
+        builder.Services.AddScoped<IProductPricing, EfProductPricing>();
         builder.Services.AddSingleton<IFileStorage, MemoryFileStorage>();
         builder.Services.AddDataProtection().UseEphemeralDataProtectionProvider();
         builder.Services.AddAntiforgery(options => options.HeaderName = "X-CSRF-TOKEN");
