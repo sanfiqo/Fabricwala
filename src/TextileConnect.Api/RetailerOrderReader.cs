@@ -10,9 +10,15 @@ public sealed class RetailerOrderReader(MarketplaceDbContext db)
 {
     public static bool IsValidGroup(string? group) => group is null or "all" or OrderStatusRules.Active or OrderStatusRules.Delivered or OrderStatusRules.Problems;
 
-    public async Task<PagedResponse<RetailerOrderSummaryResponse>> ListAsync(long retailerId, string? group, int page, int pageSize, CancellationToken ct)
+    public Task<PagedResponse<RetailerOrderSummaryResponse>> ListAsync(long retailerId, string? group, int page, int pageSize, CancellationToken ct)
+        => ListCoreAsync(db.Orders.AsNoTracking().Where(o => o.RetailerBusinessId == retailerId), group, page, pageSize, ct);
+
+    /// <summary>All retailers, for admins. Optional search by order number.</summary>
+    public Task<PagedResponse<RetailerOrderSummaryResponse>> ListAllAsync(string? search, string? group, int page, int pageSize, CancellationToken ct)
+        => ListCoreAsync(string.IsNullOrWhiteSpace(search) ? db.Orders.AsNoTracking() : db.Orders.AsNoTracking().Where(o => o.OrderNumber.Contains(search.Trim())), group, page, pageSize, ct);
+
+    private async Task<PagedResponse<RetailerOrderSummaryResponse>> ListCoreAsync(IQueryable<Order> orders, string? group, int page, int pageSize, CancellationToken ct)
     {
-        var orders = db.Orders.AsNoTracking().Where(o => o.RetailerBusinessId == retailerId);
         // problems: a seller order was rejected/cancelled or a claim is open. delivered: paid and every seller order delivered (and no problem). active: the rest.
         orders = group switch
         {

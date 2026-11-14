@@ -1188,18 +1188,6 @@
         ]
       }
     },
-    "/api/v1/admin/products": {
-      "get": {
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "testhost"
-        ]
-      }
-    },
     "/api/v1/admin/products/{id}/moderate": {
       "post": {
         "parameters": [
