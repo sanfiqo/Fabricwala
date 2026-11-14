@@ -67,6 +67,8 @@ public sealed record SellerOrderResponse(long Id, long OrderId, string OrderNumb
 
 public sealed record OrderResponse(long Id, string OrderNumber, DateTime? PlacedAt, decimal SubTotal, decimal ShippingTotal, decimal TaxTotal, decimal GrandTotal, string PaymentStatus, object? DeliveryAddress, IReadOnlyList<SellerOrderResponse> SellerOrders)
 {
+    public string Status { get; init; } = string.Empty;
+    public string Group { get; init; } = string.Empty;
     public static OrderResponse From(Order value) => new(value.Id, value.OrderNumber, value.PlacedAtUtc, value.SubTotal, value.ShippingTotal, value.TaxTotal, value.GrandTotal, value.PaymentStatus, new { line1 = value.DeliveryLine1, line2 = value.DeliveryLine2, city = value.DeliveryCity, pincode = value.DeliveryPincode }, value.SellerOrders.Select(SellerOrderResponse.From).ToList());
 }
 

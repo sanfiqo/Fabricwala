@@ -13,7 +13,7 @@ namespace TextileConnect.Tests;
 
 public sealed class PaymentHttpTests
 {
-    private static async Task<MarketplaceHttpFixture> StartAsync()
+    internal static async Task<MarketplaceHttpFixture> StartAsync()
     {
         var fixture = await CheckoutHttpTests.StartAsync(extra: app => app.MapPaymentEndpoints());
         using var scope = fixture.Services.CreateScope();
@@ -24,7 +24,7 @@ public sealed class PaymentHttpTests
         return fixture;
     }
 
-    private static async Task<JsonElement> PlaceOrderAsync(HttpClient client)
+    internal static async Task<JsonElement> PlaceOrderAsync(HttpClient client)
     {
         Assert.Equal(HttpStatusCode.OK, (await client.PostAsJsonAsync("/api/v1/cart/items", new { variantId = 1, quantity = 60 })).StatusCode);
         using var request = new HttpRequestMessage(HttpMethod.Post, "/api/v1/checkout") { Content = JsonContent.Create(new { deliveryAddressId = 100 }) };
@@ -34,7 +34,7 @@ public sealed class PaymentHttpTests
         return await response.Content.ReadFromJsonAsync<JsonElement>();
     }
 
-    private static Task<HttpResponseMessage> StartPaymentAsync(HttpClient client, long orderId, string? key)
+    internal static Task<HttpResponseMessage> StartPaymentAsync(HttpClient client, long orderId, string? key)
     {
         using var request = new HttpRequestMessage(HttpMethod.Post, "/api/v1/payments") { Content = JsonContent.Create(new { orderId }) };
         if (key is not null) request.Headers.Add("Idempotency-Key", key);
@@ -55,7 +55,7 @@ public sealed class PaymentHttpTests
     private static string Captured(string gatewayOrderId, long paise, string eventName = "payment.captured")
         => JsonSerializer.Serialize(new { @event = eventName, payload = new { payment = new { entity = new { id = "pay_" + gatewayOrderId, order_id = gatewayOrderId, amount = paise } } } });
 
-    private static async Task<JsonElement> JsonAsync(HttpResponseMessage response)
+    internal static async Task<JsonElement> JsonAsync(HttpResponseMessage response)
     {
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         return await response.Content.ReadFromJsonAsync<JsonElement>();

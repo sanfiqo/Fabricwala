@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using TextileConnect.Application.Businesses;
 using TextileConnect.Application.Orders;
+using TextileConnect.Infrastructure.Persistence;
 
 namespace TextileConnect.Api;
 
@@ -15,11 +16,20 @@ public static class OrderEndpoints
                 request.DeliveryAddressId, http.Headers["Idempotency-Key"].ToString(), ct);
             return result.Replayed ? Results.Ok(ApiResponseMappings.Order(result.Order)) : Results.Created($"/api/v1/orders/{result.Order.Id}", ApiResponseMappings.Order(result.Order));
         }).RequireAuthorization("ApprovedBusiness").RequireAuthorization(policy => policy.RequireRole("Retailer"));
-        retailer.MapGet("", async (ICurrentBusiness current, IOrderService orders, CancellationToken ct) => Results.Ok((await orders.ListForRetailerAsync(current.RequireBusinessId(), ct)).Select(ApiResponseMappings.Order).ToList()));
-        retailer.MapGet("/{id:long}", async (long id, ICurrentBusiness current, IOrderService orders, CancellationToken ct) =>
-            await orders.GetForRetailerAsync(current.RequireBusinessId(), id, ct) is { } order ? Results.Ok(ApiResponseMappings.Order(order)) : Results.NotFound());
-        retailer.MapPost("/{id:long}/confirm-delivery", async (long id, ICurrentBusiness current, IOrderService orders, CancellationToken ct) =>
-            await orders.ConfirmDeliveryAsync(current.RequireBusinessId(), id, ct) is { } order ? Results.Ok(ApiResponseMappings.Order(order)) : Results.NotFound());
+        retailer.RequireAuthorization(policy => policy.RequireRole("Retailer"));
+        retailer.MapGet("", async (string? group, int? page, int? pageSize, ICurrentBusiness current, MarketplaceDbContext db, CancellationToken ct) =>
+        {
+            var current1 = page ?? 1; var size = pageSize ?? 20;
+            if (!RetailerOrderReader.IsValidGroup(group) || current1 is < 1 or > 1_000_000 || size is < 1 or > 100) return Results.BadRequest();
+            return Results.Ok(await new RetailerOrderReader(db).ListAsync(current.RequireBusinessId(), group, current1, size, ct));
+        });
+        retailer.MapGet("/{id:long}", async (long id, ICurrentBusiness current, MarketplaceDbContext db, CancellationToken ct) =>
+            await new RetailerOrderReader(db).DetailAsync(current.RequireBusinessId(), id, ct) is { } order ? Results.Ok(order) : Results.NotFound());
+        retailer.MapPost("/{id:long}/confirm-delivery", async (long id, ICurrentBusiness current, IOrderService orders, MarketplaceDbContext db, CancellationToken ct) =>
+        {
+            if (await orders.ConfirmDeliveryAsync(current.RequireBusinessId(), id, ct) is null) return Results.NotFound();
+            return Results.Ok(await new RetailerOrderReader(db).DetailAsync(current.RequireBusinessId(), id, ct));
+        });
         var seller = app.MapGroup("/api/v1/seller/orders").RequireAuthorization("ApprovedBusiness");
         seller.MapGet("", async (ICurrentBusiness current, IOrderService orders, CancellationToken ct) => Results.Ok((await orders.ListForSellerAsync(current.RequireBusinessId(), ct)).Select(ApiResponseMappings.SellerOrder).ToList()));
         seller.MapGet("/{id:long}", async (long id, ICurrentBusiness current, IOrderService orders, CancellationToken ct) =>

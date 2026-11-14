@@ -18,8 +18,8 @@ an input gap, not evidence that those screens have working endpoints.
 | Retailer | Product | `GET /api/v1/products/{slug}`; `GET /api/v1/landed-cost` | `productId`, `qty`, `cityId`, optional `pincode` | `ProductDetailResponse`; `LandedCostResponse` | partly |
 | Retailer | Cart | `GET /api/v1/cart`; `POST/PUT/DELETE /api/v1/cart/items...` | `CartRequest(VariantId, Quantity)` | `CartResponse` (tier price on product total qty, GST %, `nextTier` add-more savings, per-line `issues`, `canCheckout`); shipping calculated at checkout | exists |
 | Retailer | Checkout | `POST /api/v1/checkout`; `POST /api/v1/payments` | `CheckoutRequest(DeliveryAddressId)` + required `Idempotency-Key` header (8-100 chars); `PaymentRequest(OrderId)` | `OrderResponse` (201 created, 200 replay of the same key; totals, delivery snapshot, per-seller orders with item snapshots and platform fee); `PaymentSessionResponse` (`POST /api/v1/payments` with `Idempotency-Key`, `GET /api/v1/payments/{gatewayOrderId}` status Pending/Paid/Failed; test gateway only: `POST /api/v1/payments/{gatewayOrderId}/dev-complete[?success=false]`) | exists |
-| Retailer | Orders list | `GET /api/v1/orders` | None | list of `OrderResponse` | partly |
-| Retailer | Track order | `GET /api/v1/orders/{id}`; `POST /api/v1/orders/{id}/confirm-delivery` | Order id | `OrderResponse` with `SellerOrderResponse`, history, shipment | partly |
+| Retailer | Orders list | `GET /api/v1/orders?group=active\|delivered\|problems\|all&page&pageSize` | optional group/paging (pageSize 1-100, newest first) | `PagedResponse<RetailerOrderSummaryResponse>` (`status`, `group`, item count, first item title, seller names) | exists |
+| Retailer | Track order | `GET /api/v1/orders/{id}`; `POST /api/v1/orders/{id}/confirm-delivery` | Order id | `OrderResponse` (`status`, `group`, delivery address, per-seller `history` timeline, `shipment` LR/carrier, seller names); confirm returns the same detail | exists |
 | Retailer | Search + filters | `GET /api/v1/products` | Supports query, category, price, MOQ, sort, paging; no material/size/colour/seller-city filters | Paged `ProductSummaryResponse` list | partly |
 | Retailer | Account | `GET /api/v1/auth/me`; `GET/PUT /api/v1/businesses/me`; address routes | `BusinessUpdate`; address entity | Auth profile/business/address shapes; language preference missing | partly |
 | Retailer | Notifications | `GET /api/v1/notifications`; `GET /unread-count`; `POST /{id}/read` | Page query; notification id | Anonymous paged list; `{ count }`; notification entity | partly |
@@ -84,6 +84,7 @@ Business-rule failures keep their HTTP status but carry a specific code (always 
 | 409 | `shipping_unavailable` | No freight rate for the seller-to-address route; order cannot be priced |
 | 409 | `insufficient_stock` | Stock changed between cart and checkout |
 | 409 | `idempotency_key_reused` | Same `Idempotency-Key` sent with a different request |
+| 409 | `order_not_shipped` | Delivery cannot be confirmed before the seller ships |
 | 409 | `order_not_payable` | Order is already paid or no longer waiting for payment |
 | 400 | `payment_amount_mismatch` | Gateway reported a different amount than the order total |
 

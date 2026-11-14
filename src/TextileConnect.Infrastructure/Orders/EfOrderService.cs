@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using TextileConnect.Application.Common;
 using TextileConnect.Application.Orders;
+using TextileConnect.Domain.Notifications;
 using TextileConnect.Domain.Orders;
 using TextileConnect.Infrastructure.Persistence;
 
@@ -16,9 +18,26 @@ public sealed class EfOrderService(MarketplaceDbContext db) : IOrderService
         var order = await GetForRetailerAsync(businessId, orderId, cancellationToken);
         if (order is null) return null;
         var sellerOrders = await db.SellerOrders.Where(x => x.OrderId == orderId).ToListAsync(cancellationToken);
-        foreach (var sellerOrder in sellerOrders) sellerOrder.Status = "Delivered";
-        var shipments = await db.Shipments.Where(x => sellerOrders.Select(s => s.Id).Contains(x.SellerOrderId)).ToListAsync(cancellationToken);
-        foreach (var shipment in shipments) { shipment.Status = "Delivered"; shipment.DeliveredAt = DateTime.UtcNow; }
+        var shipped = sellerOrders.Where(x => x.Status == "Dispatched").ToList();
+        if (shipped.Count == 0)
+        {
+            if (sellerOrders.Count > 0 && sellerOrders.All(x => x.Status == "Delivered")) return order; // already confirmed: nothing changes
+            throw new RuleViolationException("order_not_shipped", "This order has not been shipped yet.");
+        }
+        var now = DateTime.UtcNow;
+        var shippedIds = shipped.Select(x => x.Id).ToArray();
+        foreach (var sellerOrder in shipped)
+        {
+            sellerOrder.Status = "Delivered";
+            sellerOrder.DeliveredAt = now;
+            db.OrderStatusHistories.Add(new OrderStatusHistory { SellerOrderId = sellerOrder.Id, Status = "Delivered", Note = "Delivery confirmed by the retailer.", ChangedAtUtc = now });
+        }
+        foreach (var shipment in await db.Shipments.Where(x => shippedIds.Contains(x.SellerOrderId)).ToListAsync(cancellationToken))
+        { shipment.Status = "Delivered"; shipment.DeliveredAt = now; }
+        var sellerIds = shipped.Select(x => x.ManufacturerBusinessId).Distinct().ToArray();
+        var sellerUsers = await db.BusinessUsers.AsNoTracking().Where(x => sellerIds.Contains(x.BusinessId)).Select(x => x.UserId).Distinct().ToListAsync(cancellationToken);
+        db.Notifications.AddRange(sellerUsers.Select(userId => new Notification
+        { UserId = userId, Title = "Delivery confirmed", Message = $"The retailer confirmed delivery of order {order.OrderNumber}.", Link = "/seller/orders", CreatedAtUtc = now }));
         await db.SaveChangesAsync(cancellationToken);
         return order;
     }
@@ -37,6 +56,7 @@ public sealed class EfOrderService(MarketplaceDbContext db) : IOrderService
             throw new InvalidOperationException("Seller orders can only be accepted after payment.");
         order.Status = status;
         order.RejectReason = reason;
+        db.OrderStatusHistories.Add(new OrderStatusHistory { SellerOrderId = order.Id, Status = status, Note = reason });
         if (status == "Accepted") order.AcceptedAt = DateTime.UtcNow;
         if (status == "Dispatched")
         {
