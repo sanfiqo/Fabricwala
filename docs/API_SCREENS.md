@@ -29,7 +29,7 @@ an input gap, not evidence that those screens have working endpoints.
 | Auth | Business details | `POST/GET/PUT /api/v1/businesses...`; document routes | Business entity; `BusinessUpdate`; multipart document; no pincode lookup DTO/route | Business/address/document entities | partly |
 | Auth | Waiting for approval | `GET /api/v1/auth/me` | None | Auth profile anonymous shape including verification status/rejection note | exists |
 | Seller | Dashboard | `GET /api/v1/seller/dashboard` | None | Anonymous dashboard: new orders, pending dispatch, monthly sales, payout due, top products, low stock | partly |
-| Seller | Orders | `GET /api/v1/seller/orders`; accept/reject/dispatch/status/shipment routes | `SellerReject`; `SellerDispatch`; `SellerStatus`; `ShipmentStatus` | `SellerOrderResponse`; `ShipmentResponse` | partly |
+| Seller | Orders | `GET /api/v1/seller/orders?status=new\|to_pack\|shipped\|done\|all&page&pageSize`; `GET /{id}`; `POST /{id}/accept\|reject\|dispatch` | `SellerReject(Reason)`; `SellerDispatch(LrNumber, CarrierName?)` | `PagedResponse<SellerOrderSummaryResponse>` and `SellerOrderResponse` (`orderValue`, `platformFee`, `youGet`, `acceptDeadline`, history, shipment); only paid orders; unaccepted orders auto-cancel and refund after the accept window | exists |
 | Seller | Products | `GET /api/v1/seller/products`; product detail/delete; inventory alerts | None for list; product id for mutations | `ProductSummaryResponse`; alert/duplicate anonymous shapes | partly |
 | Seller | Add product | `POST /api/v1/seller/products`; bulk template/preview/import/image routes | `ProductInput`; multipart bulk/image upload | `ProductDetailResponse`; `BulkPreview`; anonymous import/image results | partly |
 | Seller | Payouts | `GET /api/v1/seller/payouts?csv=true` | Optional `csv` query | Anonymous payout rows or CSV: seller order, amount, commission, status, settled date | partly |
@@ -84,6 +84,9 @@ Business-rule failures keep their HTTP status but carry a specific code (always 
 | 409 | `shipping_unavailable` | No freight rate for the seller-to-address route; order cannot be priced |
 | 409 | `insufficient_stock` | Stock changed between cart and checkout |
 | 409 | `idempotency_key_reused` | Same `Idempotency-Key` sent with a different request |
+| 409 | `order_not_paid` | Seller action on an order that is not paid |
+| 409 | `invalid_order_transition` | Action not allowed in the order's current state (e.g. accept twice, reject after accepting) |
+| 409 | `accept_window_expired` | The acceptance window passed (the order will be or was auto-cancelled and refunded) |
 | 409 | `order_not_shipped` | Delivery cannot be confirmed before the seller ships |
 | 409 | `order_not_payable` | Order is already paid or no longer waiting for payment |
 | 400 | `payment_amount_mismatch` | Gateway reported a different amount than the order total |
@@ -197,7 +200,6 @@ Notifications | no mark-all-read route; list/read responses are anonymous/entity
 Report a problem | missing pieces count, note, photo limit, and reason enum validation | medium
 Business details | pincode lookup is missing; routes bind domain entities directly | medium
 Seller dashboard | no six-month chart and no explicit next-payout status contract | medium
-Seller orders | missing paging and complete order-value, fee, and payout-status fields | medium
 Seller products | missing search/filter query and on/off toggle contract | medium
 Add product | missing explicit save-draft, publish, update, and product-photo contract | big
 Payouts | missing next-payout/on-hold summary and linked-bank-account display contract | medium

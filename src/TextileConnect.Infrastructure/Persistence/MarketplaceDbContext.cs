@@ -124,6 +124,7 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
         builder.Entity<Order>().Property(x => x.PlacedByUserId).HasMaxLength(450).IsRequired();
         builder.Entity<Order>().Property(x => x.GrandTotal).HasPrecision(18, 2);
         builder.Entity<SellerOrder>().HasKey(x => x.Id);
+        builder.Entity<SellerOrder>().Property(x => x.Status).HasMaxLength(40).IsConcurrencyToken();
         builder.Entity<SellerOrder>().HasMany(x => x.History).WithOne(x => x.SellerOrder).HasForeignKey(x => x.SellerOrderId);
         builder.Entity<OrderStatusHistory>(entity => { entity.HasKey(x => x.Id); entity.Property(x => x.Status).HasMaxLength(40).IsRequired(); entity.Property(x => x.Note).HasMaxLength(1000); entity.HasIndex(x => new { x.SellerOrderId, x.ChangedAtUtc, x.Id }); });
         builder.Entity<IdempotencyRecord>(entity => { entity.HasKey(x => x.Id); entity.Property(x => x.Scope).HasMaxLength(40).IsRequired(); entity.Property(x => x.Key).HasMaxLength(100).IsRequired(); entity.Property(x => x.RequestHash).HasMaxLength(64).IsRequired(); entity.Property(x => x.ResourceKey).HasMaxLength(100).IsRequired(); entity.HasIndex(x => new { x.BusinessId, x.Scope, x.Key }).IsUnique(); });
@@ -164,6 +165,9 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
         builder.Entity<Settlement>().Property(x => x.Amount).HasPrecision(18, 2);
         builder.Entity<Settlement>().Property(x => x.CommissionAmount).HasPrecision(18, 2);
         builder.Entity<Refund>().HasKey(x => x.Id);
+        builder.Entity<Refund>().Property(x => x.Status).HasMaxLength(32);
+        builder.Entity<Refund>().Property(x => x.GatewayRefundId).HasMaxLength(100);
+        builder.Entity<Refund>().HasIndex(x => new { x.SellerOrderId, x.Status });
         builder.Entity<Refund>().Property(x => x.Amount).HasPrecision(18, 2);
         builder.Entity<Invoice>().HasKey(x => x.Id);
         builder.Entity<Invoice>().HasIndex(x => x.InvoiceNumber).IsUnique();

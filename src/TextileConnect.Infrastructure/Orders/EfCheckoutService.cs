@@ -12,7 +12,7 @@ using TextileConnect.Infrastructure.Persistence;
 
 namespace TextileConnect.Infrastructure.Orders;
 
-public sealed partial class EfCheckoutService(MarketplaceDbContext db, ICartService cart, IProductPricing pricing) : ICheckoutService
+public sealed partial class EfCheckoutService(MarketplaceDbContext db, ICartService cart, IProductPricing pricing, TimeProvider? clock = null) : ICheckoutService
 {
     private const string Scope = "checkout";
     private const decimal DefaultCommissionRate = 0.02m;
@@ -59,7 +59,7 @@ public sealed partial class EfCheckoutService(MarketplaceDbContext db, ICartServ
         var defaultRate = await DefaultRateAsync(cancellationToken);
         var city = await db.Cities.AsNoTracking().Where(x => x.Id == address.CityId).Select(x => x.Name).SingleOrDefaultAsync(cancellationToken) ?? string.Empty;
 
-        var now = DateTime.UtcNow;
+        var now = (clock ?? TimeProvider.System).GetUtcNow().UtcDateTime;
         var order = new Order
         {
             OrderNumber = NewOrderNumber(now), RetailerBusinessId = retailerBusinessId, PlacedByUserId = userId, PlacedAtUtc = now,

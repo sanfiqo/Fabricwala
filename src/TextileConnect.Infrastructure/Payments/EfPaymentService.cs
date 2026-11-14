@@ -12,7 +12,7 @@ using TextileConnect.Infrastructure.Persistence;
 
 namespace TextileConnect.Infrastructure.Payments;
 
-public sealed partial class EfPaymentService(MarketplaceDbContext db, IPaymentGateway gateway) : IPaymentService
+public sealed partial class EfPaymentService(MarketplaceDbContext db, IPaymentGateway gateway, TimeProvider? clock = null) : IPaymentService
 {
     private const string Scope = "payment";
     private const int DefaultAcceptWindowHours = 24;
@@ -61,11 +61,20 @@ public sealed partial class EfPaymentService(MarketplaceDbContext db, IPaymentGa
         if (amountPaid.HasValue && amountPaid.Value != payment.Amount)
             throw new RuleViolationException("payment_amount_mismatch", "The paid amount does not match the order.", 400);
 
-        var now = DateTime.UtcNow;
+        var now = (clock ?? TimeProvider.System).GetUtcNow().UtcDateTime;
         payment.Status = "Paid";
         payment.GatewayPaymentId = gatewayPaymentId;
         payment.PaidAt = now;
         var order = await db.Orders.Include(x => x.SellerOrders).SingleAsync(x => x.Id == payment.OrderId, cancellationToken);
+        if (order.SellerOrders.Count > 0 && order.SellerOrders.All(x => x.Status is "Cancelled" or "Rejected"))
+        {
+            // Money arrived after the order was cancelled (payment window expired): queue a full refund, never keep it.
+            order.PaymentStatus = "Refunded";
+            foreach (var cancelled in order.SellerOrders)
+                if (cancelled.Total > 0) db.Refunds.Add(new Refund { PaymentId = payment.Id, SellerOrderId = cancelled.Id, Amount = cancelled.Total, Reason = "Payment arrived after the order was cancelled.", CreatedAtUtc = now });
+            await db.SaveChangesAsync(cancellationToken);
+            return true;
+        }
         order.PaymentStatus = "Paid";
         var window = await AcceptWindowHoursAsync(cancellationToken);
         foreach (var sellerOrder in order.SellerOrders)

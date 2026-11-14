@@ -62,7 +62,15 @@ public sealed record StatusHistoryResponse(string Status, string? Note, DateTime
 public sealed record ShipmentResponse(string? CarrierName, string? LrNumber, DateTime? DispatchedAt);
 public sealed record SellerOrderResponse(long Id, long OrderId, string OrderNumber, string SubOrderNumber, string ManufacturerName, string RetailerName, string DeliveryCity, string Status, string PaymentStatus, DateTime? PlacedAt, IReadOnlyList<OrderItemResponse> Items, decimal SubTotal, decimal ShippingAmount, decimal TaxAmount, decimal Total, decimal CommissionRate, decimal CommissionAmount, string? RejectReason, IReadOnlyList<StatusHistoryResponse> History, ShipmentResponse? Shipment)
 {
-    public static SellerOrderResponse From(SellerOrder value) => new(value.Id, value.OrderId, value.Order?.OrderNumber ?? string.Empty, $"{value.Order?.OrderNumber ?? ""}-{value.Id}", string.Empty, string.Empty, value.Order?.DeliveryCity ?? string.Empty, value.Status == "Pending" ? "PendingAcceptance" : value.Status, value.Order?.PaymentStatus ?? "Pending", value.PlacedAtUtc, value.Items.Select(x => new OrderItemResponse(x.Id, x.ProductId, x.Title, x.Size, x.Colour, x.Quantity, x.UnitPrice, x.GstRate, x.LineTotal) { GstAmount = x.GstAmount }).ToList(), value.SubTotal, value.ShippingAmount, value.TaxAmount, value.Total, value.CommissionRate, value.CommissionAmount, value.RejectReason, value.History.OrderBy(x => x.ChangedAtUtc).ThenBy(x => x.Id).Select(x => new StatusHistoryResponse(x.Status, x.Note, x.ChangedAtUtc)).ToList(), null);
+    /// <summary>What the retailer paid for this seller's goods, GST and freight.</summary>
+    public decimal OrderValue { get; init; }
+    /// <summary>Platform fee charged to the seller: goods subtotal x commission rate.</summary>
+    public decimal PlatformFee { get; init; }
+    /// <summary>OrderValue minus PlatformFee: what the seller receives.</summary>
+    public decimal YouGet { get; init; }
+    public DateTime? AcceptDeadline { get; init; }
+    public static SellerOrderResponse From(SellerOrder value) => new(value.Id, value.OrderId, value.Order?.OrderNumber ?? string.Empty, $"{value.Order?.OrderNumber ?? ""}-{value.Id}", string.Empty, string.Empty, value.Order?.DeliveryCity ?? string.Empty, value.Status == "Pending" ? "PendingAcceptance" : value.Status, value.Order?.PaymentStatus ?? "Pending", value.PlacedAtUtc, value.Items.Select(x => new OrderItemResponse(x.Id, x.ProductId, x.Title, x.Size, x.Colour, x.Quantity, x.UnitPrice, x.GstRate, x.LineTotal) { GstAmount = x.GstAmount }).ToList(), value.SubTotal, value.ShippingAmount, value.TaxAmount, value.Total, value.CommissionRate, value.CommissionAmount, value.RejectReason, value.History.OrderBy(x => x.ChangedAtUtc).ThenBy(x => x.Id).Select(x => new StatusHistoryResponse(x.Status, x.Note, x.ChangedAtUtc)).ToList(), null)
+        { OrderValue = value.Total, PlatformFee = value.CommissionAmount, YouGet = value.Total - value.CommissionAmount, AcceptDeadline = value.Status == "Pending" ? value.AcceptDeadlineUtc : null };
 }
 
 public sealed record OrderResponse(long Id, string OrderNumber, DateTime? PlacedAt, decimal SubTotal, decimal ShippingTotal, decimal TaxTotal, decimal GrandTotal, string PaymentStatus, object? DeliveryAddress, IReadOnlyList<SellerOrderResponse> SellerOrders)

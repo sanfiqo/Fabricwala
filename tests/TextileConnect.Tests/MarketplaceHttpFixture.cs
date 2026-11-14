@@ -33,6 +33,7 @@ namespace TextileConnect.Tests;
 public sealed class MarketplaceHttpFixture(WebApplication app) : IAsyncDisposable
 {
     public IServiceProvider Services => app.Services;
+    public TestClock Clock => (TestClock)app.Services.GetRequiredService<TimeProvider>();
     public ValueTask DisposeAsync() => app.DisposeAsync();
 
     public static async Task<MarketplaceHttpFixture> StartAsync(Action<WebApplication>? map = null)
@@ -57,6 +58,8 @@ public sealed class MarketplaceHttpFixture(WebApplication app) : IAsyncDisposabl
         builder.Services.AddScoped<TextileConnect.Application.Orders.ICartService, TextileConnect.Infrastructure.Orders.EfCartService>();
         builder.Services.AddScoped<TextileConnect.Application.Orders.ICheckoutService, TextileConnect.Infrastructure.Orders.EfCheckoutService>();
         builder.Services.AddScoped<TextileConnect.Application.Orders.IOrderService, TextileConnect.Infrastructure.Orders.EfOrderService>();
+        builder.Services.AddScoped<TextileConnect.Application.Orders.IOrderMaintenance, TextileConnect.Infrastructure.Orders.EfOrderService>();
+        builder.Services.AddSingleton<TimeProvider, TestClock>();
         builder.Services.AddSingleton<TextileConnect.Application.Payments.IPaymentGateway, TextileConnect.Application.Payments.DevelopmentPaymentGateway>();
         builder.Services.AddScoped<TextileConnect.Application.Payments.IPaymentService, TextileConnect.Infrastructure.Payments.EfPaymentService>();
         builder.Services.AddSingleton<IFileStorage, MemoryFileStorage>();
