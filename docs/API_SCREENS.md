@@ -25,7 +25,7 @@ an input gap, not evidence that those screens have working endpoints.
 | Retailer | Notifications | `GET /api/v1/notifications`; `GET /unread-count`; `POST /{id}/read` | Page query; notification id | Anonymous paged list; `{ count }`; notification entity | partly |
 | Retailer | Report a problem | `POST /api/v1/seller-orders/{sellerOrderId}/claims`; photo upload route | `ClaimRequest(Reason)`; individual photo upload | Return-claim entity / photo count | partly |
 | Auth | Login (mobile) | `POST /api/v1/auth/otp/request` | `OtpRequest(PhoneNumber)` | `204`; challenge cookie | exists |
-| Auth | OTP | `POST /api/v1/auth/otp/verify` | `OtpVerifyRequest(PhoneNumber, Code, ChallengeId?)` | Auth profile anonymous shape with user, roles, business | exists |
+| Auth | OTP | `POST /api/v1/auth/otp/verify` | `OtpVerifyRequest(PhoneNumber, Code, ChallengeId?)` | `AuthProfileResponse` with user, roles, business and preferredLanguage | exists |
 | Auth | Business details | `POST/GET/PUT /api/v1/businesses...`; document routes | Business entity; `BusinessUpdate`; multipart document; no pincode lookup DTO/route | Business/address/document entities | partly |
 | Auth | Waiting for approval | `GET /api/v1/auth/me` | None | Auth profile anonymous shape including verification status/rejection note | exists |
 | Seller | Dashboard | `GET /api/v1/seller/dashboard` | None | Anonymous dashboard: new orders, pending dispatch, monthly sales, payout due, top products, low stock | partly |
@@ -79,6 +79,20 @@ HTTP status and headers such as `Retry-After` are preserved. HEAD responses have
 - Exists: **6**
 - Partly: **28**
 - Missing: **4**
+
+## Authentication (B1)
+
+Use `GET /api/v1/auth/csrf` and keep its cookie; send the returned token in
+`X-CSRF-TOKEN` on every JSON/form mutation, including OTP request/verify, refresh,
+and logout. Get a fresh token after sign-in because it is bound to the user.
+Gateway webhook routes use signature verification instead of CSRF.
+`POST /api/v1/auth/refresh` renews the current cookie and returns `AuthProfileResponse`;
+`POST /api/v1/auth/logout` clears it (204). Both require authentication.
+Profile fields: `userId`, `phone` (own user only), `fullName`, `roles`, `business`,
+`preferredLanguage`. Role names remain `Retailer`, `Manufacturer`, `Admin`.
+Development OTP is `123456`; five wrong attempts, five-minute expiry, one-use,
+resend/mobile/IP limits remain enforced. Fake delivery does not print OTPs.
+Development HTTP cookies work for local preview; production cookies are always Secure.
 
 ## Missing capabilities inside partly covered screens
 

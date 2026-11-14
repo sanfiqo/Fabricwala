@@ -10,7 +10,7 @@ Pending: night run in progress.
 - Process: first unfinished task only; targeted tests per task, full suite every three tasks and at end. One task per commit (`P-NIGHT <id>: <what>`).
 - After three failed attempts: revert only this task's uncommitted implementation, log BLOCKED, continue. Stop on three consecutive BLOCKED tasks, unrecoverable full-suite failure after three attempts, or completed queue.
 - Commit hashes are recorded after commits, in the following checkpoint. No unrelated phase ticks.
-- Baseline: build passed; suite 90 passed / 0 failed. Consecutive blocked tasks: 0. Tasks since full suite: 2 (A1, A2).
+- Latest full suite: 108 passed / 0 failed. Consecutive blocked tasks: 0. Tasks since full suite: 0.
 
 ## Queue
 
@@ -18,10 +18,10 @@ Pending: night run in progress.
 
 ### A. Contract
 - [x] A1. Audit Gaps and rows for all 38 named screens; document 18 unspecified screen identities. `ffcac6f`.
-- [x] A2. Stable `{ code, message, fields? }` errors everywhere; document codes. Commit recorded in next checkpoint.
+- [x] A2. Stable `{ code, message, fields? }` errors everywhere; document codes. `adeaebb`.
 
 ### B. Core journey
-- [ ] B1. Auth: send/verify OTP (Development 123456), refresh, logout; retailer/manufacturer/admin.
+- [x] B1. Auth: send/verify OTP (Development 123456), refresh, logout; retailer/manufacturer/admin. Commit recorded in next checkpoint.
 - [ ] B2. Business: create/get, pincode lookup, optional 15-character GST, verification status/note.
 - [ ] B3. Admin approvals: paged status list, review detail/GST/documents, approve/reject with note.
 - [ ] B4. Retailer catalogue: home/categories/best sellers; paged search/filter; detail/tiers/landed price/variants.
@@ -58,6 +58,7 @@ Pending: night run in progress.
 - Baseline `dotnet test TextileConnect.slnx --no-build --no-restore --nologo`: 90 passed, 0 failed, 0 reported skipped.
 - MySQL coverage limitation: `TEXTILECONNECT_TEST_MYSQL` is unset; existing MySQL test returns without exercising a database. No local settings or secrets were read.
 - A2: build and 12 loopback HTTP error/download contract tests passed on attempt 2. Full suite due after B1.
+- B1 checkpoint: build passed; 16 targeted tests passed; full suite 108 passed / 0 failed (MySQL caveat above still applies).
 
 ## Log
 
@@ -70,3 +71,6 @@ Pending: night run in progress.
 - A2 in progress: normalize API errors before auth/rate limiting; suppress arbitrary error bodies without buffering successful files, sanitize exception responses/logs and field validation values. No NuGet additions or DTO renames. HTTP contract tests use a loopback Kestrel test server, not mocked middleware results.
 - A2 attempt 1: build passed; HTTP tests failed during harness startup because clearing configuration removed its writable provider. Add an empty in-memory provider (no configuration files or secrets) and rerun.
 - A2 complete: 12 HTTP tests green. Stable error DTO covers framework/endpoint statuses and exceptions; arbitrary diagnostics suppressed; successful files stream unchanged. Rate-limit rejection is explicitly 429. No packages or public DTOs renamed.
+- B1 decision: fixed Development OTP is 123456 without relaxing resend/IP/mobile/attempt/expiry protections. Production always uses secure cookies and random OTPs. Development HTTP supports cookies for local previews; JSON mutations require CSRF (gateway webhooks retain signature authentication). Remove OTP console logging. Add a named auth profile DTO without renaming existing DTOs.
+- B1 targeted validation: 16 auth/policy/identity tests passed. HTTP role/cookie/CSRF/refresh/logout tests substitute the mobile-auth adapter and use isolated in-memory Identity storage; they are not MySQL locking/proof-consumption evidence. Full suite running at the three-task checkpoint.
+- B1 complete: full suite green (108/0). AuthProfileResponse is newly named from prior anonymous JSON; no existing public DTO renamed. No new package. Next: B2.

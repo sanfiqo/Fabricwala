@@ -35,10 +35,10 @@ public static class SanfiqoIdentityRegistration
             options.DefaultChallengeScheme = IdentityConstants.ApplicationScheme;
         }).AddCookie(IdentityConstants.ApplicationScheme, options =>
         {
-            var identityOptions = services.BuildServiceProvider().GetRequiredService<IOptions<SanfiqoIdentityOptions>>().Value;
+            var identityOptions = configuration.GetSection(SanfiqoIdentityOptions.SectionName).Get<SanfiqoIdentityOptions>() ?? new();
             options.Cookie.Name = identityOptions.CookieName;
             options.Cookie.HttpOnly = true;
-            options.Cookie.SecurePolicy = identityOptions.RequireSecureCookie ? CookieSecurePolicy.Always : CookieSecurePolicy.SameAsRequest;
+            options.Cookie.SecurePolicy = environment.IsDevelopment() ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always;
             options.Cookie.SameSite = SameSiteMode.Lax;
             options.ExpireTimeSpan = identityOptions.CookieLifetime;
             options.SlidingExpiration = identityOptions.CookieSlidingExpiration;

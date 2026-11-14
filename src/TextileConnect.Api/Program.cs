@@ -97,8 +97,9 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
-app.UseAntiforgery();
 app.UseAuthorization();
+app.UseMiddleware<ApiCsrfMiddleware>();
+app.UseAntiforgery();
 
 app.MapControllers();
 app.MapSanfiqoAuthEndpoints();

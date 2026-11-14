@@ -14,7 +14,6 @@ public sealed class FakeOtpDelivery : IOtpDelivery, IOtpSender, ILocalOtpInspect
     {
         cancellationToken.ThrowIfCancellationRequested();
         _codes[challengeId] = new CapturedCode(code, expiresAt);
-        Console.WriteLine($"Development OTP for {mobileE164}: {code} (challenge {challengeId})");
         return Task.CompletedTask;
     }
 
