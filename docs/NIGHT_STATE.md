@@ -10,7 +10,7 @@ Pending: night run in progress.
 - Process: first unfinished task only; targeted tests per task, full suite every three tasks and at end. One task per commit (`P-NIGHT <id>: <what>`).
 - After three failed attempts: revert only this task's uncommitted implementation, log BLOCKED, continue. Stop on three consecutive BLOCKED tasks, unrecoverable full-suite failure after three attempts, or completed queue.
 - Commit hashes are recorded after commits, in the following checkpoint. No unrelated phase ticks.
-- Latest full suite: 108 passed / 0 failed. Consecutive blocked tasks: 0. Tasks since full suite: 1 (B2).
+- Latest full suite: 108 passed / 0 failed. Consecutive blocked tasks: 0. Tasks since full suite: 2 (B2, B3).
 
 ## Queue
 
@@ -22,8 +22,8 @@ Pending: night run in progress.
 
 ### B. Core journey
 - [x] B1. Auth: send/verify OTP (Development 123456), refresh, logout; retailer/manufacturer/admin. `8d2d146`.
-- [x] B2. Business: create/get, pincode lookup, optional 15-character GST, verification status/note. Commit recorded in next checkpoint.
-- [ ] B3. Admin approvals: paged status list, review detail/GST/documents, approve/reject with note.
+- [x] B2. Business: create/get, pincode lookup, optional 15-character GST, verification status/note. `f1705dc`.
+- [x] B3. Admin approvals: paged status list, review detail/GST/documents, approve/reject with note. Commit recorded in next checkpoint.
 - [ ] B4. Retailer catalogue: home/categories/best sellers; paged search/filter; detail/tiers/landed price/variants.
 - [ ] B5. Cart: CRUD, tier price and add-more savings data.
 - [ ] B6. Checkout: address/order/test payment, Idempotency-Key, seller splits.
@@ -60,6 +60,7 @@ Pending: night run in progress.
 - A2: build and 12 loopback HTTP error/download contract tests passed on attempt 2. Full suite due after B1.
 - B1 checkpoint: build passed; 16 targeted tests passed; full suite 108 passed / 0 failed (MySQL caveat above still applies).
 - B2: final build and 21 targeted tests passed; MySQL migration SQL generated/checked offline. No live schema migration applied.
+- B3: build and 11 targeted approval/profile/security-stamp tests passed. Full suite due after B4; HTTP fixture still uses isolated test authentication/in-memory persistence.
 
 ## Log
 
@@ -80,3 +81,5 @@ Pending: night run in progress.
 - Git steering: commits are local only. Never push, reset --hard, clean, force push or delete branches. If a Git action awaits approval, complete independent work, retry once, then mark the task BLOCKED and move on if approval still blocks it. No Git approval rejection has occurred so far.
 - B2: nine targeted tests passed on attempt 2. Scaffolded NightBusinessProfiles without opening a database; corrected EF's year-0001 backfill to a MySQL-valid date followed by existing CreatedAtUtc. Duplicate-key races map to 409 and roll back the registration transaction. Migration adds only the profile timestamp, unique membership user index and exact postal directory. No live migration applied; pre-existing duplicate memberships need review before applying the unique index.
 - B2 complete: 21 final targeted tests passed; migration SQL checked. Existing EF CLI 9.0.10 emits an older-tool warning against runtime 10.0.9 but generated the migration and SQL successfully. No package added. New named DTOs only (BusinessCreateRequest, BusinessProfileResponse, PincodeResponse); existing DTO names unchanged. Next B3.
+- B3 in progress: paged stable approval lists; review with masked phone, GST format result explicitly not a live registry check, authorized document URLs. Required rejection note is enforced in Application/service and endpoint; business and all-member claim/stamp changes share a MySQL transaction/row lock. Keep unrelated Admin roles; rejection removes approved claims. Status changes queue notifications; repeating the same decision does not duplicate notifications.
+- B3 complete: 11 tests green, including all-member claim removal, required notes, admin role denial, missing resources, pagination, document isolation/privacy and notification deduplication. No packages or renamed DTOs. Next B4.

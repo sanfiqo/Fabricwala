@@ -57,38 +57,10 @@ public static class BusinessEndpoints
         group.MapPost("/me/users", (StaffRequest request, ClaimsPrincipal principal, IBusinessDirectory directory) =>
             Results.Ok(directory.AddStaff(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "", request.UserId)));
 
-        var admin = app.MapGroup("/api/v1/admin/businesses").RequireAuthorization(p => p.RequireRole("Admin"));
-        admin.MapGet("", (IBusinessDirectory directory) => Results.Ok(directory.ListPending()));
-        admin.MapPost("/{id:long}/approve", async (long id, ClaimsPrincipal principal, IBusinessDirectory directory, MarketplaceDbContext db, UserManager<ApplicationUser> users) =>
-        {
-            var business = directory.SetVerification(id, VerificationStatus.Approved, null, principal.FindFirstValue(ClaimTypes.NameIdentifier));
-            if (business is null) return Results.NotFound();
-            var ownerId = db.BusinessUsers.Where(x => x.BusinessId == id && x.IsPrimary).Select(x => x.UserId).SingleOrDefault();
-            if (ownerId is not null && await users.FindByIdAsync(ownerId) is { } owner)
-            {
-                var targetRole = business.BusinessType.ToString();
-                var roles = await users.GetRolesAsync(owner);
-                foreach (var role in roles.Where(x => x != targetRole)) await users.RemoveFromRoleAsync(owner, role);
-                if (!roles.Contains(targetRole, StringComparer.Ordinal)) await users.AddToRoleAsync(owner, targetRole);
-                var oldClaims = await users.GetClaimsAsync(owner);
-                var oldBusinessClaims = oldClaims.Where(x => BusinessClaimTypes.All.Contains(x.Type)).ToList();
-                if (oldBusinessClaims.Count != 0) await users.RemoveClaimsAsync(owner, oldBusinessClaims);
-                await users.AddClaimsAsync(owner,
-                [
-                    new Claim(BusinessClaimTypes.BusinessId, business.Id.ToString()),
-                    new Claim(BusinessClaimTypes.BusinessType, business.BusinessType.ToString()),
-                    new Claim(BusinessClaimTypes.Approved, "true")
-                ]);
-                await users.UpdateSecurityStampAsync(owner);
-            }
-            return Results.Ok(business);
-        });
-        admin.MapPost("/{id:long}/reject", (long id, Rejection request, ClaimsPrincipal principal, IBusinessDirectory directory) =>
-            directory.SetVerification(id, VerificationStatus.Rejected, request.Note, principal.FindFirstValue(ClaimTypes.NameIdentifier)) is { } business
-                ? Results.Ok(business) : Results.NotFound());
+        app.MapBusinessApprovalEndpoints();
     }
 
-    private static BusinessProfileResponse Profile(Business business, MarketplaceDbContext db)
+    internal static BusinessProfileResponse Profile(Business business, MarketplaceDbContext db)
     {
         var address = (from item in db.BusinessAddresses.AsNoTracking()
                        join city in db.Cities on item.CityId equals city.Id

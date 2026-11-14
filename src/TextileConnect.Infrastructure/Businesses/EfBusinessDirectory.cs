@@ -69,6 +69,26 @@ public sealed class EfBusinessDirectory(MarketplaceDbContext db) : IBusinessDire
         foreach (var address in db.BusinessAddresses.Where(x => x.BusinessId == businessId && x.AddressType == type && x.IsDefault)) address.IsDefault = false;
     }
     public IReadOnlyList<Business> ListPending() => db.Businesses.Where(x => x.VerificationStatus == VerificationStatus.Pending && !x.IsDeleted).ToList();
-    public Business? SetVerification(long id, VerificationStatus status, string? note, string? approverId) { var business = db.Businesses.SingleOrDefault(x => x.Id == id); if (business is null) return null; business.VerificationStatus = status; business.RejectionNote = note; business.ApprovedByUserId = approverId; business.ApprovedAtUtc = status == VerificationStatus.Approved ? DateTime.UtcNow : null; db.SaveChanges(); return business; }
+    public Business? SetVerification(long id, VerificationStatus status, string? note, string? approverId)
+    {
+        BusinessVerificationRules.Validate(status, note);
+        var business = db.Businesses.SingleOrDefault(x => x.Id == id && !x.IsDeleted);
+        if (business is null) return null;
+        if (business.VerificationStatus == VerificationStatus.Suspended) throw new BusinessConflictException();
+        note = status == VerificationStatus.Rejected ? note!.Trim() : null;
+        if (business.VerificationStatus == status && business.RejectionNote == note) return business;
+        business.VerificationStatus = status;
+        business.RejectionNote = note;
+        business.ApprovedByUserId = status == VerificationStatus.Approved ? approverId : null;
+        business.ApprovedAtUtc = status == VerificationStatus.Approved ? DateTime.UtcNow : null;
+        business.UpdatedAtUtc = DateTime.UtcNow;
+        foreach (var userId in db.BusinessUsers.Where(x => x.BusinessId == id).Select(x => x.UserId).ToList())
+            db.Notifications.Add(new Domain.Notifications.Notification
+            {
+                UserId = userId, Title = "Business verification", Message = status.ToString(), Link = "/account"
+            });
+        db.SaveChanges();
+        return business;
+    }
     public BusinessUser AddStaff(string ownerUserId, string staffUserId) { var business = GetForUser(ownerUserId) ?? throw new InvalidOperationException("Business context is required."); var member = new BusinessUser { BusinessId = business.Id, UserId = staffUserId, Role = BusinessMemberRole.Staff }; db.BusinessUsers.Add(member); db.SaveChanges(); return member; }
 }

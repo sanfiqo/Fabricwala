@@ -74,11 +74,14 @@ HTTP status and headers such as `Retry-After` are preserved. HEAD responses have
 | Other 5xx | `internal_error` |
 | Other 4xx | `request_failed` |
 
-## Coverage counts
+## Coverage counts (A1 snapshot)
 
 - Exists: **6**
 - Partly: **28**
 - Missing: **4**
+
+These counts and the initial table record the starting audit. The completed B-task
+contracts below supersede those snapshot entries; D1 will export the final OpenAPI.
 
 ## Authentication (B1)
 
@@ -113,6 +116,25 @@ Sources: [Indore district](https://indore.nic.in/en/std-pin-codes/) and
 [India Post Punjab directory](https://www.indiapost.gov.in/sites/PostalCircles/Punjab/Lists/PostOffices/PB_Pincode_12Nov2020.pdf).
 
 ## Remaining capabilities (original audit)
+
+## Admin approvals (B3)
+
+`GET /api/v1/admin/businesses?status=Pending&page=1&pageSize=20` returns
+`PagedResponse<AdminBusinessSummaryResponse>` (`items`, `total`, `page`, `pageSize`).
+Statuses include Pending, Approved, Rejected and Suspended; sort is created time/id
+descending, page size 1–100. Invalid filters/pages return 400.
+`GET /api/v1/admin/businesses/{id}` returns `BusinessReviewResponse` containing
+`business`, `gstCheck` (`provided`, nullable `formatValid`, `status` = `not_checked`
+or `not_provided`), and `documents`. This is a format result, not a GST registry check.
+Document URLs require Admin access and match both business and document ids; storage
+keys and full phone numbers are not returned in admin review/list responses.
+Approve/reject routes are unchanged; rejection requires a nonblank `note` up to
+1000 characters. Missing businesses/documents return 404; wrong roles get 403.
+Each member's approval claims/security stamp are updated atomically with the
+business decision on MySQL. Repeating the same decision avoids duplicate notifications.
+Suspended businesses require the separate reactivation flow.
+
+## Original audit follow-up list
 
 - Home: no explicit best-sellers contract; current product response is a generic list.
 - Product: landed price is a separate call and product details do not include all required presentation fields.
