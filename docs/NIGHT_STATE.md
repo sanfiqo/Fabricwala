@@ -39,7 +39,7 @@ Pending: night run in progress.
 - [x] B12. Notifications: list/unread count/read one/read all. `9217800`
 - [x] B13. Problem reports: enum/pieces/photos/note; open claims hold payout. `2a88085`
 - [x] B14. Account: profile/address CRUD/language en or hi. `ab5e2f9`
-- [x] B15. Admin home: today/seven/thirty day stats and decision counts. `COMMIT`
+- [x] B15. Admin home: today/seven/thirty day stats and decision counts. `df74c55`
 
 ### C. HTTP integration proof
 - [ ] C1. FullJourney: signup/approval/publish/search/cart/checkout/accept/ship/delivery/payout through HTTP.
