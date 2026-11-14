@@ -87,6 +87,7 @@ if (!app.Environment.IsEnvironment("Testing"))
     await SanfiqoRoleSeeder.SeedAsync(app.Services);
     using var seedScope = app.Services.CreateScope();
     await MarketplaceSeed.SeedAsync(seedScope.ServiceProvider.GetRequiredService<MarketplaceDbContext>());
+    if (app.Environment.IsDevelopment()) await DevelopmentSeed.SeedAsync(app.Services); // demo businesses, products and users; never in Production
 }
 
 app.UseMiddleware<ApiErrorMiddleware>();

@@ -115,6 +115,7 @@ public sealed class OpenApiExportTests
 
         spec["info"]!["title"] = "TextileConnect API";
         spec["info"]!["version"] = "v1";
+        NameAnonymousSchemas(spec);
         var text = Canonical(spec);
         var file = Path.Combine(RepoRoot(), "docs", "openapi.json");
         if (Environment.GetEnvironmentVariable("OPENAPI_EXPORT") == "1")
@@ -124,6 +125,46 @@ public sealed class OpenApiExportTests
         }
         Assert.True(File.Exists(file), "docs/openapi.json is missing. Run this test once with OPENAPI_EXPORT=1.");
         Assert.True(File.ReadAllText(file).Replace("\r\n", "\n") == text, "docs/openapi.json is out of date. Run this test with OPENAPI_EXPORT=1 and commit the file.");
+    }
+
+    /// <summary>
+    /// Handlers that return anonymous objects get compiler-numbered schema names that change whenever any anonymous type is added anywhere.
+    /// They are renamed AnonymousResponse1..n in a stable order (by their content) so the exported file only changes when an API really changes.
+    /// </summary>
+    private static void NameAnonymousSchemas(JsonNode spec)
+    {
+        var schemas = spec["components"]?["schemas"]?.AsObject();
+        if (schemas is null) return;
+        var anonymous = schemas.Where(x => System.Text.RegularExpressions.Regex.IsMatch(x.Key, @"f__AnonymousType\d+$"))
+            .Select(x => (x.Key, Body: x.Value!.ToJsonString())).OrderBy(x => x.Body, StringComparer.Ordinal).ToList();
+        var rename = new Dictionary<string, string>();
+        for (var i = 0; i < anonymous.Count; i++) rename[anonymous[i].Key] = $"AnonymousResponse{i + 1}";
+        foreach (var (oldName, _) in anonymous)
+        {
+            var body = schemas[oldName];
+            schemas.Remove(oldName);
+            schemas[rename[oldName]] = body;
+        }
+        Rewrite(spec, rename);
+    }
+
+    private static void Rewrite(JsonNode? node, Dictionary<string, string> rename)
+    {
+        switch (node)
+        {
+            case JsonObject obj:
+                foreach (var key in obj.Select(x => x.Key).ToList())
+                    if (key == "$ref" && obj[key] is JsonValue value && value.TryGetValue<string>(out var reference) && reference.StartsWith("#/components/schemas/"))
+                    {
+                        var name = reference["#/components/schemas/".Length..];
+                        if (rename.TryGetValue(name, out var renamed)) obj[key] = "#/components/schemas/" + renamed;
+                    }
+                    else Rewrite(obj[key], rename);
+                break;
+            case JsonArray array:
+                foreach (var item in array) Rewrite(item, rename);
+                break;
+        }
     }
 
     /// <summary>Stable, readable JSON: sorted keys, two-space indent, LF line endings, trailing newline.</summary>

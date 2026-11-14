@@ -68,6 +68,16 @@
         },
         "type": "object"
       },
+      "AnonymousResponse1": {
+        "additionalProperties": false,
+        "properties": {
+          "token": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "BusinessAddress": {
         "additionalProperties": false,
         "properties": {
@@ -645,16 +655,6 @@
         "additionalProperties": false,
         "properties": {
           "userId": {
-            "nullable": true,
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "String\u003C\u003Ef__AnonymousType27": {
-        "additionalProperties": false,
-        "properties": {
-          "token": {
             "nullable": true,
             "type": "string"
           }
@@ -3283,7 +3283,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/String\u003C\u003Ef__AnonymousType27"
+                  "$ref": "#/components/schemas/AnonymousResponse1"
                 }
               }
             },
