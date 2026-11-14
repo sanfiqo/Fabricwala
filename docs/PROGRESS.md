@@ -69,3 +69,4 @@ Handover: Phase 1 complete. Phase 2 complete except P2.3 migration tooling block
 2026-11-14 | P-NIGHT D1 | done | OpenAPI export to docs/openapi.json with drift check; 168 tests passed
 2026-11-14 | P-NIGHT D2 | done | Development-only design seed with demo businesses, products and users; 170 tests passed
 2026-11-14 | P-NIGHT D3 | done | docs/RUN_LOCAL.md (secret names only); MySQL start and migrations not verified here
+2026-11-14 | P-NIGHT D4 | done | Development-only CORS for the Vite dev server and LAN, strict outside Development; 189 tests passed

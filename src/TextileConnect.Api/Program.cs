@@ -51,7 +51,7 @@ builder.Services.AddRateLimiter(options =>
     options.AddFixedWindowLimiter("auth", limiter => { limiter.PermitLimit = 10; limiter.Window = TimeSpan.FromMinutes(1); limiter.QueueLimit = 0; });
     options.AddFixedWindowLimiter("search", limiter => { limiter.PermitLimit = 60; limiter.Window = TimeSpan.FromMinutes(1); limiter.QueueLimit = 0; });
 });
-builder.Services.AddCors(options => options.AddPolicy("frontend", policy => policy.WithOrigins(builder.Configuration["Cors:FrontendOrigin"] ?? "http://localhost:5173").AllowAnyHeader().AllowAnyMethod().AllowCredentials()));
+builder.Services.AddFrontendCors(builder.Configuration, builder.Environment);
 builder.Services.AddHealthChecks();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentBusiness, CurrentBusiness>();
@@ -92,7 +92,7 @@ if (!app.Environment.IsEnvironment("Testing"))
 
 app.UseMiddleware<ApiErrorMiddleware>();
 app.UseRateLimiter();
-app.UseCors("frontend");
+app.UseCors(FrontendCors.PolicyName);
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
