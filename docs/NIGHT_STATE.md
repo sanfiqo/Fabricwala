@@ -10,7 +10,7 @@ Pending: night run in progress.
 - Process: first unfinished task only; targeted tests per task, full suite every three tasks and at end. One task per commit (`P-NIGHT <id>: <what>`).
 - After three failed attempts: revert only this task's uncommitted implementation, log BLOCKED, continue. Stop on three consecutive BLOCKED tasks, unrecoverable full-suite failure after three attempts, or completed queue.
 - Commit hashes are recorded after commits, in the following checkpoint. No unrelated phase ticks.
-- Latest full suite: 119 passed / 0 failed. Consecutive blocked tasks: 0. Tasks since full suite: 0.
+- Latest full suite: 129 passed / 0 failed. Consecutive blocked tasks: 0. Tasks since full suite: 0.
 
 ## Queue
 
@@ -27,7 +27,7 @@ Pending: night run in progress.
 - [x] B4. Retailer catalogue: home/categories/best sellers; paged search/filter; detail/tiers/landed price/variants.
   - [x] B4.1. Populated catalogue/home/category DTOs, search filters, stable paging, public seller visibility, stored product attributes and migration. `6268c28`.
   - [x] B4.2. Shared server landed-price quote by pincode/quantity, shipping/GST/fee handling and product integration. `4253dec`.
-- [ ] B5. Cart: CRUD, tier price and add-more savings data.
+- [x] B5. Cart: CRUD, tier price and add-more savings data. `COMMIT`.
 - [ ] B6. Checkout: address/order/test payment, Idempotency-Key, seller splits.
 - [ ] B7. Retailer orders: paged status groups, detail/timeline, confirm delivery.
 - [ ] B8. Seller orders: status groups/actions, configurable fee (2% default), acceptance expiry/full refund/fake clock.
@@ -91,3 +91,4 @@ Pending: night run in progress.
 - B4.1 complete: real catalogue fields, stable paged filtering, paid-unit popularity and approved-seller visibility are covered by HTTP tests. Batch media/stock/city lookups avoid list N+1 queries. No packages or existing DTO names changed; metadata/index migration SQL checked. Full suite 119/0. Next B4.2.
 - B4.2 decisions: one batched pricing service for catalogue, cart and checkout; zone rates take precedence over city fallback, preferring per-piece when both rate types exist. Minimum freight applies to either type; unknown weight cannot produce a per-kilo quote. Totals round to paise away from zero; rounded per-unit displays need not multiply exactly to aggregate freight. GST is stored as a percentage (5 means 5%). UX rules require factory + delivery + GST, so retailer fee stays zero and seller commission is separate. Exact postal mappings validate city/pincode; unknown pincode-only destinations return 404 instead of inventing a city.
 - Continued by Claude Code after Codex hit its token limit; resumed from B4.2 (Codex left the pricing service, endpoint wiring and DI uncommitted; build and 119 tests were green, tests were missing). Added 5 HTTP tests (per-piece/per-kg/min charge, on-request shipping, validation 400/404, role 401/403, catalogue card/detail quotes). B4.2 complete; B4 done. Note: the saved prompt has no section 6 (see Resume entry); proceeding under the written stop rules. Next B5.
+- B5 decisions: tier price and MOQ use the product's total quantity across sizes/colours; GST fixed to percentage (old code multiplied by the raw rate, 100x too high). New validated `AddItemAsync` (variant active, product Active, seller approved manufacturer, qty 1..1,000,000, cumulative stock) because existing `AddAsync` is used by an old test with a fictitious variant. Below-MOQ shows lowest tier price + `below_moq`; unpurchasable lines flagged `unavailable` and excluded from totals; `canCheckout` false while any issue. Shipping is not in the cart (null) - B6 checkout must use IProductPricing and the same product-total quantity rule (current EfCheckoutService prices per line, hard-coded 2% commission, ignores GST). Cart now Retailer-role only. Added 5 HTTP tests. Full suite 129/0. Next B6.

@@ -16,7 +16,7 @@ an input gap, not evidence that those screens have working endpoints.
 |---|---|---|---|---|---|
 | Retailer | Home | `GET /api/v1/categories`; `GET /api/v1/products`; `GET /api/v1/banners` | Product query: `q`, `categoryId`, `minPrice`, `maxPrice`, `maxMoq`, `sort`, `page`, `pageSize` | Category/banner entities; paged anonymous product list using `ProductSummaryResponse` | partly |
 | Retailer | Product | `GET /api/v1/products/{slug}`; `GET /api/v1/landed-cost` | `productId`, `qty`, `cityId`, optional `pincode` | `ProductDetailResponse`; `LandedCostResponse` | partly |
-| Retailer | Cart | `GET /api/v1/cart`; `POST/PUT/DELETE /api/v1/cart/items...` | `CartRequest(VariantId, Quantity)` | `CartResponse`; no next-tier savings contract | partly |
+| Retailer | Cart | `GET /api/v1/cart`; `POST/PUT/DELETE /api/v1/cart/items...` | `CartRequest(VariantId, Quantity)` | `CartResponse` (tier price on product total qty, GST %, `nextTier` add-more savings, per-line `issues`, `canCheckout`); shipping calculated at checkout | exists |
 | Retailer | Checkout | `POST /api/v1/checkout`; `POST /api/v1/payments` | `CheckoutRequest(DeliveryAddressId)`; `PaymentRequest(OrderId)` | `OrderResponse`; payment result | partly |
 | Retailer | Orders list | `GET /api/v1/orders` | None | list of `OrderResponse` | partly |
 | Retailer | Track order | `GET /api/v1/orders/{id}`; `POST /api/v1/orders/{id}/confirm-delivery` | Order id | `OrderResponse` with `SellerOrderResponse`, history, shipment | partly |
@@ -170,7 +170,6 @@ No existing public DTO names changed. Destination-specific landed quotes follow 
 ## Gaps
 
 Unspecified screens | the referenced inputs name only 15 of the claimed 33 additional screens; 18 screen identities are unspecified | unknown
-Cart | next-tier quantity and add-more savings data are absent | small
 Account | en/hi language preference is absent | small
 Approvals list | only pending businesses; no status filter or paging | medium
 Category list | names only; category ids, slugs and tree are absent | small

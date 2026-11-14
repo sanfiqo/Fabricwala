@@ -38,11 +38,20 @@ public sealed record ProductDetailResponse(long Id, string Slug, string Title, l
     }
 }
 
-public sealed record CartItemResponse(long Id, long VariantId, long ProductId, string Slug, string Title, string? Size, string? Colour, string? ImageUrl, int Quantity, int Moq, ProductUnit Unit, decimal UnitPrice, decimal LineTotal);
+public sealed record CartItemResponse(long Id, long VariantId, long ProductId, string Slug, string Title, string? Size, string? Colour, string? ImageUrl, int Quantity, int Moq, ProductUnit Unit, decimal UnitPrice, decimal LineTotal)
+{
+    public int ProductQuantity { get; init; }
+    public decimal LineSubTotal { get; init; }
+    public decimal LineTax { get; init; }
+    public int AvailableStock { get; init; }
+    public TextileConnect.Application.Orders.CartNextTier? NextTier { get; init; }
+    public IReadOnlyList<string> Issues { get; init; } = [];
+}
 public sealed record CartGroupResponse(long ManufacturerId, string ManufacturerName, IReadOnlyList<CartItemResponse> Items, decimal SubTotal, decimal? ShippingAmount, decimal TaxAmount, decimal Total);
 public sealed record CartResponse(IReadOnlyList<CartGroupResponse> Groups, decimal SubTotal, decimal? ShippingTotal, decimal TaxTotal, decimal GrandTotal, IReadOnlyList<object> Addresses)
 {
-    public static CartResponse From(CartView value) => new(value.Sellers.Select(group => new CartGroupResponse(group.SellerBusinessId, group.ManufacturerName, group.Items.Select(line => new CartItemResponse(line.ItemId, line.VariantId, line.ProductId, line.Slug, line.Title, line.Size, line.Colour, line.ImageUrl, line.Quantity, line.Moq, line.Unit, line.SlabPrice, line.Total)).ToList(), group.SubTotal, group.ShippingTotal, group.GstTotal, group.Total)).ToList(), value.Sellers.Sum(x => x.SubTotal), value.Sellers.Any(x => x.ShippingTotal is null) ? null : value.Sellers.Sum(x => x.ShippingTotal ?? 0), value.Sellers.Sum(x => x.GstTotal), value.Sellers.Sum(x => x.Total), []);
+    public bool CanCheckout { get; init; }
+    public static CartResponse From(CartView value) => new(value.Sellers.Select(group => new CartGroupResponse(group.SellerBusinessId, group.ManufacturerName, group.Items.Select(line => new CartItemResponse(line.ItemId, line.VariantId, line.ProductId, line.Slug, line.Title, line.Size, line.Colour, line.ImageUrl, line.Quantity, line.Moq, line.Unit, line.SlabPrice, line.Total) { ProductQuantity = line.ProductQuantity, LineSubTotal = line.LineSubTotal, LineTax = line.LineGst, AvailableStock = line.AvailableStock, NextTier = line.NextTier, Issues = line.Issues }).ToList(), group.SubTotal, group.ShippingTotal, group.GstTotal, group.Total)).ToList(), value.Sellers.Sum(x => x.SubTotal), value.Sellers.Any(x => x.ShippingTotal is null) ? null : value.Sellers.Sum(x => x.ShippingTotal ?? 0), value.Sellers.Sum(x => x.GstTotal), value.Sellers.Sum(x => x.Total), []) { CanCheckout = value.CanCheckout };
 }
 
 public sealed record OrderItemResponse(long Id, long ProductId, string Title, string? Size, string? Colour, int Quantity, decimal UnitPrice, decimal GstRate, decimal LineTotal);
