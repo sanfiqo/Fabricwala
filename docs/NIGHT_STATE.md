@@ -1,6 +1,14 @@
 # Morning report
 
-Pending: night run in progress.
+Updated after D4 (block E in progress). Branch backend/api-for-screens, local commits only, nothing pushed.
+
+- Done (commit): 0 50b5235, A1 ffcac6f, A2 adeaebb, B1 8d2d146, B2 f1705dc, B3 4cb4987, B4 6268c28+4253dec, B5 615b6ce, B6 1729b55+1611351, B7 9345a97, B8 694f6fb, B9 fba614f, B10 d38eeba, B11 7c00923, B12 9217800, B13 2a88085, B14 ab5e2f9, B15 df74c55, C1-C3 56250cb, D1 2640d7e, D2 bd30ec6, D3 64578c5, D4 25a501f. (Each also has a following "record commit id" commit.)
+- BLOCKED: none.
+- Tests: 189 passed / 0 failed. FullJourney: PASS (plus the expired-acceptance refund test and the problem-report payout-hold test, all over HTTP). MySQL itself was never exercised (no server): the MySQL integration test returns early when TEXTILECONNECT_TEST_MYSQL is unset.
+- Decisions I made alone: see Log (one entry per task). Main ones: strict seller order state machine and 24h accept window (setting), commission stored at checkout (seller override or 2%), seller payout held until delivery or 7 days and held while a claim is open, orders/notifications lists became paged objects, seller routes are Manufacturer-role only, old raw-entity seller product API replaced, stock reserved at checkout and released on cancel, Hangfire not used (hosted worker instead, no new package), docs/PROGRESS.md now also updated per task.
+- Not built / known gaps: real Razorpay Route payout transfer and the Razorpay refund call are untested against the real API; a payout already released is not clawed back after a later refund; seller/admin photo viewing for claims; no demo orders in the seed.
+- What you must do: set the user-secrets named in docs/RUN_LOCAL.md (connection string, UserContacts:LookupHmacKey, Otp:StorageHmacKey) with your own values; run the two `dotnet ef database update` commands (not verified here); review that the migrations NightCatalogueAttributes, NightCheckoutSnapshots, NightPaymentStatusToken, NightOrderLifecycle, NightSellerProducts, NightProblemReports (and earlier B2) are right for any existing data before applying to a shared database; give Razorpay test keys when you want to try the real gateway.
+- Next 3 tasks: E1 admin lists (orders, claims with detail/resolve, sellers, retailers, product moderation, payouts, commission report), E2 saved products / rate order / invoice list / address pincode check / reorder, then a review pass of the Log decisions.
 
 ## Run state
 
