@@ -16,7 +16,7 @@ public static class InvoiceEndpoints
             if (invoiceType is not ("SellerToRetailer" or "PlatformCommission")) return Results.BadRequest();
             var businessId = current.RequireBusinessId();
             var sellerOrder = await db.SellerOrders.Include(x => x.Order).SingleOrDefaultAsync(x => x.Id == sellerOrderId && (x.ManufacturerBusinessId == businessId || x.Order!.RetailerBusinessId == businessId), ct);
-            if (sellerOrder is null) return Results.NotFound();
+            if (sellerOrder is null || (invoiceType == "PlatformCommission" && sellerOrder.ManufacturerBusinessId != businessId)) return Results.NotFound(); // the commission invoice is between the platform and the seller
             var invoice = await db.Invoices.SingleOrDefaultAsync(x => x.SellerOrderId == sellerOrderId && x.InvoiceType == invoiceType, ct) ?? await finance.CreateInvoiceAsync(sellerOrderId, invoiceType, ct);
             var stream = await storage.OpenPrivateAsync(invoice.FileKey!, ct);
             return Results.File(stream, "application/pdf", $"{invoice.InvoiceNumber}.pdf");

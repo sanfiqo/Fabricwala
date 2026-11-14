@@ -58,6 +58,7 @@ public sealed class MarketplaceHttpFixture(WebApplication app) : IAsyncDisposabl
         builder.Services.AddScoped<IProductPricing, EfProductPricing>();
         builder.Services.AddScoped<ISellerProductService, EfSellerProductService>();
         builder.Services.AddScoped<IProductDirectory, EfProductDirectory>();
+        builder.Services.AddScoped<TextileConnect.Application.Payments.IFinanceService, TextileConnect.Infrastructure.Payments.EfFinanceService>();
         builder.Services.AddScoped<TextileConnect.Application.Orders.ICartService, TextileConnect.Infrastructure.Orders.EfCartService>();
         builder.Services.AddScoped<TextileConnect.Application.Orders.ICheckoutService, TextileConnect.Infrastructure.Orders.EfCheckoutService>();
         builder.Services.AddScoped<TextileConnect.Application.Orders.IOrderService, TextileConnect.Infrastructure.Orders.EfOrderService>();

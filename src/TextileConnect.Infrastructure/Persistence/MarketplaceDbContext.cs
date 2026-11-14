@@ -30,6 +30,7 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<SellerOrder> SellerOrders => Set<SellerOrder>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+    public DbSet<OrderRating> OrderRatings => Set<OrderRating>();
     public DbSet<OrderStatusHistory> OrderStatusHistories => Set<OrderStatusHistory>();
     public DbSet<IdempotencyRecord> IdempotencyRecords => Set<IdempotencyRecord>();
     public DbSet<Shipment> Shipments => Set<Shipment>();
@@ -127,6 +128,8 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
         builder.Entity<SellerOrder>().Property(x => x.Status).HasMaxLength(40).IsConcurrencyToken();
         builder.Entity<SellerOrder>().HasMany(x => x.History).WithOne(x => x.SellerOrder).HasForeignKey(x => x.SellerOrderId);
         builder.Entity<OrderStatusHistory>(entity => { entity.HasKey(x => x.Id); entity.Property(x => x.Status).HasMaxLength(40).IsRequired(); entity.Property(x => x.Note).HasMaxLength(1000); entity.HasIndex(x => new { x.SellerOrderId, x.ChangedAtUtc, x.Id }); });
+        builder.Entity<OrderRating>(entity => { entity.HasKey(x => x.Id); entity.Property(x => x.Comment).HasMaxLength(1000); entity.HasIndex(x => x.OrderId).IsUnique(); });
+        builder.Entity<TextileConnect.Domain.Community.Favourite>().HasIndex(x => new { x.RetailerBusinessId, x.ProductId }).IsUnique();
         builder.Entity<IdempotencyRecord>(entity => { entity.HasKey(x => x.Id); entity.Property(x => x.Scope).HasMaxLength(40).IsRequired(); entity.Property(x => x.Key).HasMaxLength(100).IsRequired(); entity.Property(x => x.RequestHash).HasMaxLength(64).IsRequired(); entity.Property(x => x.ResourceKey).HasMaxLength(100).IsRequired(); entity.HasIndex(x => new { x.BusinessId, x.Scope, x.Key }).IsUnique(); });
         builder.Entity<OrderItem>().Property(x => x.Title).HasMaxLength(200);
         builder.Entity<OrderItem>().Property(x => x.Size).HasMaxLength(40);

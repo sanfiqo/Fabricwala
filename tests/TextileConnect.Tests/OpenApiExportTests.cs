@@ -44,7 +44,7 @@ public sealed class OpenApiExportTests
             app.MapAdminEndpoints(); app.MapProductEndpoints(); app.MapLandedCostEndpoints(); app.MapInvoiceEndpoints(); app.MapReturnClaimEndpoints();
             app.MapNotificationEndpoints(); app.MapAccountEndpoints(); app.MapStorefrontEndpoints(); app.MapSellerDashboardEndpoints(); app.MapBulkProductEndpoints();
             app.MapStockAlertEndpoints(); app.MapPayoutEndpoints(); app.MapAdminDashboardEndpoints(); app.MapAdminReportEndpoints(); app.MapProductModerationEndpoints();
-            app.MapCategoryBannerEndpoints(); app.MapBusinessSuspensionEndpoints(); app.MapCartEndpoints(); app.MapOrderEndpoints(); app.MapPaymentEndpoints(); app.MapCommunityEndpoints();
+            app.MapCategoryBannerEndpoints(); app.MapBusinessSuspensionEndpoints(); app.MapAdminListEndpoints(); app.MapRetailerExtrasEndpoints(); app.MapCartEndpoints(); app.MapOrderEndpoints(); app.MapPaymentEndpoints(); app.MapCommunityEndpoints();
         }, builder =>
         {
             builder.Services.AddEndpointsApiExplorer();
