@@ -13,6 +13,8 @@ public sealed record CartLine(long ItemId, long VariantId, int Quantity, decimal
     public int Moq { get; init; }
     public ProductUnit Unit { get; init; }
     /// <summary>Total pieces of this product in the cart across sizes/colours; the price tier uses this.</summary>
+    /// <summary>GST percentage (5 means 5%).</summary>
+    public decimal GstRate { get; init; }
     public int ProductQuantity { get; init; }
     public decimal LineSubTotal { get; init; }
     public decimal LineGst { get; init; }

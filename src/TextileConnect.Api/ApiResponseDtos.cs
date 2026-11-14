@@ -54,17 +54,20 @@ public sealed record CartResponse(IReadOnlyList<CartGroupResponse> Groups, decim
     public static CartResponse From(CartView value) => new(value.Sellers.Select(group => new CartGroupResponse(group.SellerBusinessId, group.ManufacturerName, group.Items.Select(line => new CartItemResponse(line.ItemId, line.VariantId, line.ProductId, line.Slug, line.Title, line.Size, line.Colour, line.ImageUrl, line.Quantity, line.Moq, line.Unit, line.SlabPrice, line.Total) { ProductQuantity = line.ProductQuantity, LineSubTotal = line.LineSubTotal, LineTax = line.LineGst, AvailableStock = line.AvailableStock, NextTier = line.NextTier, Issues = line.Issues }).ToList(), group.SubTotal, group.ShippingTotal, group.GstTotal, group.Total)).ToList(), value.Sellers.Sum(x => x.SubTotal), value.Sellers.Any(x => x.ShippingTotal is null) ? null : value.Sellers.Sum(x => x.ShippingTotal ?? 0), value.Sellers.Sum(x => x.GstTotal), value.Sellers.Sum(x => x.Total), []) { CanCheckout = value.CanCheckout };
 }
 
-public sealed record OrderItemResponse(long Id, long ProductId, string Title, string? Size, string? Colour, int Quantity, decimal UnitPrice, decimal GstRate, decimal LineTotal);
+public sealed record OrderItemResponse(long Id, long ProductId, string Title, string? Size, string? Colour, int Quantity, decimal UnitPrice, decimal GstRate, decimal LineTotal)
+{
+    public decimal GstAmount { get; init; }
+}
 public sealed record StatusHistoryResponse(string Status, string? Note, DateTime ChangedAt);
 public sealed record ShipmentResponse(string? CarrierName, string? LrNumber, DateTime? DispatchedAt);
 public sealed record SellerOrderResponse(long Id, long OrderId, string OrderNumber, string SubOrderNumber, string ManufacturerName, string RetailerName, string DeliveryCity, string Status, string PaymentStatus, DateTime? PlacedAt, IReadOnlyList<OrderItemResponse> Items, decimal SubTotal, decimal ShippingAmount, decimal TaxAmount, decimal Total, decimal CommissionRate, decimal CommissionAmount, string? RejectReason, IReadOnlyList<StatusHistoryResponse> History, ShipmentResponse? Shipment)
 {
-    public static SellerOrderResponse From(SellerOrder value) => new(value.Id, value.OrderId, value.Order?.OrderNumber ?? string.Empty, $"{value.Order?.OrderNumber ?? ""}-{value.Id}", string.Empty, string.Empty, string.Empty, value.Status == "Pending" ? "PendingAcceptance" : value.Status, value.Order?.PaymentStatus ?? "Pending", null, value.Items.Select(x => new OrderItemResponse(x.Id, x.ProductId, string.Empty, null, null, x.Quantity, x.UnitPrice, 0m, x.LineTotal)).ToList(), value.SubTotal, 0m, 0m, value.SubTotal, value.CommissionRate, value.SubTotal * value.CommissionRate, value.RejectReason, [], null);
+    public static SellerOrderResponse From(SellerOrder value) => new(value.Id, value.OrderId, value.Order?.OrderNumber ?? string.Empty, $"{value.Order?.OrderNumber ?? ""}-{value.Id}", string.Empty, string.Empty, value.Order?.DeliveryCity ?? string.Empty, value.Status == "Pending" ? "PendingAcceptance" : value.Status, value.Order?.PaymentStatus ?? "Pending", value.PlacedAtUtc, value.Items.Select(x => new OrderItemResponse(x.Id, x.ProductId, x.Title, x.Size, x.Colour, x.Quantity, x.UnitPrice, x.GstRate, x.LineTotal) { GstAmount = x.GstAmount }).ToList(), value.SubTotal, value.ShippingAmount, value.TaxAmount, value.Total, value.CommissionRate, value.CommissionAmount, value.RejectReason, value.History.OrderBy(x => x.ChangedAtUtc).ThenBy(x => x.Id).Select(x => new StatusHistoryResponse(x.Status, x.Note, x.ChangedAtUtc)).ToList(), null);
 }
 
 public sealed record OrderResponse(long Id, string OrderNumber, DateTime? PlacedAt, decimal SubTotal, decimal ShippingTotal, decimal TaxTotal, decimal GrandTotal, string PaymentStatus, object? DeliveryAddress, IReadOnlyList<SellerOrderResponse> SellerOrders)
 {
-    public static OrderResponse From(Order value) => new(value.Id, value.OrderNumber, null, value.SellerOrders.Sum(x => x.SubTotal), 0m, 0m, value.GrandTotal, value.PaymentStatus, null, value.SellerOrders.Select(SellerOrderResponse.From).ToList());
+    public static OrderResponse From(Order value) => new(value.Id, value.OrderNumber, value.PlacedAtUtc, value.SubTotal, value.ShippingTotal, value.TaxTotal, value.GrandTotal, value.PaymentStatus, new { line1 = value.DeliveryLine1, line2 = value.DeliveryLine2, city = value.DeliveryCity, pincode = value.DeliveryPincode }, value.SellerOrders.Select(SellerOrderResponse.From).ToList());
 }
 
 public static class ApiResponseMappings

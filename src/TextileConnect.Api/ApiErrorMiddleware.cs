@@ -35,12 +35,15 @@ public sealed class ApiErrorMiddleware(RequestDelegate next, ILogger<ApiErrorMid
                 UnauthorizedAccessException => 403,
                 KeyNotFoundException => 404,
                 TextileConnect.Application.Businesses.BusinessConflictException => 409,
+                TextileConnect.Application.Common.RuleViolationException rule => rule.Status,
                 Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException => 409,
                 Microsoft.EntityFrameworkCore.DbUpdateException update
                     when update.InnerException is MySql.Data.MySqlClient.MySqlException { Number: 1062 } => 409,
                 _ => 500
             };
-            error = ApiErrorResponse.ForStatus(context.Response.StatusCode);
+            error = exception is TextileConnect.Application.Common.RuleViolationException violation
+                ? new ApiErrorResponse(violation.Code, violation.Message)
+                : ApiErrorResponse.ForStatus(context.Response.StatusCode);
             if (exception is ValidationException validation)
                 error = error with { Fields = validation.Errors.GroupBy(x => x.PropertyName)
                     .ToDictionary(x => x.Key, _ => new[] { "invalid_value" }) };

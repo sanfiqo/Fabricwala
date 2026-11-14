@@ -9,9 +9,12 @@ public static class OrderEndpoints
     public static void MapOrderEndpoints(this WebApplication app)
     {
         var retailer = app.MapGroup("/api/v1/orders").RequireAuthorization("ApprovedBusiness");
-        app.MapPost("/api/v1/checkout", async (CheckoutRequest request, ClaimsPrincipal principal, ICurrentBusiness current, ICheckoutService checkout, CancellationToken ct) =>
-            await checkout.CheckoutAsync(current.RequireBusinessId(), principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty, request.DeliveryAddressId, ct) is { } order ? Results.Ok(ApiResponseMappings.Order(order)) : Results.BadRequest())
-            .RequireAuthorization("ApprovedBusiness");
+        app.MapPost("/api/v1/checkout", async (CheckoutRequest request, HttpRequest http, ClaimsPrincipal principal, ICurrentBusiness current, ICheckoutService checkout, CancellationToken ct) =>
+        {
+            var result = await checkout.CheckoutAsync(current.RequireBusinessId(), principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty,
+                request.DeliveryAddressId, http.Headers["Idempotency-Key"].ToString(), ct);
+            return result.Replayed ? Results.Ok(ApiResponseMappings.Order(result.Order)) : Results.Created($"/api/v1/orders/{result.Order.Id}", ApiResponseMappings.Order(result.Order));
+        }).RequireAuthorization("ApprovedBusiness").RequireAuthorization(policy => policy.RequireRole("Retailer"));
         retailer.MapGet("", async (ICurrentBusiness current, IOrderService orders, CancellationToken ct) => Results.Ok((await orders.ListForRetailerAsync(current.RequireBusinessId(), ct)).Select(ApiResponseMappings.Order).ToList()));
         retailer.MapGet("/{id:long}", async (long id, ICurrentBusiness current, IOrderService orders, CancellationToken ct) =>
             await orders.GetForRetailerAsync(current.RequireBusinessId(), id, ct) is { } order ? Results.Ok(ApiResponseMappings.Order(order)) : Results.NotFound());

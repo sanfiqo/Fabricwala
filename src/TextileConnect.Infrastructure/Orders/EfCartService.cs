@@ -72,7 +72,7 @@ public sealed class EfCartService(MarketplaceDbContext db) : ICartService
                 {
                     ProductId = product.Id, Slug = product.Slug, Title = product.Title, Size = variant.Size, Colour = variant.Colour, Moq = product.Moq, Unit = product.Unit,
                     ImageUrl = image is null ? null : MediaUrl(product.Slug, image),
-                    ProductQuantity = qty, LineSubTotal = subTotal, LineGst = gst, AvailableStock = variant.StockQty, Issues = issues,
+                    GstRate = product.GstRate, ProductQuantity = qty, LineSubTotal = subTotal, LineGst = gst, AvailableStock = variant.StockQty, Issues = issues,
                     NextTier = next is null ? null : new CartNextTier(next.MinQty, next.PricePerUnit, next.MinQty - qty, price - next.PricePerUnit,
                         ProductQuote.Money((price - next.PricePerUnit) * next.MinQty)),
                 }));

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using TextileConnect.Domain.Businesses;
 using TextileConnect.Domain.Catalogue;
+using TextileConnect.Infrastructure.Catalogue;
 using TextileConnect.Infrastructure.Orders;
 using TextileConnect.Infrastructure.Persistence;
 
@@ -41,11 +42,16 @@ public sealed class MySqlFlowIntegrationTests
         db.PriceSlabs.Add(new PriceSlab { ProductId = product.Id, MinQty = 10, MaxQty = 100, PricePerUnit = 100 });
         await db.SaveChangesAsync();
 
+        db.BusinessAddresses.Add(new BusinessAddress { BusinessId = manufacturer.Id, AddressType = AddressType.Pickup, Line1 = "Test factory", CityId = cityId, Pincode = "190001", IsDefault = true });
+        if (!await db.PostalCodes.AnyAsync(x => x.Pincode == "190001")) db.PostalCodes.Add(new PostalCode { Pincode = "190001", CityId = cityId });
+        if (!await db.ShippingRates.AnyAsync(x => x.FromCityId == cityId && x.ToCityId == cityId && x.RateType == ShippingRateType.PerPiece))
+            db.ShippingRates.Add(new ShippingRate { FromCityId = cityId, ToCityId = cityId, RateType = ShippingRateType.PerPiece, Rate = 5, MinCharge = 0, TransitDays = 2 });
+        await db.SaveChangesAsync();
         var cart = new EfCartService(db);
-        var checkout = new EfCheckoutService(db);
+        var checkout = new EfCheckoutService(db, cart, new EfProductPricing(db));
         var orders = new EfOrderService(db);
         await cart.AddAsync(retailer.Id, "integration-retailer", variant.Id, 10);
-        var order = await checkout.CheckoutAsync(retailer.Id, "integration-retailer", address.Id);
+        var order = (await checkout.CheckoutAsync(retailer.Id, "integration-retailer", address.Id, "integration-key-1")).Order;
         Assert.NotNull(order);
         order!.PaymentStatus = "Paid";
         await db.SaveChangesAsync();

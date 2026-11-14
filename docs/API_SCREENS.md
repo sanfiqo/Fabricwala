@@ -17,7 +17,7 @@ an input gap, not evidence that those screens have working endpoints.
 | Retailer | Home | `GET /api/v1/categories`; `GET /api/v1/products`; `GET /api/v1/banners` | Product query: `q`, `categoryId`, `minPrice`, `maxPrice`, `maxMoq`, `sort`, `page`, `pageSize` | Category/banner entities; paged anonymous product list using `ProductSummaryResponse` | partly |
 | Retailer | Product | `GET /api/v1/products/{slug}`; `GET /api/v1/landed-cost` | `productId`, `qty`, `cityId`, optional `pincode` | `ProductDetailResponse`; `LandedCostResponse` | partly |
 | Retailer | Cart | `GET /api/v1/cart`; `POST/PUT/DELETE /api/v1/cart/items...` | `CartRequest(VariantId, Quantity)` | `CartResponse` (tier price on product total qty, GST %, `nextTier` add-more savings, per-line `issues`, `canCheckout`); shipping calculated at checkout | exists |
-| Retailer | Checkout | `POST /api/v1/checkout`; `POST /api/v1/payments` | `CheckoutRequest(DeliveryAddressId)`; `PaymentRequest(OrderId)` | `OrderResponse`; payment result | partly |
+| Retailer | Checkout | `POST /api/v1/checkout`; `POST /api/v1/payments` | `CheckoutRequest(DeliveryAddressId)` + required `Idempotency-Key` header (8-100 chars); `PaymentRequest(OrderId)` | `OrderResponse` (201 created, 200 replay of the same key; totals, delivery snapshot, per-seller orders with item snapshots and platform fee); payment result | partly |
 | Retailer | Orders list | `GET /api/v1/orders` | None | list of `OrderResponse` | partly |
 | Retailer | Track order | `GET /api/v1/orders/{id}`; `POST /api/v1/orders/{id}/confirm-delivery` | Order id | `OrderResponse` with `SellerOrderResponse`, history, shipment | partly |
 | Retailer | Search + filters | `GET /api/v1/products` | Supports query, category, price, MOQ, sort, paging; no material/size/colour/seller-city filters | Paged `ProductSummaryResponse` list | partly |
@@ -73,6 +73,17 @@ HTTP status and headers such as `Retry-After` are preserved. HEAD responses have
 | 503 | `service_unavailable` |
 | Other 5xx | `internal_error` |
 | Other 4xx | `request_failed` |
+
+Business-rule failures keep their HTTP status but carry a specific code (always safe to translate):
+
+| HTTP | Code | Meaning |
+|---|---|---|
+| 409 | `cart_empty` | Checkout with no cart items |
+| 409 | `cart_not_ready` | A cart line has an issue (`below_moq`, `unavailable`, `insufficient_stock`) |
+| 409 | `delivery_unavailable` | Delivery address pincode/city is not serviceable |
+| 409 | `shipping_unavailable` | No freight rate for the seller-to-address route; order cannot be priced |
+| 409 | `insufficient_stock` | Stock changed between cart and checkout |
+| 409 | `idempotency_key_reused` | Same `Idempotency-Key` sent with a different request |
 
 ## Coverage counts (A1 snapshot)
 
@@ -154,7 +165,7 @@ No existing public DTO names changed. Destination-specific landed quotes follow 
 
 - Home: no explicit best-sellers contract; current product response is a generic list.
 - Product: landed price is a separate call and product details do not include all required presentation fields.
-- Checkout: no visible `Idempotency-Key` contract; payment and checkout responses are not documented DTOs.
+- Checkout: `Idempotency-Key` contract done (B6.1); payment response is not yet a documented DTO (B6.2).
 - Orders and seller orders: lists are not paged and response mappings omit populated snapshot/address/history fields.
 - Search: material, size, colour, and seller-city filters are absent from the query contract.
 - Notifications: no mark-all-read route; list/read responses are anonymous/entity shapes.
