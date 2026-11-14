@@ -34,7 +34,7 @@ Pending: night run in progress.
 - [x] B7. Retailer orders: paged status groups, detail/timeline, confirm delivery. `9345a97`.
 - [x] B8. Seller orders: status groups/actions, configurable fee (2% default), acceptance expiry/full refund/fake clock. `694f6fb`.
 - [x] B9. Seller products: filtered/searchable list, on/off, CRUD/draft/publish, tiers/MOQ/variants/stock. `fba614f`.
-- [x] B10. Payouts: hold until confirmed or seven days, summary/per-order/CSV; no bank numbers. `COMMIT`.
+- [x] B10. Payouts: hold until confirmed or seven days, summary/per-order/CSV; no bank numbers. `d38eeba`.
 - [ ] B11. Seller dashboard: counts, monthly sales/next payout, six-month chart, low stock/best sellers.
 - [ ] B12. Notifications: list/unread count/read one/read all.
 - [ ] B13. Problem reports: enum/pieces/photos/note; open claims hold payout.
