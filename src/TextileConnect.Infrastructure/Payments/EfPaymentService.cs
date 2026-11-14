@@ -80,6 +80,9 @@ public sealed partial class EfPaymentService(MarketplaceDbContext db, IPaymentGa
         foreach (var sellerOrder in order.SellerOrders)
         {
             sellerOrder.AcceptDeadlineUtc = now.AddHours(window);
+            // Seller's share is held (Pending, no release date) until the order is shipped or delivered.
+            db.Settlements.Add(new Settlement { PaymentId = payment.Id, SellerOrderId = sellerOrder.Id, ManufacturerBusinessId = sellerOrder.ManufacturerBusinessId,
+                Amount = sellerOrder.Total - sellerOrder.CommissionAmount, CommissionAmount = sellerOrder.CommissionAmount, Status = "Pending", ReleaseAfter = Settlements.NoReleaseDate });
             db.OrderStatusHistories.Add(new OrderStatusHistory { SellerOrderId = sellerOrder.Id, Status = "Pending", Note = "Payment received; waiting for the seller to accept.", ChangedAtUtc = now });
         }
         await NotifyAsync(order.SellerOrders.Select(x => x.ManufacturerBusinessId), "New order", $"Order {order.OrderNumber} is paid and waiting for you to accept.", "/seller/orders", now, cancellationToken);

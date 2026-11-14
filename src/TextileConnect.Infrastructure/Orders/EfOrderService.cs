@@ -39,6 +39,8 @@ public sealed class EfOrderService(MarketplaceDbContext db, IPaymentGateway? gat
             sellerOrder.DeliveredAt = now;
             db.OrderStatusHistories.Add(new OrderStatusHistory { SellerOrderId = sellerOrder.Id, Status = "Delivered", Note = "Delivery confirmed by the retailer.", ChangedAtUtc = now });
         }
+        foreach (var settlement in await db.Settlements.Where(x => shippedIds.Contains(x.SellerOrderId) && x.Status == "Pending").ToListAsync(cancellationToken))
+            settlement.ReleaseAfter = now;
         foreach (var shipment in await db.Shipments.Where(x => shippedIds.Contains(x.SellerOrderId)).ToListAsync(cancellationToken))
         { shipment.Status = "Delivered"; shipment.DeliveredAt = now; }
         await NotifyBusinessesAsync(shipped.Select(x => x.ManufacturerBusinessId), "Delivery confirmed", $"The retailer confirmed delivery of order {order.OrderNumber}.", "/seller/orders", now, cancellationToken);
@@ -89,6 +91,9 @@ public sealed class EfOrderService(MarketplaceDbContext db, IPaymentGateway? gat
                 if (shipment is null) db.Shipments.Add(new Shipment { SellerOrderId = order.Id, LrNumber = lr, CarrierName = carrier, DispatchedAt = now });
                 else { shipment.LrNumber = lr; shipment.CarrierName = carrier; shipment.DispatchedAt = now; shipment.Status = "Dispatched"; }
                 db.OrderStatusHistories.Add(new OrderStatusHistory { SellerOrderId = order.Id, Status = "Dispatched", Note = $"LR {lr}", ChangedAtUtc = now });
+                var autoRelease = now.AddDays(await AutoReleaseDaysAsync(cancellationToken));
+                var held = await db.Settlements.SingleOrDefaultAsync(x => x.SellerOrderId == order.Id && x.Status == "Pending", cancellationToken);
+                if (held is not null && held.ReleaseAfter > autoRelease) held.ReleaseAfter = autoRelease;
                 await NotifyBusinessesAsync([parent.RetailerBusinessId], "Order shipped", $"Order {parent.OrderNumber} was shipped. LR number {lr}.", $"/orders/{parent.Id}", now, cancellationToken);
                 break;
             default:
@@ -145,6 +150,7 @@ public sealed class EfOrderService(MarketplaceDbContext db, IPaymentGateway? gat
                 $"Order {sellerOrder.Order!.OrderNumber} was cancelled because payment was not completed.", now, cancellationToken);
             cancelled++;
         }
+        await ReleaseDueSettlementsAsync(now, cancellationToken);
         await db.SaveChangesAsync(cancellationToken);
         foreach (var refund in refunds) await ProcessRefundAsync(refund, cancellationToken);
         await RetryRequestedRefundsAsync(cancellationToken);
@@ -161,6 +167,8 @@ public sealed class EfOrderService(MarketplaceDbContext db, IPaymentGateway? gat
         foreach (var item in sellerOrder.Items.Where(x => x.VariantId.HasValue))
             if (variants.TryGetValue(item.VariantId!.Value, out var variant)) variant.StockQty += item.Quantity;
         db.OrderStatusHistories.Add(new OrderStatusHistory { SellerOrderId = sellerOrder.Id, Status = finalStatus, Note = reason, ChangedAtUtc = now });
+        foreach (var settlement in await db.Settlements.Where(x => x.SellerOrderId == sellerOrder.Id && x.Status == "Pending").ToListAsync(cancellationToken))
+            settlement.Status = "Cancelled";
 
         Refund? refund = null;
         var paid = string.Equals(parent.PaymentStatus, "Paid", StringComparison.OrdinalIgnoreCase) || parent.PaymentStatus is "PartiallyRefunded";
@@ -210,6 +218,28 @@ public sealed class EfOrderService(MarketplaceDbContext db, IPaymentGateway? gat
         var ids = businessIds.Distinct().ToArray();
         var users = await db.BusinessUsers.AsNoTracking().Where(x => ids.Contains(x.BusinessId)).Select(x => x.UserId).Distinct().ToListAsync(cancellationToken);
         db.Notifications.AddRange(users.Select(userId => new Notification { UserId = userId, Title = title, Message = message, Link = link, CreatedAtUtc = now }));
+    }
+
+    /// <summary>Releases held payouts whose date has come, unless the retailer has an unresolved claim on that order.</summary>
+    private async Task ReleaseDueSettlementsAsync(DateTime now, CancellationToken cancellationToken)
+    {
+        var due = await db.Settlements.Where(x => x.Status == "Pending" && x.ReleaseAfter <= now
+                && !db.ReturnClaims.Any(c => c.SellerOrderId == x.SellerOrderId && c.ResolvedAtUtc == null))
+            .OrderBy(x => x.Id).Take(200).ToListAsync(cancellationToken);
+        if (due.Count == 0) return;
+        var orderNumbers = await db.SellerOrders.Where(x => due.Select(d => d.SellerOrderId).Contains(x.Id)).Select(x => new { x.Id, x.Order!.OrderNumber }).ToDictionaryAsync(x => x.Id, x => x.OrderNumber, cancellationToken);
+        foreach (var settlement in due)
+        {
+            settlement.Status = "Released";
+            settlement.SettledAt = now;
+            await NotifyBusinessesAsync([settlement.ManufacturerBusinessId], "Payout released", $"Your payout for order {orderNumbers.GetValueOrDefault(settlement.SellerOrderId)} is released.", "/seller/payouts", now, cancellationToken);
+        }
+    }
+
+    private async Task<int> AutoReleaseDaysAsync(CancellationToken cancellationToken)
+    {
+        var value = await db.PlatformSettings.AsNoTracking().Where(x => x.Key == "Settlement.AutoReleaseDays").Select(x => x.Value).SingleOrDefaultAsync(cancellationToken);
+        return int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var days) && days is >= 1 and <= 90 ? days : 7;
     }
 
     private async Task<int> UnpaidExpiryMinutesAsync(CancellationToken cancellationToken)

@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using TextileConnect.Application.Businesses;
 using TextileConnect.Infrastructure.Persistence;
 
@@ -8,15 +7,14 @@ public static class PayoutEndpoints
 {
     public static void MapPayoutEndpoints(this WebApplication app)
     {
-        app.MapGet("/api/v1/seller/payouts", async (ICurrentBusiness current, MarketplaceDbContext db, bool? csv, CancellationToken ct) =>
+        app.MapGet("/api/v1/seller/payouts", async (string? status, int? page, int? pageSize, bool? csv, ICurrentBusiness current, MarketplaceDbContext db, TimeProvider clock, CancellationToken ct) =>
         {
-            var rows = await db.Settlements.AsNoTracking().Where(x => x.ManufacturerBusinessId == current.RequireBusinessId()).OrderByDescending(x => x.Id).Select(x => new { sellerOrderId = x.SellerOrderId, amount = x.Amount, commission = x.CommissionAmount, status = x.Status, settledAt = x.SettledAt }).ToListAsync(ct);
+            var number = page ?? 1; var size = pageSize ?? 20;
+            if (!SellerPayoutReader.IsValidStatus(status) || number is < 1 or > 1_000_000 || size is < 1 or > 100) return Results.BadRequest();
+            var reader = new SellerPayoutReader(db, clock);
             if (csv == true)
-            {
-                var body = "sellerOrderId,amount,commission,status,settledAt\n" + string.Join("\n", rows.Select(x => $"{x.sellerOrderId},{x.amount:0.00},{x.commission:0.00},{x.status},{x.settledAt:O}"));
-                return Results.Text(body, "text/csv", System.Text.Encoding.UTF8);
-            }
-            return Results.Ok(new { items = rows, total = rows.Sum(x => x.amount), commission = rows.Sum(x => x.commission) });
-        }).RequireAuthorization("ApprovedBusiness");
+                return Results.File(System.Text.Encoding.UTF8.GetBytes(await reader.CsvAsync(current.RequireBusinessId(), status, ct)), "text/csv; charset=utf-8", "payouts.csv");
+            return Results.Ok(await reader.SummaryAsync(current.RequireBusinessId(), status, number, size, ct));
+        }).RequireAuthorization("ApprovedBusiness").RequireAuthorization(policy => policy.RequireRole("Manufacturer"));
     }
 }

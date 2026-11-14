@@ -13,9 +13,9 @@ namespace TextileConnect.Tests;
 
 public sealed class PaymentHttpTests
 {
-    internal static async Task<MarketplaceHttpFixture> StartAsync()
+    internal static async Task<MarketplaceHttpFixture> StartAsync(Action<Microsoft.AspNetCore.Builder.WebApplication>? extra = null)
     {
-        var fixture = await CheckoutHttpTests.StartAsync(extra: app => app.MapPaymentEndpoints());
+        var fixture = await CheckoutHttpTests.StartAsync(extra: app => { app.MapPaymentEndpoints(); extra?.Invoke(app); });
         using var scope = fixture.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
         db.BusinessUsers.AddRange(new BusinessUser { BusinessId = 10, UserId = "seller-user", Role = BusinessMemberRole.Owner },
