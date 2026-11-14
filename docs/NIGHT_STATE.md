@@ -62,7 +62,7 @@ Updated after D4 (block E in progress). Branch backend/api-for-screens, local co
 
 ### E. Only after A-D
 - [x] E1. Admin orders/claims/businesses/moderation/payouts/commission lists. `5f1916d`
-- [x] E2. Saved products/order rating/invoice list/pincode check/reorder. `COMMIT`
+- [x] E2. Saved products/order rating/invoice list/pincode check/reorder. `fae2274`
 
 ## Validation
 
