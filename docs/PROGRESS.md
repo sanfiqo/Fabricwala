@@ -53,3 +53,9 @@ Handover: Phase 1 complete. Phase 2 complete except P2.3 migration tooling block
 2026-11-13 | P5.10 | done | Added payment webhook completion, private document download, validated shipping DTOs/city references, full-flow integration coverage; 63 tests passed
 2026-11-13 | Clean MySQL verification | done | Dropped textileconnect_dev, applied both migration chains from zero, original PlatformSettings migration succeeded, seeds: States=1/Cities=12/Categories=8/PlatformSettings=4; API health 200
 2026-11-13 | Real flow fixes | partial | Added environment-over-local precedence, approved-business claim, approval role assignment, and product variant/slab persistence; build passed; 63 tests passed; full flow still blocked by invalid local HMAC lengths
+2026-11-14 | P-NIGHT B4.2 | done | landed-cost quote service; 119 tests passed
+2026-11-14 | P-NIGHT B5 | done | cart tier pricing, GST fix, add-more savings; 129 tests passed
+2026-11-14 | P-NIGHT B6 | done | idempotent checkout + payments + webhook; 137 tests passed
+2026-11-14 | P-NIGHT B7 | done | retailer order groups, timeline, confirm delivery; 140 tests passed
+2026-11-14 | P-NIGHT B8 | done | seller order tabs/actions, expiry + refund with fake clock; 146 tests passed
+2026-11-14 | P-NIGHT B9 | done | seller products: list/filters, draft/publish, edit, toggle, admin hold; 150 tests passed

@@ -25,4 +25,6 @@ public sealed class Product
     public ProductUnit Unit { get; set; }
     public ProductStatus Status { get; set; } = ProductStatus.Draft;
     public bool IsDeleted { get; set; }
+    /// <summary>Set when an admin switches the product off; the seller cannot switch it back on.</summary>
+    public bool AdminHold { get; set; }
 }

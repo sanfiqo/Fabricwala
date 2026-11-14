@@ -428,6 +428,9 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
 
+                    b.Property<bool>("AdminHold")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<long>("CategoryId")
                         .HasColumnType("bigint");
 

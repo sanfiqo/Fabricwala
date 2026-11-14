@@ -87,6 +87,7 @@ Business-rule failures keep their HTTP status but carry a specific code (always 
 | 409 | `order_not_paid` | Seller action on an order that is not paid |
 | 409 | `invalid_order_transition` | Action not allowed in the order's current state (e.g. accept twice, reject after accepting) |
 | 409 | `accept_window_expired` | The acceptance window passed (the order will be or was auto-cancelled and refunded) |
+| 409 | `product_deactivated_by_admin` | Seller tried to switch on a product an admin deactivated |
 | 409 | `order_not_shipped` | Delivery cannot be confirmed before the seller ships |
 | 409 | `order_not_payable` | Order is already paid or no longer waiting for payment |
 | 400 | `payment_amount_mismatch` | Gateway reported a different amount than the order total |

@@ -17,6 +17,8 @@ public static class ProductModerationEndpoints
             var product = await db.Products.SingleOrDefaultAsync(x => x.Id == id && !x.IsDeleted, ct);
             if (product is null || request.Action is not ("Flag" or "Deactivate" or "Activate")) return Results.BadRequest();
             product.Status = request.Action == "Activate" ? ProductStatus.Active : request.Action == "Deactivate" ? ProductStatus.Inactive : product.Status;
+            if (request.Action == "Deactivate") product.AdminHold = true;
+            else if (request.Action == "Activate") product.AdminHold = false;
             db.AuditLogs.Add(new AuditLog { UserId = principal.FindFirstValue(ClaimTypes.NameIdentifier), Action = $"Product{request.Action}", EntityName = nameof(Product), EntityId = id.ToString() });
             if (request.Action == "Flag")
             {
