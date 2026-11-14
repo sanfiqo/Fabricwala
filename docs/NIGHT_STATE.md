@@ -31,7 +31,7 @@ Pending: night run in progress.
 - [x] B6. Checkout: address/order/test payment, Idempotency-Key, seller splits.
   - [x] B6.1. Order snapshots/totals/commission, seller split, idempotent checkout, stock reservation, status history, migration. `1729b55`.
   - [x] B6.2. Payment: idempotent create, test gateway completion (Development), verified idempotent webhook, order status/notifications. `1611351`.
-- [x] B7. Retailer orders: paged status groups, detail/timeline, confirm delivery. `COMMIT`.
+- [x] B7. Retailer orders: paged status groups, detail/timeline, confirm delivery. `9345a97`.
 - [ ] B8. Seller orders: status groups/actions, configurable fee (2% default), acceptance expiry/full refund/fake clock.
 - [ ] B9. Seller products: filtered/searchable list, on/off, CRUD/draft/publish, tiers/MOQ/variants/stock.
 - [ ] B10. Payouts: hold until confirmed or seven days, summary/per-order/CSV; no bank numbers.
