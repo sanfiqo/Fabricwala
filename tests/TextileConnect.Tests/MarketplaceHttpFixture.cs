@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -53,8 +54,14 @@ public sealed class MarketplaceHttpFixture(WebApplication app) : IAsyncDisposabl
         builder.Services.AddSingleton<IFileStorage, MemoryFileStorage>();
         builder.Services.AddDataProtection().UseEphemeralDataProtectionProvider();
         builder.Services.AddAntiforgery(options => options.HeaderName = "X-CSRF-TOKEN");
+        builder.Services.AddRateLimiter(options =>
+        {
+            options.RejectionStatusCode = 429;
+            options.AddFixedWindowLimiter("search", limiter => { limiter.PermitLimit = 60; limiter.Window = TimeSpan.FromMinutes(1); });
+        });
         var app = builder.Build();
         app.UseMiddleware<ApiErrorMiddleware>();
+        app.UseRateLimiter();
         app.UseAuthentication();
         app.UseAuthorization();
         app.UseMiddleware<ApiCsrfMiddleware>();

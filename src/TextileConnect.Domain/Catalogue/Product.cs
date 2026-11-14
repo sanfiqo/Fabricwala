@@ -11,6 +11,15 @@ public sealed class Product
     public required string Title { get; set; }
     public required string Slug { get; set; }
     public string? Description { get; set; }
+    public string? Material { get; set; }
+    public string? FabricSpec { get; set; }
+    public string? Season { get; set; }
+    public string? HsnCode { get; set; }
+    public decimal WeightPerUnitGrams { get; set; }
+    public int DispatchDays { get; set; }
+    public string? ReturnPolicy { get; set; }
+    public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
+    public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
     public decimal GstRate { get; set; }
     public int Moq { get; set; }
     public ProductUnit Unit { get; set; }

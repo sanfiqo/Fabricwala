@@ -121,6 +121,8 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("BusinessId", "AddressType", "IsDefault", "Id");
+
                     b.ToTable("BusinessAddresses");
                 });
 
@@ -415,6 +417,8 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ProductId", "PricePerUnit");
+
                     b.ToTable("PriceSlabs");
                 });
 
@@ -427,18 +431,43 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                     b.Property<long>("CategoryId")
                         .HasColumnType("bigint");
 
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<string>("Description")
                         .HasColumnType("longtext");
+
+                    b.Property<int>("DispatchDays")
+                        .HasColumnType("int");
+
+                    b.Property<string>("FabricSpec")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
 
                     b.Property<decimal>("GstRate")
                         .HasPrecision(5, 2)
                         .HasColumnType("decimal(5,2)");
 
+                    b.Property<string>("HsnCode")
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("tinyint(1)");
 
+                    b.Property<string>("Material")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
                     b.Property<int>("Moq")
                         .HasColumnType("int");
+
+                    b.Property<string>("ReturnPolicy")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Season")
+                        .HasMaxLength(80)
+                        .HasColumnType("varchar(80)");
 
                     b.Property<long>("SellerBusinessId")
                         .HasColumnType("bigint");
@@ -459,10 +488,19 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                     b.Property<int>("Unit")
                         .HasColumnType("int");
 
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<decimal>("WeightPerUnitGrams")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Slug")
                         .IsUnique();
+
+                    b.HasIndex("Status", "IsDeleted", "CategoryId", "Id");
 
                     b.ToTable("Products");
                 });
@@ -488,6 +526,8 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ProductId", "SortOrder", "Id");
 
                     b.ToTable("ProductMedia");
                 });
@@ -521,6 +561,8 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("Sku")
                         .IsUnique();
+
+                    b.HasIndex("ProductId", "IsActive");
 
                     b.ToTable("ProductVariants");
                 });

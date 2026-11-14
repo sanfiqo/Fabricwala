@@ -10,7 +10,7 @@ Pending: night run in progress.
 - Process: first unfinished task only; targeted tests per task, full suite every three tasks and at end. One task per commit (`P-NIGHT <id>: <what>`).
 - After three failed attempts: revert only this task's uncommitted implementation, log BLOCKED, continue. Stop on three consecutive BLOCKED tasks, unrecoverable full-suite failure after three attempts, or completed queue.
 - Commit hashes are recorded after commits, in the following checkpoint. No unrelated phase ticks.
-- Latest full suite: 108 passed / 0 failed. Consecutive blocked tasks: 0. Tasks since full suite: 2 (B2, B3).
+- Latest full suite: 119 passed / 0 failed. Consecutive blocked tasks: 0. Tasks since full suite: 0.
 
 ## Queue
 
@@ -23,8 +23,10 @@ Pending: night run in progress.
 ### B. Core journey
 - [x] B1. Auth: send/verify OTP (Development 123456), refresh, logout; retailer/manufacturer/admin. `8d2d146`.
 - [x] B2. Business: create/get, pincode lookup, optional 15-character GST, verification status/note. `f1705dc`.
-- [x] B3. Admin approvals: paged status list, review detail/GST/documents, approve/reject with note. Commit recorded in next checkpoint.
+- [x] B3. Admin approvals: paged status list, review detail/GST/documents, approve/reject with note. `4cb4987`.
 - [ ] B4. Retailer catalogue: home/categories/best sellers; paged search/filter; detail/tiers/landed price/variants.
+  - [x] B4.1. Populated catalogue/home/category DTOs, search filters, stable paging, public seller visibility, stored product attributes and migration. Commit recorded next checkpoint.
+  - [ ] B4.2. Shared server landed-price quote by pincode/quantity, shipping/GST/fee handling and product integration.
 - [ ] B5. Cart: CRUD, tier price and add-more savings data.
 - [ ] B6. Checkout: address/order/test payment, Idempotency-Key, seller splits.
 - [ ] B7. Retailer orders: paged status groups, detail/timeline, confirm delivery.
@@ -61,6 +63,7 @@ Pending: night run in progress.
 - B1 checkpoint: build passed; 16 targeted tests passed; full suite 108 passed / 0 failed (MySQL caveat above still applies).
 - B2: final build and 21 targeted tests passed; MySQL migration SQL generated/checked offline. No live schema migration applied.
 - B3: build and 11 targeted approval/profile/security-stamp tests passed. Full suite due after B4; HTTP fixture still uses isolated test authentication/in-memory persistence.
+- B4.1: build, 8 targeted tests and full suite (119 passed / 0 failed) passed. Migration SQL validated offline; no live database migration or MySQL flow exercised.
 
 ## Log
 
@@ -83,3 +86,6 @@ Pending: night run in progress.
 - B2 complete: 21 final targeted tests passed; migration SQL checked. Existing EF CLI 9.0.10 emits an older-tool warning against runtime 10.0.9 but generated the migration and SQL successfully. No package added. New named DTOs only (BusinessCreateRequest, BusinessProfileResponse, PincodeResponse); existing DTO names unchanged. Next B3.
 - B3 in progress: paged stable approval lists; review with masked phone, GST format result explicitly not a live registry check, authorized document URLs. Required rejection note is enforced in Application/service and endpoint; business and all-member claim/stamp changes share a MySQL transaction/row lock. Keep unrelated Admin roles; rejection removes approved claims. Status changes queue notifications; repeating the same decision does not duplicate notifications.
 - B3 complete: 11 tests green, including all-member claim removal, required notes, admin role denial, missing resources, pagination, document isolation/privacy and notification deduplication. No packages or renamed DTOs. Next B4.
+- B4 split: current product summaries return placeholder prices/seller fields and Product lacks the documented material/weight/spec attributes. First complete real catalogue data and filters (B4.1, then full suite); then central landed-cost quotes (B4.2) for later cart/checkout reuse. Keep existing DTO names and query aliases.
+- B4.1 attempt 1: six existing catalogue tests passed; two new HTTP tests failed in fixture setup because mixed explicit/generated variant IDs collided in the in-memory provider. Assign all fixture variant IDs explicitly. Catalogue migration scaffolded offline; existing product creation dates are unknown and use an explicit epoch backfill rather than fabricated history.
+- B4.1 complete: real catalogue fields, stable paged filtering, paid-unit popularity and approved-seller visibility are covered by HTTP tests. Batch media/stock/city lookups avoid list N+1 queries. No packages or existing DTO names changed; metadata/index migration SQL checked. Full suite 119/0. Next B4.2.

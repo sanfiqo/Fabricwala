@@ -85,12 +85,22 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
         {
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Title).HasMaxLength(200).IsRequired();
+            entity.Property(x => x.Material).HasMaxLength(100);
+            entity.Property(x => x.FabricSpec).HasMaxLength(500);
+            entity.Property(x => x.Season).HasMaxLength(80);
+            entity.Property(x => x.HsnCode).HasMaxLength(20);
+            entity.Property(x => x.WeightPerUnitGrams).HasPrecision(18, 2);
+            entity.HasIndex(x => new { x.Status, x.IsDeleted, x.CategoryId, x.Id });
             entity.Property(x => x.Slug).HasMaxLength(240).IsRequired();
             entity.Property(x => x.GstRate).HasPrecision(5, 2);
             entity.HasIndex(x => x.Slug).IsUnique();
         });
         builder.Entity<ProductVariant>().HasKey(x => x.Id);
         builder.Entity<ProductVariant>().HasIndex(x => x.Sku).IsUnique();
+        builder.Entity<ProductVariant>().HasIndex(x => new { x.ProductId, x.IsActive });
+        builder.Entity<PriceSlab>().HasIndex(x => new { x.ProductId, x.PricePerUnit });
+        builder.Entity<ProductMedia>().HasIndex(x => new { x.ProductId, x.SortOrder, x.Id });
+        builder.Entity<BusinessAddress>().HasIndex(x => new { x.BusinessId, x.AddressType, x.IsDefault, x.Id });
         builder.Entity<PriceSlab>().HasKey(x => x.Id);
         builder.Entity<PriceSlab>().Property(x => x.PricePerUnit).HasPrecision(18, 2);
         builder.Entity<ProductMedia>().HasKey(x => x.Id);

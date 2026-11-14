@@ -7,7 +7,10 @@ namespace TextileConnect.Api;
 
 public sealed record ProductSummaryResponse(long Id, string Slug, string Title, long CategoryId, long SellerBusinessId, string SellerName, string SellerCity, string? ImageUrl, int Moq, ProductUnit Unit, decimal PriceFrom, decimal PriceTo, string? Material, ProductStatus? Status)
 {
-    public static ProductSummaryResponse From(Product value) => new(value.Id, value.Slug, value.Title, value.CategoryId, value.SellerBusinessId, string.Empty, string.Empty, null, value.Moq, value.Unit, 0m, 0m, null, value.Status);
+    public int AvailableStock { get; init; }
+    public int UnitsSold { get; init; }
+    public LandedCostResponse? LandedCost { get; init; }
+    public static ProductSummaryResponse From(Product value) => new(value.Id, value.Slug, value.Title, value.CategoryId, value.SellerBusinessId, string.Empty, string.Empty, null, value.Moq, value.Unit, 0m, 0m, value.Material, value.Status);
 }
 
 public sealed record ProductVariantResponse(long Id, string Sku, string? Size, string? Colour, int StockQty, bool IsActive)
@@ -27,10 +30,11 @@ public sealed record ProductMediaResponse(long Id, string? Url, string MediaType
 
 public sealed record ProductDetailResponse(long Id, string Slug, string Title, long CategoryId, long SellerBusinessId, string SellerName, string SellerCity, string? ImageUrl, int Moq, ProductUnit Unit, decimal PriceFrom, decimal PriceTo, string? Material, string? Description, string? FabricSpec, string? Season, string? HsnCode, decimal GstRate, decimal WeightPerUnitGrams, int DispatchDays, string? ReturnPolicy, ProductStatus Status, IReadOnlyList<ProductMediaResponse> Media, IReadOnlyList<ProductVariantResponse> Variants, IReadOnlyList<PriceSlabResponse> Slabs)
 {
+    public LandedCostResponse? LandedCost { get; init; }
     public static ProductDetailResponse From(ProductDetail value)
     {
         var prices = value.Slabs.Select(x => x.PricePerUnit).ToArray();
-        return new(value.Product.Id, value.Product.Slug, value.Product.Title, value.Product.CategoryId, value.Product.SellerBusinessId, string.Empty, string.Empty, null, value.Product.Moq, value.Product.Unit, prices.DefaultIfEmpty().Min(), prices.DefaultIfEmpty().Max(), null, value.Product.Description, null, null, null, value.Product.GstRate, 0m, 0, null, value.Product.Status, value.Media.Select(ProductMediaResponse.From).ToList(), value.Variants.Select(ProductVariantResponse.From).ToList(), value.Slabs.Select(PriceSlabResponse.From).ToList());
+        return new(value.Product.Id, value.Product.Slug, value.Product.Title, value.Product.CategoryId, value.Product.SellerBusinessId, string.Empty, string.Empty, null, value.Product.Moq, value.Product.Unit, prices.DefaultIfEmpty().Min(), prices.DefaultIfEmpty().Max(), value.Product.Material, value.Product.Description, value.Product.FabricSpec, value.Product.Season, value.Product.HsnCode, value.Product.GstRate, value.Product.WeightPerUnitGrams, value.Product.DispatchDays, value.Product.ReturnPolicy, value.Product.Status, value.Media.Select(ProductMediaResponse.From).ToList(), value.Variants.Select(ProductVariantResponse.From).ToList(), value.Slabs.Select(PriceSlabResponse.From).ToList());
     }
 }
 

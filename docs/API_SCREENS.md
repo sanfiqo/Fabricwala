@@ -115,8 +115,6 @@ The postal directory is extensible in `PostalCodes`, initially seeded with only
 Sources: [Indore district](https://indore.nic.in/en/std-pin-codes/) and
 [India Post Punjab directory](https://www.indiapost.gov.in/sites/PostalCircles/Punjab/Lists/PostOffices/PB_Pincode_12Nov2020.pdf).
 
-## Remaining capabilities (original audit)
-
 ## Admin approvals (B3)
 
 `GET /api/v1/admin/businesses?status=Pending&page=1&pageSize=20` returns
@@ -133,6 +131,24 @@ Approve/reject routes are unchanged; rejection requires a nonblank `note` up to
 Each member's approval claims/security stamp are updated atomically with the
 business decision on MySQL. Repeating the same decision avoids duplicate notifications.
 Suspended businesses require the separate reactivation flow.
+
+## Public catalogue (B4.1)
+
+`GET /api/v1/home` returns `HomeResponse`: categories and a paged `bestSellers`
+collection ranked by paid, non-cancelled/non-rejected units sold, with stable id ties.
+`GET /api/v1/categories?page=1&pageSize=100` returns active category ids, parent ids,
+names, slugs and sort order. `GET /api/v1/products` returns a paged collection with
+real seller/city, image URL, factory price range, material, available stock and units sold.
+Filters: `q`, `categoryId`, `minPrice`, `maxPrice`, `maxMoq`, `stateId` or `state`
+(code/name), `sellerCityId`, `material`, `size`, `colour`. Price filters use the starting
+factory tier price. Sort: `popular`, `price-asc`, `price-desc`, `moq-asc`, `new`/`newest`.
+Page size is 1–100; default 20. Invalid filters return 400. Public browsing is anonymous.
+Only active, non-deleted products of approved, non-deleted manufacturers are visible.
+`GET /api/v1/products/{slug}` includes stored fabric/weight/specs, active variants and
+stock, ordered quantity tiers and media URLs. Missing/hidden products return 404.
+Private storage keys are not returned. Media routes verify public product ownership;
+only supported image/video formats are served inline, with `nosniff`.
+No existing public DTO names changed. Destination-specific landed quotes follow in B4.2.
 
 ## Original audit follow-up list
 
