@@ -37,7 +37,7 @@ Pending: night run in progress.
 - [x] B10. Payouts: hold until confirmed or seven days, summary/per-order/CSV; no bank numbers. `d38eeba`.
 - [x] B11. Seller dashboard: counts, monthly sales/next payout, six-month chart, low stock/best sellers. `7c00923`
 - [x] B12. Notifications: list/unread count/read one/read all. `9217800`
-- [x] B13. Problem reports: enum/pieces/photos/note; open claims hold payout. `COMMIT`
+- [x] B13. Problem reports: enum/pieces/photos/note; open claims hold payout. `2a88085`
 - [ ] B14. Account: profile/address CRUD/language en or hi.
 - [ ] B15. Admin home: today/seven/thirty day stats and decision counts.
 
