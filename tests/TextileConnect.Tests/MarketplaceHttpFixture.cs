@@ -33,10 +33,11 @@ namespace TextileConnect.Tests;
 public sealed class MarketplaceHttpFixture(WebApplication app) : IAsyncDisposable
 {
     public IServiceProvider Services => app.Services;
+    public string BaseAddress => app.Urls.Single();
     public TestClock Clock => (TestClock)app.Services.GetRequiredService<TimeProvider>();
     public ValueTask DisposeAsync() => app.DisposeAsync();
 
-    public static async Task<MarketplaceHttpFixture> StartAsync(Action<WebApplication>? map = null)
+    public static async Task<MarketplaceHttpFixture> StartAsync(Action<WebApplication>? map = null, Action<WebApplicationBuilder>? configure = null)
     {
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions { EnvironmentName = "Testing", ContentRootPath = AppContext.BaseDirectory });
         builder.Configuration.Sources.Clear();
@@ -72,6 +73,7 @@ public sealed class MarketplaceHttpFixture(WebApplication app) : IAsyncDisposabl
             options.RejectionStatusCode = 429;
             options.AddFixedWindowLimiter("search", limiter => { limiter.PermitLimit = 60; limiter.Window = TimeSpan.FromMinutes(1); });
         });
+        configure?.Invoke(builder);
         var app = builder.Build();
         app.UseMiddleware<ApiErrorMiddleware>();
         app.UseRateLimiter();
