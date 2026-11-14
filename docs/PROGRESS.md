@@ -64,3 +64,4 @@ Handover: Phase 1 complete. Phase 2 complete except P2.3 migration tooling block
 2026-11-14 | P-NIGHT B12 | done | Notifications paged list, unread filter/count, read one, read all; 157 tests passed
 2026-11-14 | P-NIGHT B13 | done | Problem reports with reason, pieces, 3 photos, payout hold and admin decision; 160 tests passed
 2026-11-14 | P-NIGHT B14 | done | Account profile, language en/hi and address book CRUD; 163 tests passed
+2026-11-14 | P-NIGHT B15 | done | Admin home stats for today, 7 and 30 days with decision counts; 164 tests passed

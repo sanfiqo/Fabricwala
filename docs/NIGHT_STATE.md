@@ -10,7 +10,7 @@ Pending: night run in progress.
 - Process: first unfinished task only; targeted tests per task, full suite every three tasks and at end. One task per commit (`P-NIGHT <id>: <what>`).
 - After three failed attempts: revert only this task's uncommitted implementation, log BLOCKED, continue. Stop on three consecutive BLOCKED tasks, unrecoverable full-suite failure after three attempts, or completed queue.
 - Commit hashes are recorded after commits, in the following checkpoint. No unrelated phase ticks.
-- Latest full suite: 163 passed / 0 failed. Consecutive blocked tasks: 0. Tasks since full suite: 0.
+- Latest full suite: 164 passed / 0 failed. Consecutive blocked tasks: 0. Tasks since full suite: 0.
 
 ## Queue
 
@@ -39,7 +39,7 @@ Pending: night run in progress.
 - [x] B12. Notifications: list/unread count/read one/read all. `9217800`
 - [x] B13. Problem reports: enum/pieces/photos/note; open claims hold payout. `2a88085`
 - [x] B14. Account: profile/address CRUD/language en or hi. `ab5e2f9`
-- [ ] B15. Admin home: today/seven/thirty day stats and decision counts.
+- [x] B15. Admin home: today/seven/thirty day stats and decision counts. `COMMIT`
 
 ### C. HTTP integration proof
 - [ ] C1. FullJourney: signup/approval/publish/search/cart/checkout/accept/ship/delivery/payout through HTTP.
@@ -104,3 +104,4 @@ Pending: night run in progress.
 - B12 decisions: notification list is a paged object (newest first, id tie-break, unread=true filter, pageSize 1-100 else 400; before it clamped silently), read-one is idempotent and 404 for another user, new POST /read-all (batched, returns updated count). Any signed-in user, strictly own notifications. Full suite 157/0. Next B13.
 - B13 decisions: retailer can report once a seller order is Dispatched or Delivered (before, only Delivered, which let the payout release first); reason enum Damaged/WrongItem/ShortQuantity/QualityIssue/Other (Other needs a note), pieces 1..ordered, note up to 1000, one open claim per seller order (409 claim_already_open), up to 3 photos (jpeg/png/webp, max 5 MB, 409 claim_photo_limit), photos only while open. Open claim = ResolvedAtUtc null = payout held (B10). Admin decision needs a note, refund 0 or less than or equal to the seller order total with 2 decimals, Rejected means no refund, deciding twice is 409 claim_not_open; an approved refund creates a Refund row (processed by the maintenance job) and reduces the still-held payout; an already released payout is not clawed back (known gap). Retailer routes Retailer-only, respond Manufacturer-only. Migration NightProblemReports (ReasonCode, Pieces). Photo viewing for admins is part of E1. Full suite 160/0. Next B14.
 - B14 decisions: new route set /api/v1/account (old /businesses/me/addresses routes kept untouched; they accept raw entities). GET/PUT account (full name up to 100, language en or hi, empty update is 400), PUT /language. Addresses: retailers manage Delivery, manufacturers manage Pickup (never mixed), city is taken from the exact postal directory by pincode (unknown pincode 400, no guessing), first address becomes default, one default kept, deleting the default promotes the oldest other, max 20 per business (409 address_limit), orders keep their own address snapshot so deleting is safe, strict business isolation (other business gets 404). Registered address stays with business details. Full suite 163/0. Next B15.
+- B15 decisions: old endpoint took a days parameter but only used it for new businesses; replaced by typed AdminDashboardResponse with today, last7Days (today and the 6 days before) and last30Days periods (UTC days, TimeProvider). Gmv = grand total of orders whose payment was captured in the period and are still Paid or PartiallyRefunded (fully refunded or cancelled orders are not revenue); Commission = platform fee on seller orders not rejected or cancelled; newBusinesses by CreatedAtUtc. needsDecision: pending business approvals, unresolved claims, products in PendingReview, refunds still Requested. Admin-only. Full suite 164/0. This completes block B. Next C1 FullJourney.
