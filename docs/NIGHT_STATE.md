@@ -42,9 +42,9 @@ Pending: night run in progress.
 - [x] B15. Admin home: today/seven/thirty day stats and decision counts. `df74c55`
 
 ### C. HTTP integration proof
-- [x] C1. FullJourney: signup/approval/publish/search/cart/checkout/accept/ship/delivery/payout through HTTP. `COMMIT`
-- [x] C2. Expired seller acceptance cancels and refunds. `COMMIT`
-- [x] C3. Open problem report holds payout. `COMMIT`
+- [x] C1. FullJourney: signup/approval/publish/search/cart/checkout/accept/ship/delivery/payout through HTTP. `56250cb`
+- [x] C2. Expired seller acceptance cancels and refunds. `56250cb`
+- [x] C3. Open problem report holds payout. `56250cb`
 
 ### D. Frontend handoff
 - [ ] D1. Export `docs/openapi.json`; preserve DTO names/log any renames.
