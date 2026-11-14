@@ -1297,8 +1297,10 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("Status")
+                        .IsConcurrencyToken()
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(32)
+                        .HasColumnType("varchar(32)");
 
                     b.HasKey("Id");
 

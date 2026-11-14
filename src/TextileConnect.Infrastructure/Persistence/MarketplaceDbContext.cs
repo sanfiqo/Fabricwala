@@ -157,6 +157,7 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
         builder.Entity<PayoutAccount>().HasKey(x => x.Id);
         builder.Entity<PayoutAccount>().HasIndex(x => x.BusinessId).IsUnique();
         builder.Entity<Payment>().HasKey(x => x.Id);
+        builder.Entity<Payment>().Property(x => x.Status).HasMaxLength(32).IsConcurrencyToken();
         builder.Entity<Payment>().HasIndex(x => x.GatewayOrderId).IsUnique();
         builder.Entity<Payment>().Property(x => x.Amount).HasPrecision(18, 2);
         builder.Entity<Settlement>().HasKey(x => x.Id);

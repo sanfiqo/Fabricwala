@@ -39,6 +39,7 @@ public static class MarketplaceSeed
             ["Commission.DefaultRate"] = "0.02",
             ["Retailer.PlatformFeeRate"] = "0",
             ["Settlement.AutoReleaseDays"] = "7",
+            ["Seller.AcceptWindowHours"] = "24",
             ["Brand.Name"] = "TextileConnect"
         };
         foreach (var setting in settings)

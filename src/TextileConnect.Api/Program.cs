@@ -63,6 +63,7 @@ builder.Services.AddScoped<IProductPricing, EfProductPricing>();
 builder.Services.AddScoped<ICartService, EfCartService>();
 builder.Services.AddScoped<IOrderService, EfOrderService>();
 builder.Services.AddScoped<ICheckoutService, EfCheckoutService>();
+builder.Services.AddScoped<IPaymentService, EfPaymentService>();
 builder.Services.AddScoped<ICommunityService, EfCommunityService>();
 builder.Services.AddScoped<IAuthBusinessProfileReader, AuthBusinessProfileReader>();
 if (builder.Environment.IsDevelopment())

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Builder;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -14,9 +15,9 @@ public sealed class CheckoutHttpTests
 {
     private const long RetailerId = 30;
 
-    internal static async Task<MarketplaceHttpFixture> StartAsync(bool withRates = true)
+    internal static async Task<MarketplaceHttpFixture> StartAsync(bool withRates = true, Action<WebApplication>? extra = null)
     {
-        var fixture = await MarketplaceHttpFixture.StartAsync(app => { app.MapCartEndpoints(); app.MapOrderEndpoints(); });
+        var fixture = await MarketplaceHttpFixture.StartAsync(app => { app.MapCartEndpoints(); app.MapOrderEndpoints(); extra?.Invoke(app); });
         await CatalogueHttpTests.SeedAsync(fixture);
         using var scope = fixture.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();

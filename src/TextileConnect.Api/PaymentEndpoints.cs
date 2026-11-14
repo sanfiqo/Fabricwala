@@ -1,9 +1,6 @@
-using System.Security.Claims;
 using System.Text.Json;
-using Microsoft.EntityFrameworkCore;
 using TextileConnect.Application.Businesses;
 using TextileConnect.Application.Payments;
-using TextileConnect.Infrastructure.Persistence;
 
 namespace TextileConnect.Api;
 
@@ -11,36 +8,45 @@ public static class PaymentEndpoints
 {
     public static void MapPaymentEndpoints(this WebApplication app)
     {
-        app.MapPost("/api/v1/payments", async (PaymentRequest request, ClaimsPrincipal principal, ICurrentBusiness current, MarketplaceDbContext db, IPaymentGateway gateway, CancellationToken ct) =>
+        var retailer = app.MapGroup("/api/v1/payments").RequireAuthorization("ApprovedBusiness").RequireAuthorization(policy => policy.RequireRole("Retailer"));
+        retailer.MapPost("", async (PaymentRequest request, HttpRequest http, ICurrentBusiness current, IPaymentService payments, CancellationToken ct) =>
         {
-            var order = await db.Orders.SingleOrDefaultAsync(x => x.Id == request.OrderId && x.RetailerBusinessId == current.RequireBusinessId(), ct);
-            if (order is null) return Results.NotFound();
-            var payment = await gateway.CreateOrderAsync(order.GrandTotal, order.OrderNumber, ct);
-            db.Payments.Add(new Domain.Payments.Payment { OrderId = order.Id, GatewayOrderId = payment.GatewayOrderId, Amount = payment.Amount, Status = "Pending" });
-            await db.SaveChangesAsync(ct);
-            return Results.Ok(new { orderId = order.Id, gatewayOrderId = payment.GatewayOrderId, amount = payment.Amount, currency = "INR", keyId = app.Configuration["Razorpay:KeyId"] ?? "dev_key" });
-        }).RequireAuthorization("ApprovedBusiness");
-        app.MapPost("/api/v1/payments/webhook", async (HttpRequest request, MarketplaceDbContext db, IPaymentGateway gateway, CancellationToken ct) =>
+            var session = await payments.StartAsync(current.RequireBusinessId(), request.OrderId, http.Headers["Idempotency-Key"].ToString(), ct);
+            return Results.Ok(PaymentSessionResponse.From(session, app.Configuration["Razorpay:KeyId"] ?? "dev_key"));
+        });
+        retailer.MapGet("/{gatewayOrderId}", async (string gatewayOrderId, ICurrentBusiness current, IPaymentService payments, CancellationToken ct) =>
+            await payments.GetAsync(current.RequireBusinessId(), gatewayOrderId, ct) is { } session
+                ? Results.Ok(PaymentSessionResponse.From(session, app.Configuration["Razorpay:KeyId"] ?? "dev_key")) : Results.NotFound());
+        // Test gateway only: lets the frontend finish a payment locally. A real gateway has no such route (404).
+        retailer.MapPost("/{gatewayOrderId}/dev-complete", async (string gatewayOrderId, bool? success, ICurrentBusiness current, IPaymentService payments, IPaymentGateway gateway, CancellationToken ct) =>
+        {
+            if (gateway is not DevelopmentPaymentGateway) return Results.NotFound();
+            if (await payments.GetAsync(current.RequireBusinessId(), gatewayOrderId, ct) is null) return Results.NotFound();
+            if (success == false) await payments.FailAsync(gatewayOrderId, ct);
+            else await payments.ConfirmAsync(gatewayOrderId, $"dev_pay_{Guid.NewGuid():N}", null, ct);
+            return Results.Ok(PaymentSessionResponse.From((await payments.GetAsync(current.RequireBusinessId(), gatewayOrderId, ct))!, "dev_key"));
+        });
+
+        app.MapPost("/api/v1/payments/webhook", async (HttpRequest request, IPaymentGateway gateway, IPaymentService payments, CancellationToken ct) =>
         {
             using var reader = new StreamReader(request.Body);
             var payload = await reader.ReadToEndAsync(ct);
-            var signature = request.Headers["X-Razorpay-Signature"].ToString();
-            if (!gateway.VerifyWebhookSignature(payload, signature)) return Results.Unauthorized();
+            if (!gateway.VerifyWebhookSignature(payload, request.Headers["X-Razorpay-Signature"].ToString())) return Results.Unauthorized();
             using var json = JsonDocument.Parse(payload);
+            var eventName = json.RootElement.TryGetProperty("event", out var e) ? e.GetString() : "payment.captured";
             var entity = json.RootElement.GetProperty("payload").GetProperty("payment").GetProperty("entity");
-            var gatewayOrderId = entity.GetProperty("order_id").GetString();
-            var gatewayPaymentId = entity.GetProperty("id").GetString();
-            var payment = await db.Payments.SingleOrDefaultAsync(x => x.GatewayOrderId == gatewayOrderId, ct);
-            if (payment is null) return Results.NotFound();
-            if (!string.Equals(payment.Status, "Paid", StringComparison.OrdinalIgnoreCase))
+            var gatewayOrderId = entity.GetProperty("order_id").GetString() ?? string.Empty;
+            bool known;
+            if (eventName == "payment.failed") known = await payments.FailAsync(gatewayOrderId, ct);
+            else if (eventName is "payment.captured" or "payment.authorized" or "order.paid")
             {
-                payment.Status = "Paid"; payment.GatewayPaymentId = gatewayPaymentId; payment.PaidAt = DateTime.UtcNow;
-                var order = await db.Orders.SingleAsync(x => x.Id == payment.OrderId, ct);
-                order.PaymentStatus = "Paid";
-                await db.SaveChangesAsync(ct);
+                var paise = entity.TryGetProperty("amount", out var amount) && amount.TryGetInt64(out var value) ? value : (long?)null;
+                known = await payments.ConfirmAsync(gatewayOrderId, entity.GetProperty("id").GetString() ?? string.Empty, paise / 100m, ct);
             }
-            return Results.Ok();
+            else return Results.Ok(); // other events are acknowledged and ignored
+            return known ? Results.Ok() : Results.NotFound();
         });
     }
+
     public sealed record PaymentRequest(long OrderId);
 }
