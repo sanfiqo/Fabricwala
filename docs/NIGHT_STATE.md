@@ -10,15 +10,15 @@ Pending: night run in progress.
 - Process: first unfinished task only; targeted tests per task, full suite every three tasks and at end. One task per commit (`P-NIGHT <id>: <what>`).
 - After three failed attempts: revert only this task's uncommitted implementation, log BLOCKED, continue. Stop on three consecutive BLOCKED tasks, unrecoverable full-suite failure after three attempts, or completed queue.
 - Commit hashes are recorded after commits, in the following checkpoint. No unrelated phase ticks.
-- Baseline: build passed; suite 90 passed / 0 failed. Consecutive blocked tasks: 0. Tasks since full suite: 0.
+- Baseline: build passed; suite 90 passed / 0 failed. Consecutive blocked tasks: 0. Tasks since full suite: 2 (A1, A2).
 
 ## Queue
 
 - [x] 0. Read rules, contracts and phases; create state; baseline build/tests. `50b5235`.
 
 ### A. Contract
-- [x] A1. Audit Gaps and rows for all 38 named screens; document 18 unspecified screen identities. Commit recorded in next checkpoint.
-- [ ] A2. Stable `{ code, message, fields? }` errors everywhere; document codes.
+- [x] A1. Audit Gaps and rows for all 38 named screens; document 18 unspecified screen identities. `ffcac6f`.
+- [x] A2. Stable `{ code, message, fields? }` errors everywhere; document codes. Commit recorded in next checkpoint.
 
 ### B. Core journey
 - [ ] B1. Auth: send/verify OTP (Development 123456), refresh, logout; retailer/manufacturer/admin.
@@ -57,6 +57,7 @@ Pending: night run in progress.
 - Baseline `dotnet build TextileConnect.slnx --no-restore --nologo`: passed (12 pre-existing warnings: 10 dependency advisories, 2 nullable dereferences in ReturnClaimEndpoints).
 - Baseline `dotnet test TextileConnect.slnx --no-build --no-restore --nologo`: 90 passed, 0 failed, 0 reported skipped.
 - MySQL coverage limitation: `TEXTILECONNECT_TEST_MYSQL` is unset; existing MySQL test returns without exercising a database. No local settings or secrets were read.
+- A2: build and 12 loopback HTTP error/download contract tests passed on attempt 2. Full suite due after B1.
 
 ## Log
 
@@ -66,3 +67,6 @@ Pending: night run in progress.
 - 0: Created requested branch from backend `master` at `d0aa587`; baseline green. Existing dependency advisory and nullable warnings are recorded above; do not count the early-return MySQL test as database proof.
 - A1: Verified endpoint registrations against all 38 named rows. Corrected Cart, Account, Approvals, Category list and Address book to partly covered (6 exists / 28 partly / 4 missing, counted from table); added explicit gaps. The input summary counts were off by one. Unnamed screens are an input gap and will not be invented; continue with the explicit backend queue.
 - Resume 2026-11-14: User explicitly requested nonstop execution and section 6. The saved night prompt ends at section 5; no section 6 is present. Continue without questions using the existing written hard stops; retain completed step 0 and finish interrupted A1 rather than recreate history.
+- A2 in progress: normalize API errors before auth/rate limiting; suppress arbitrary error bodies without buffering successful files, sanitize exception responses/logs and field validation values. No NuGet additions or DTO renames. HTTP contract tests use a loopback Kestrel test server, not mocked middleware results.
+- A2 attempt 1: build passed; HTTP tests failed during harness startup because clearing configuration removed its writable provider. Add an empty in-memory provider (no configuration files or secrets) and rerun.
+- A2 complete: 12 HTTP tests green. Stable error DTO covers framework/endpoint statuses and exceptions; arbitrary diagnostics suppressed; successful files stream unchanged. Rate-limit rejection is explicitly 429. No packages or public DTOs renamed.

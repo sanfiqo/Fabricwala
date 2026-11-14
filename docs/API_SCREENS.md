@@ -53,7 +53,28 @@ an input gap, not evidence that those screens have working endpoints.
 | Seller | Ratings | Storefront includes aggregate rating; no ratings list endpoint | Business id | Storefront aggregate only | partly |
 | Admin | Admin lists | Business approval list and report export exist; no general problem-report list | Optional report kind | Business list; CSV export | partly |
 
-## Summary
+## Error contract (A2)
+
+All `/api/v1` errors use JSON `{ "code": "stable_string", "message": "safe English fallback", "fields": { "field": ["invalid_value"] } }`.
+`fields` is optional. Translate `code` and field codes in the client; never show raw server diagnostics.
+HTTP status and headers such as `Retry-After` are preserved. HEAD responses have no body.
+
+| HTTP | Code |
+|---|---|
+| 400, 422 | `validation_failed` |
+| 401 | `authentication_required` |
+| 403 | `forbidden` |
+| 404 | `not_found` |
+| 405 | `method_not_allowed` |
+| 409 | `conflict` |
+| 413 | `payload_too_large` |
+| 415 | `unsupported_media_type` |
+| 429 | `rate_limited` |
+| 503 | `service_unavailable` |
+| Other 5xx | `internal_error` |
+| Other 4xx | `request_failed` |
+
+## Coverage counts
 
 - Exists: **6**
 - Partly: **28**
