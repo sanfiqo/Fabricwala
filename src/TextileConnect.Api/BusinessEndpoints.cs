@@ -16,15 +16,19 @@ public static class BusinessEndpoints
     public static void MapBusinessEndpoints(this WebApplication app)
     {
         var group = app.MapGroup("/api/v1/businesses").RequireAuthorization();
-        group.MapPost("", (Business business, ClaimsPrincipal principal, IBusinessDirectory directory) =>
-            Results.Ok(directory.Create(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "", business)));
-        group.MapGet("/me", (ClaimsPrincipal principal, IBusinessDirectory directory) =>
+        group.MapPost("", async (BusinessCreateRequest request, ClaimsPrincipal principal, IBusinessDirectory directory, UserManager<ApplicationUser> users, MarketplaceDbContext db) =>
+        {
+            var user = await users.GetUserAsync(principal);
+            var business = directory.Create(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "", request.ToBusiness(user?.PhoneNumber), request.Pincode);
+            return Results.Created("/api/v1/businesses/me", Profile(business, db));
+        }).RequireAuthorization(policy => policy.RequireRole("Retailer", "Manufacturer"));
+        group.MapGet("/me", (ClaimsPrincipal principal, IBusinessDirectory directory, MarketplaceDbContext db) =>
             directory.GetForUser(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "") is { } business
-                ? Results.Ok(business) : Results.NotFound());
-        group.MapPut("/me", (BusinessUpdate request, ClaimsPrincipal principal, IBusinessDirectory directory) =>
+                ? Results.Ok(Profile(business, db)) : Results.NotFound());
+        group.MapPut("/me", (BusinessUpdate request, ClaimsPrincipal principal, IBusinessDirectory directory, MarketplaceDbContext db) =>
             directory.UpdateForUser(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "", b =>
             { b.DisplayName = request.DisplayName; b.Email = request.Email; }) is { } business
-                ? Results.Ok(business) : Results.NotFound());
+                ? Results.Ok(Profile(business, db)) : Results.NotFound());
         group.MapPost("/me/addresses", (BusinessAddress address, ClaimsPrincipal principal, IBusinessDirectory directory) =>
             Results.Ok(directory.AddAddress(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "", address)));
         group.MapGet("/me/addresses", (ClaimsPrincipal principal, IBusinessDirectory directory) =>
@@ -82,6 +86,19 @@ public static class BusinessEndpoints
         admin.MapPost("/{id:long}/reject", (long id, Rejection request, ClaimsPrincipal principal, IBusinessDirectory directory) =>
             directory.SetVerification(id, VerificationStatus.Rejected, request.Note, principal.FindFirstValue(ClaimTypes.NameIdentifier)) is { } business
                 ? Results.Ok(business) : Results.NotFound());
+    }
+
+    private static BusinessProfileResponse Profile(Business business, MarketplaceDbContext db)
+    {
+        var address = (from item in db.BusinessAddresses.AsNoTracking()
+                       join city in db.Cities on item.CityId equals city.Id
+                       join state in db.States on city.StateId equals state.Id
+                       where item.BusinessId == business.Id && item.AddressType == AddressType.Registered
+                       orderby item.Id
+                       select new { item.Pincode, CityId = city.Id, City = city.Name, State = state.Name }).FirstOrDefault();
+        return new(business.Id, business.BusinessType, business.LegalName, business.DisplayName,
+            business.Gstin, business.Phone, business.Email, business.VerificationStatus, business.RejectionNote,
+            business.CreatedAtUtc, business.UpdatedAtUtc, address?.Pincode, address?.CityId, address?.City, address?.State);
     }
 
     public sealed record BusinessUpdate(string DisplayName, string? Email);

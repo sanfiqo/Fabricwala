@@ -104,6 +104,7 @@ app.UseAntiforgery();
 app.MapControllers();
 app.MapSanfiqoAuthEndpoints();
 app.MapBusinessEndpoints();
+app.MapPincodeEndpoints();
 app.MapAdminEndpoints();
 app.MapProductEndpoints();
 app.MapLandedCostEndpoints();

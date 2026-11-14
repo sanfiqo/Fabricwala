@@ -16,6 +16,7 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
     public DbSet<BusinessDocument> BusinessDocuments => Set<BusinessDocument>();
     public DbSet<State> States => Set<State>();
     public DbSet<City> Cities => Set<City>();
+    public DbSet<PostalCode> PostalCodes => Set<PostalCode>();
     public DbSet<DeliveryZone> DeliveryZones => Set<DeliveryZone>();
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<HomeBanner> HomeBanners => Set<HomeBanner>();
@@ -57,11 +58,19 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
             entity.HasIndex(x => x.Gstin).IsUnique();
         });
         builder.Entity<BusinessUser>().HasKey(x => new { x.BusinessId, x.UserId });
+        builder.Entity<BusinessUser>().HasIndex(x => x.UserId).IsUnique();
         builder.Entity<BusinessAddress>().HasKey(x => x.Id);
         builder.Entity<BusinessDocument>().HasKey(x => x.Id);
         builder.Entity<State>().HasKey(x => x.Id);
         builder.Entity<City>().HasKey(x => x.Id);
         builder.Entity<City>().HasIndex(x => new { x.StateId, x.Name }).IsUnique();
+        builder.Entity<PostalCode>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Pincode).HasMaxLength(6).IsRequired();
+            entity.HasIndex(x => x.Pincode).IsUnique();
+            entity.HasOne<City>().WithMany().HasForeignKey(x => x.CityId).OnDelete(DeleteBehavior.Restrict);
+        });
         builder.Entity<DeliveryZone>(entity =>
         {
             entity.HasKey(x => x.Id);

@@ -94,7 +94,25 @@ Development OTP is `123456`; five wrong attempts, five-minute expiry, one-use,
 resend/mobile/IP limits remain enforced. Fake delivery does not print OTPs.
 Development HTTP cookies work for local preview; production cookies are always Secure.
 
-## Missing capabilities inside partly covered screens
+## Business profile and pincode contract (B2)
+
+`POST /api/v1/businesses` accepts `BusinessCreateRequest`: `businessType`
+(`Retailer`/`Manufacturer`), `legalName`, `displayName`, optional `phone` (defaults to
+the signed-in user's phone), `email`, `gstin`, `pincode`. It returns 201 with
+`BusinessProfileResponse`; repeat registration returns 409. Ownership, verification,
+commission, platform ownership and ids cannot be supplied by the caller.
+`GET/PUT /api/v1/businesses/me` returns only the current user's profile, including
+`verificationStatus` and `rejectionNote`. Pending signup does not authorize ordering/listing.
+GST is optional, uppercased and format-checked; this is not a live GST registration check.
+`GET /api/v1/pincodes/{pincode}` returns `PincodeResponse(pincode, cityId, city, stateId, state)`;
+malformed codes return 400 and unknown codes return 404. A pincode-only registered
+location does not invent a street address or create a usable delivery address.
+The postal directory is extensible in `PostalCodes`, initially seeded with only
+452001 (Indore) and 141001 (Ludhiana). Import verified nationwide data before launch.
+Sources: [Indore district](https://indore.nic.in/en/std-pin-codes/) and
+[India Post Punjab directory](https://www.indiapost.gov.in/sites/PostalCircles/Punjab/Lists/PostOffices/PB_Pincode_12Nov2020.pdf).
+
+## Remaining capabilities (original audit)
 
 - Home: no explicit best-sellers contract; current product response is a generic list.
 - Product: landed price is a separate call and product details do not include all required presentation fields.

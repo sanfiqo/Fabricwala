@@ -18,6 +18,7 @@ public sealed class Business
     public bool IsPlatformOwned { get; set; }
     public decimal? CommissionRateOverride { get; set; }
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
+    public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
     public DateTime? ApprovedAtUtc { get; set; }
     public string? ApprovedByUserId { get; set; }
     public bool IsDeleted { get; set; }

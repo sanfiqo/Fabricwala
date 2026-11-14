@@ -34,6 +34,10 @@ public sealed class ApiErrorMiddleware(RequestDelegate next, ILogger<ApiErrorMid
                 ValidationException or ArgumentException or AntiforgeryValidationException => 400,
                 UnauthorizedAccessException => 403,
                 KeyNotFoundException => 404,
+                TextileConnect.Application.Businesses.BusinessConflictException => 409,
+                Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException => 409,
+                Microsoft.EntityFrameworkCore.DbUpdateException update
+                    when update.InnerException is MySql.Data.MySqlClient.MySqlException { Number: 1062 } => 409,
                 _ => 500
             };
             error = ApiErrorResponse.ForStatus(context.Response.StatusCode);

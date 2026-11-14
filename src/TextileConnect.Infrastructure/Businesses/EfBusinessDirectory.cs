@@ -7,16 +7,45 @@ namespace TextileConnect.Infrastructure.Businesses;
 
 public sealed class EfBusinessDirectory(MarketplaceDbContext db) : IBusinessDirectory
 {
-    public Business Create(string userId, Business business)
+    public Business Create(string userId, Business business, string? pincode = null)
     {
+        if (string.IsNullOrWhiteSpace(userId)) throw new UnauthorizedAccessException();
+        business = new Business
+        {
+            BusinessType = business.BusinessType, LegalName = business.LegalName?.Trim() ?? string.Empty,
+            DisplayName = business.DisplayName?.Trim() ?? string.Empty, Phone = business.Phone?.Trim() ?? string.Empty,
+            Email = string.IsNullOrWhiteSpace(business.Email) ? null : business.Email.Trim(),
+            Gstin = string.IsNullOrWhiteSpace(business.Gstin) ? null : business.Gstin.Trim().ToUpperInvariant()
+        };
+        BusinessInputRules.ValidateRegistration(business, pincode);
+        if (db.BusinessUsers.Any(x => x.UserId == userId)
+            || business.Gstin != null && db.Businesses.Any(x => x.Gstin == business.Gstin)) throw new BusinessConflictException();
+        var postal = pincode is null ? null : db.PostalCodes.SingleOrDefault(x => x.Pincode == pincode)
+            ?? throw new KeyNotFoundException();
+        using var transaction = db.Database.IsRelational() ? db.Database.BeginTransaction() : null;
         db.Businesses.Add(business);
         db.SaveChanges();
         db.BusinessUsers.Add(new BusinessUser { BusinessId = business.Id, UserId = userId, Role = BusinessMemberRole.Owner, IsPrimary = true });
+        if (postal is not null) db.BusinessAddresses.Add(new BusinessAddress
+        {
+            BusinessId = business.Id, AddressType = AddressType.Registered, Line1 = string.Empty,
+            CityId = postal.CityId, Pincode = postal.Pincode, IsDefault = true
+        });
         db.SaveChanges();
+        transaction?.Commit();
         return business;
     }
     public Business? GetForUser(string userId) => db.BusinessUsers.Where(x => x.UserId == userId).Join(db.Businesses, x => x.BusinessId, x => x.Id, (_, business) => business).SingleOrDefault();
-    public Business? UpdateForUser(string userId, Action<Business> update) { var business = GetForUser(userId); if (business is null) return null; update(business); db.SaveChanges(); return business; }
+    public Business? UpdateForUser(string userId, Action<Business> update)
+    {
+        var business = GetForUser(userId);
+        if (business is null || business.IsDeleted) return null;
+        update(business);
+        BusinessInputRules.ValidateProfile(business.DisplayName, business.Email);
+        business.UpdatedAtUtc = DateTime.UtcNow;
+        db.SaveChanges();
+        return business;
+    }
     public BusinessAddress AddAddress(string userId, BusinessAddress address)
     {
         var business = GetForUser(userId) ?? throw new InvalidOperationException("Business context is required.");

@@ -76,6 +76,9 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                     b.Property<string>("RejectionNote")
                         .HasColumnType("longtext");
 
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<int>("VerificationStatus")
                         .HasColumnType("int");
 
@@ -167,6 +170,9 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
 
                     b.HasKey("BusinessId", "UserId");
 
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
                     b.ToTable("BusinessUsers");
                 });
 
@@ -222,6 +228,36 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("DeliveryZones");
+                });
+
+            modelBuilder.Entity("TextileConnect.Domain.Businesses.PostalCode", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("CityId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Pincode")
+                        .IsRequired()
+                        .HasMaxLength(6)
+                        .HasColumnType("varchar(6)");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CityId");
+
+                    b.HasIndex("Pincode")
+                        .IsUnique();
+
+                    b.ToTable("PostalCodes");
                 });
 
             modelBuilder.Entity("TextileConnect.Domain.Businesses.State", b =>
@@ -1170,6 +1206,15 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Settlements");
+                });
+
+            modelBuilder.Entity("TextileConnect.Domain.Businesses.PostalCode", b =>
+                {
+                    b.HasOne("TextileConnect.Domain.Businesses.City", null)
+                        .WithMany()
+                        .HasForeignKey("CityId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("TextileConnect.Domain.Orders.OrderItem", b =>

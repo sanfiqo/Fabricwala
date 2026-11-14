@@ -46,6 +46,14 @@ public static class MarketplaceSeed
                 db.PlatformSettings.Add(new PlatformSetting { Key = setting.Key, Value = setting.Value });
 
         await db.SaveChangesAsync(cancellationToken);
+        // Exact, verified postal mappings; never infer a city from a delivery-zone prefix.
+        foreach (var (pincode, cityName) in new[] { ("452001", "Indore"), ("141001", "Ludhiana") })
+        {
+            var city = await db.Cities.SingleOrDefaultAsync(x => x.Name == cityName, cancellationToken);
+            if (city is not null && !await db.PostalCodes.AnyAsync(x => x.Pincode == pincode, cancellationToken))
+                db.PostalCodes.Add(new PostalCode { Pincode = pincode, CityId = city.Id });
+        }
+        await db.SaveChangesAsync(cancellationToken);
         Console.WriteLine($"Marketplace seed counts: States={await db.States.CountAsync(cancellationToken)}, Cities={await db.Cities.CountAsync(cancellationToken)}, Zones={await db.DeliveryZones.CountAsync(cancellationToken)}, Categories={await db.Categories.CountAsync(cancellationToken)}, PlatformSettings={await db.PlatformSettings.CountAsync(cancellationToken)}");
     }
 }
