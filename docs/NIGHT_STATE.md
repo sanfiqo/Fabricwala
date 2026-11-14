@@ -26,7 +26,7 @@ Pending: night run in progress.
 - [x] B3. Admin approvals: paged status list, review detail/GST/documents, approve/reject with note. `4cb4987`.
 - [x] B4. Retailer catalogue: home/categories/best sellers; paged search/filter; detail/tiers/landed price/variants.
   - [x] B4.1. Populated catalogue/home/category DTOs, search filters, stable paging, public seller visibility, stored product attributes and migration. `6268c28`.
-  - [x] B4.2. Shared server landed-price quote by pincode/quantity, shipping/GST/fee handling and product integration. `COMMIT`.
+  - [x] B4.2. Shared server landed-price quote by pincode/quantity, shipping/GST/fee handling and product integration. `4253dec`.
 - [ ] B5. Cart: CRUD, tier price and add-more savings data.
 - [ ] B6. Checkout: address/order/test payment, Idempotency-Key, seller splits.
 - [ ] B7. Retailer orders: paged status groups, detail/timeline, confirm delivery.
