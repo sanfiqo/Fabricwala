@@ -60,3 +60,4 @@ Handover: Phase 1 complete. Phase 2 complete except P2.3 migration tooling block
 2026-11-14 | P-NIGHT B8 | done | seller order tabs/actions, expiry + refund with fake clock; 146 tests passed
 2026-11-14 | P-NIGHT B9 | done | seller products: list/filters, draft/publish, edit, toggle, admin hold; 150 tests passed
 2026-11-14 | P-NIGHT B10 | done | payouts: hold, 7-day/delivery release, claim hold, summary + CSV; 155 tests passed
+2026-11-14 | P-NIGHT B11 | done | Seller dashboard with real counts, 6-month chart, low stock and best sellers; 156 tests passed
