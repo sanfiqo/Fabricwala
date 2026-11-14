@@ -30,7 +30,7 @@ Pending: night run in progress.
 - [x] B5. Cart: CRUD, tier price and add-more savings data. `615b6ce`.
 - [x] B6. Checkout: address/order/test payment, Idempotency-Key, seller splits.
   - [x] B6.1. Order snapshots/totals/commission, seller split, idempotent checkout, stock reservation, status history, migration. `1729b55`.
-  - [x] B6.2. Payment: idempotent create, test gateway completion (Development), verified idempotent webhook, order status/notifications. `COMMIT`.
+  - [x] B6.2. Payment: idempotent create, test gateway completion (Development), verified idempotent webhook, order status/notifications. `1611351`.
 - [ ] B7. Retailer orders: paged status groups, detail/timeline, confirm delivery.
 - [ ] B8. Seller orders: status groups/actions, configurable fee (2% default), acceptance expiry/full refund/fake clock.
 - [ ] B9. Seller products: filtered/searchable list, on/off, CRUD/draft/publish, tiers/MOQ/variants/stock.
