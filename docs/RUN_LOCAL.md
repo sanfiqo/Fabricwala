@@ -60,13 +60,13 @@ In Development there is no SMS. The one-time code is always **123456**. All numb
 
 | Who | Mobile number | Role | Business |
 |---|---|---|---|
-| Dev Admin | +919000000003 | Admin | none |
-| Ramesh Sharma | +919000000001 | Retailer | Sharma Textiles, Indore (approved) |
-| Mehta Stores | +919000000013 | Retailer | Mehta Stores, Jammu (approved) |
-| Anil Kapoor | +919000000002 | Seller (Manufacturer) | Kapoor Knits, Ludhiana (approved) |
-| Shree Kurti House | +919000000011 | Seller | Shree Kurti House, Jaipur (approved) |
-| Gupta Garments | +919000000012 | Seller | Gupta Garments, Delhi (approved) |
-| Raj Woollens | +919000000014 | Retailer until approved | Raj Woollens, Ludhiana (pending approval, approve it as the admin to try the queue) |
+| Dev Admin | +919999900000 | Admin | none |
+| Ramesh Sharma | +919999900001 | Retailer | Sharma Textiles, Indore (approved) |
+| Mehta Stores | +919999900013 | Retailer | Mehta Stores, Jammu (approved) |
+| Anil Kapoor | +919999900002 | Seller (Manufacturer) | Kapoor Knits, Ludhiana (approved) |
+| Shree Kurti House | +919999900011 | Seller | Shree Kurti House, Jaipur (approved) |
+| Gupta Garments | +919999900012 | Seller | Gupta Garments, Delhi (approved) |
+| Raj Woollens | +919999900014 | Retailer until approved | Raj Woollens, Ludhiana (pending approval, approve it as the admin to try the queue) |
 
 Demo products (all sellers): Kapoor Knits has Quilted puffer jacket (MOQ 50, 50+ 480, 200+ 459, 500+ 440), Fleece hoodie (one size nearly out of stock), Sherpa jacket and Wool cardigan (draft). Shree Kurti House has Cotton kurti set, Gupta Garments has Thermal innerwear set. Freight between these cities is seeded so prices and checkout work. Payments use the fake gateway: after `POST /api/v1/payments` call `POST /api/v1/payments/{gatewayOrderId}/dev-complete` to pay, or `?success=false` to fail.
 
@@ -77,8 +77,8 @@ If the demo users are missing, `UserContacts:LookupHmacKey` was not set at the f
 Sign-in uses a secure HttpOnly cookie, not a token. Keep cookies between calls (`credentials: "include"` in a browser, a cookie jar in curl).
 
 1. `GET /api/v1/auth/csrf` returns a token. Send it as header `X-CSRF-TOKEN` on every POST/PUT/DELETE.
-2. `POST /api/v1/auth/otp/request` with `{ "phoneNumber": "+919000000001" }` returns a `challengeId`.
-3. `POST /api/v1/auth/otp/verify` with `{ "phoneNumber": "+919000000001", "challengeId": "<id>", "code": "123456" }` sets the cookie.
+2. `POST /api/v1/auth/otp/request` with `{ "phoneNumber": "+919999900001" }` returns 204 and stores the challenge in the `tc_otp_challenge` cookie (no `challengeId` in the body). Resending to the same number is rate limited (429), so wait a minute.
+3. `POST /api/v1/auth/otp/verify` with `{ "phoneNumber": "+919999900001", "code": "123456" }` sets the session cookie (`challengeId` is optional because the cookie carries it). The response is the profile.
 4. `GET /api/v1/auth/me` returns the profile (roles, business, language). `POST /api/v1/auth/refresh` renews the cookie after an admin approval, `POST /api/v1/auth/logout` signs out.
 
 Errors always look like `{ "code": "...", "message": "...", "fields": { ... } }` (codes are listed in API_SCREENS.md). Repeating a checkout or payment needs the same `Idempotency-Key` header.

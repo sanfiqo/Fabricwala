@@ -68,6 +68,7 @@ builder.Services.AddScoped<IOrderMaintenance, EfOrderService>();
 builder.Services.AddHostedService<OrderMaintenanceWorker>();
 builder.Services.AddScoped<ICheckoutService, EfCheckoutService>();
 builder.Services.AddScoped<IPaymentService, EfPaymentService>();
+builder.Services.AddScoped<IFinanceService, EfFinanceService>();
 builder.Services.AddScoped<ICommunityService, EfCommunityService>();
 builder.Services.AddScoped<IAuthBusinessProfileReader, AuthBusinessProfileReader>();
 if (builder.Environment.IsDevelopment())

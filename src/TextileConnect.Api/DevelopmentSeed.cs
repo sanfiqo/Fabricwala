@@ -18,14 +18,15 @@ public static class DevelopmentSeed
 
     public static readonly IReadOnlyList<Persona> Personas =
     [
-        new("+919000000003", "Dev Admin", SanfiqoRoleNames.Admin, "", null, null, true, null),
-        new("+919000000001", "Ramesh Sharma", SanfiqoRoleNames.Retailer, "Sharma Textiles", BusinessType.Retailer, "452001", true, "12 Market Road"),
-        new("+919000000002", "Anil Kapoor", SanfiqoRoleNames.Manufacturer, "Kapoor Knits", BusinessType.Manufacturer, "141001", true, "Plot 7, Focal Point"),
-        new("+919000000011", "Shree Kurti House", SanfiqoRoleNames.Manufacturer, "Shree Kurti House", BusinessType.Manufacturer, "302001", true, "Sanganer Road"),
-        new("+919000000012", "Gupta Garments", SanfiqoRoleNames.Manufacturer, "Gupta Garments", BusinessType.Manufacturer, "110001", true, "Gandhi Nagar"),
-        new("+919000000013", "Mehta Stores", SanfiqoRoleNames.Retailer, "Mehta Stores", BusinessType.Retailer, "180001", true, "Raghunath Bazaar"),
+        // The +91999990xxxx range is used so these never collide with phone numbers already stored in a developer database.
+        new("+919999900000", "Dev Admin", SanfiqoRoleNames.Admin, "", null, null, true, null),
+        new("+919999900001", "Ramesh Sharma", SanfiqoRoleNames.Retailer, "Sharma Textiles", BusinessType.Retailer, "452001", true, "12 Market Road"),
+        new("+919999900002", "Anil Kapoor", SanfiqoRoleNames.Manufacturer, "Kapoor Knits", BusinessType.Manufacturer, "141001", true, "Plot 7, Focal Point"),
+        new("+919999900011", "Shree Kurti House", SanfiqoRoleNames.Manufacturer, "Shree Kurti House", BusinessType.Manufacturer, "302001", true, "Sanganer Road"),
+        new("+919999900012", "Gupta Garments", SanfiqoRoleNames.Manufacturer, "Gupta Garments", BusinessType.Manufacturer, "110001", true, "Gandhi Nagar"),
+        new("+919999900013", "Mehta Stores", SanfiqoRoleNames.Retailer, "Mehta Stores", BusinessType.Retailer, "180001", true, "Raghunath Bazaar"),
         // Waiting for admin approval, so the user still has the Retailer role until an admin approves (the role changes on approval).
-        new("+919000000014", "Raj Woollens", SanfiqoRoleNames.Retailer, "Raj Woollens", BusinessType.Manufacturer, "141001", false, "Chaura Bazaar"),
+        new("+919999900014", "Raj Woollens", SanfiqoRoleNames.Retailer, "Raj Woollens", BusinessType.Manufacturer, "141001", false, "Chaura Bazaar"),
     ];
 
     private static bool warned;
@@ -51,7 +52,7 @@ public static class DevelopmentSeed
     {
         foreach (var (pincode, cityName) in ExtraPostalCodes)
         {
-            var city = await db.Cities.SingleOrDefaultAsync(x => x.Name == cityName, ct);
+            var city = await db.Cities.OrderBy(x => x.Id).FirstOrDefaultAsync(x => x.Name == cityName, ct);
             if (city is not null && !await db.PostalCodes.AnyAsync(x => x.Pincode == pincode, ct)) db.PostalCodes.Add(new PostalCode { Pincode = pincode, CityId = city.Id });
         }
         await db.SaveChangesAsync(ct);
@@ -89,18 +90,20 @@ public static class DevelopmentSeed
 
     private static async Task EnsureBusinessAsync(MarketplaceDbContext db, Persona persona, string? userId, CancellationToken ct)
     {
-        var existing = await db.Businesses.SingleOrDefaultAsync(x => x.LegalName == persona.BusinessName, ct);
+        var existing = await db.Businesses.OrderBy(x => x.Id).FirstOrDefaultAsync(x => x.LegalName == persona.BusinessName, ct);
         if (existing is not null)
         {
-            // Users may have become available after the first run: link the owner then.
-            if (userId is not null && !await db.BusinessUsers.AnyAsync(x => x.BusinessId == existing.Id, ct))
+            // Users may have become available after the first run, or the demo phone numbers may have changed since an earlier run:
+            // these are demo businesses, so the demo owner is (re)linked and any older demo owner link is replaced.
+            if (userId is not null && !await db.BusinessUsers.AnyAsync(x => x.BusinessId == existing.Id && x.UserId == userId, ct))
             {
+                db.BusinessUsers.RemoveRange(await db.BusinessUsers.Where(x => x.BusinessId == existing.Id && x.Role == BusinessMemberRole.Owner).ToListAsync(ct));
                 db.BusinessUsers.Add(new BusinessUser { BusinessId = existing.Id, UserId = userId, Role = BusinessMemberRole.Owner, IsPrimary = true });
                 await db.SaveChangesAsync(ct);
             }
             return;
         }
-        var postal = await db.PostalCodes.AsNoTracking().SingleOrDefaultAsync(x => x.Pincode == persona.Pincode, ct)
+        var postal = await db.PostalCodes.AsNoTracking().OrderBy(x => x.Id).FirstOrDefaultAsync(x => x.Pincode == persona.Pincode, ct)
             ?? throw new InvalidOperationException($"Pincode {persona.Pincode} is not in the postal directory.");
         var now = DateTime.UtcNow;
         var business = new Business
@@ -151,7 +154,7 @@ public static class DevelopmentSeed
         var categories = await db.Categories.AsNoTracking().ToDictionaryAsync(x => x.Slug, x => x.Id, ct);
         foreach (var demo in demos)
         {
-            var seller = await db.Businesses.AsNoTracking().SingleAsync(x => x.LegalName == demo.Seller, ct);
+            var seller = await db.Businesses.AsNoTracking().OrderBy(x => x.Id).FirstAsync(x => x.LegalName == demo.Seller, ct);
             if (await db.Products.AnyAsync(x => x.SellerBusinessId == seller.Id && x.Title == demo.Title && !x.IsDeleted, ct)) continue;
             await products.CreateAsync(seller.Id, new SellerProductRequest(demo.Title, categories[demo.Category], $"{demo.Title}, wholesale pack.", demo.Material, null, "Winter", "6101", 700, 3, "7 day return for damaged goods",
                 demo.Gst, demo.Moq, ProductUnit.Piece, demo.Variants.Select(v => new SellerVariantInput(null, null, v.Size, v.Colour, v.Stock)).ToList(),

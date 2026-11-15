@@ -51,7 +51,7 @@ public static class MarketplaceSeed
         // Exact, verified postal mappings; never infer a city from a delivery-zone prefix.
         foreach (var (pincode, cityName) in new[] { ("452001", "Indore"), ("141001", "Ludhiana") })
         {
-            var city = await db.Cities.SingleOrDefaultAsync(x => x.Name == cityName, cancellationToken);
+            var city = await db.Cities.OrderBy(x => x.Id).FirstOrDefaultAsync(x => x.Name == cityName, cancellationToken);
             if (city is not null && !await db.PostalCodes.AnyAsync(x => x.Pincode == pincode, cancellationToken))
                 db.PostalCodes.Add(new PostalCode { Pincode = pincode, CityId = city.Id });
         }
