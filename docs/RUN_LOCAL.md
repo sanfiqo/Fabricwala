@@ -77,7 +77,7 @@ If the demo users are missing, `UserContacts:LookupHmacKey` was not set at the f
 Sign-in uses a secure HttpOnly cookie, not a token. Keep cookies between calls (`credentials: "include"` in a browser, a cookie jar in curl).
 
 1. `GET /api/v1/auth/csrf` returns a token. Send it as header `X-CSRF-TOKEN` on every POST/PUT/DELETE.
-2. `POST /api/v1/auth/otp/request` with `{ "phoneNumber": "+919999900001" }` returns 204 and stores the challenge in the `tc_otp_challenge` cookie (no `challengeId` in the body). Resending to the same number is rate limited (429), so wait a minute.
+2. `POST /api/v1/auth/otp/request` with `{ "phoneNumber": "+919999900001" }` returns 204 and stores the challenge in the `tc_otp_challenge` cookie (no `challengeId` in the body). Resending to the same number is rate limited (429): at most 3 sends per 15 minutes and 10 per day per number, in every environment. In Development the per-IP limit is 200 per 15 minutes and 1000 per day (`Otp:Policy` in appsettings.Development.json), so test runs from one machine are not blocked.
 3. `POST /api/v1/auth/otp/verify` with `{ "phoneNumber": "+919999900001", "code": "123456" }` sets the session cookie (`challengeId` is optional because the cookie carries it). The response is the profile.
 4. `GET /api/v1/auth/me` returns the profile (roles, business, language). `POST /api/v1/auth/refresh` renews the cookie after an admin approval, `POST /api/v1/auth/logout` signs out.
 

@@ -125,7 +125,7 @@ commission, platform ownership and ids cannot be supplied by the caller.
 `GET/PUT /api/v1/businesses/me` returns only the current user's profile, including
 `verificationStatus` and `rejectionNote`. Pending signup does not authorize ordering/listing.
 GST is optional, uppercased and format-checked; this is not a live GST registration check.
-`GET /api/v1/pincodes/{pincode}` returns `PincodeResponse(pincode, cityId, city, stateId, state)`;
+`GET /api/v1/states` returns `[StateResponse(id, name, code)]` sorted by name, and `GET /api/v1/cities[?stateId=]` returns `[CityResponse(id, stateId, name, isDeliveryZone, isSourcingHub)]` sorted by name (both public, no paging; use them for the signup fallback when a pincode is not found and for the admin freight screen); `GET /api/v1/pincodes/{pincode}` returns `PincodeResponse(pincode, cityId, city, stateId, state)`;
 malformed codes return 400 and unknown codes return 404. A pincode-only registered
 location does not invent a street address or create a usable delivery address.
 The postal directory is extensible in `PostalCodes`, initially seeded with only

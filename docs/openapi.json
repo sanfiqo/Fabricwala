@@ -2243,6 +2243,28 @@
         ]
       }
     },
+    "/api/v1/cities": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "stateId",
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "testhost"
+        ]
+      }
+    },
     "/api/v1/enquiries": {
       "post": {
         "requestBody": {
@@ -3817,6 +3839,18 @@
           },
           "required": true
         },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "testhost"
+        ]
+      }
+    },
+    "/api/v1/states": {
+      "get": {
         "responses": {
           "200": {
             "description": "OK"
