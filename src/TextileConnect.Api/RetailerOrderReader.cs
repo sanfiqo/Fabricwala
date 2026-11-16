@@ -47,7 +47,8 @@ public sealed class RetailerOrderReader(MarketplaceDbContext db)
             var lines = mine.SelectMany(x => x.Items).OrderBy(x => x.Id).ToList();
             return new RetailerOrderSummaryResponse(order.Id, order.OrderNumber, order.PlacedAtUtc, order.GrandTotal, order.PaymentStatus, status, orderGroup,
                 lines.Count, lines.Sum(x => x.Quantity), lines.FirstOrDefault()?.Title ?? string.Empty,
-                mine.Select(x => names.GetValueOrDefault(x.ManufacturerBusinessId) ?? string.Empty).ToList());
+                mine.Select(x => names.GetValueOrDefault(x.ManufacturerBusinessId) ?? string.Empty).ToList(),
+                lines.Select(ApiResponseMappings.OrderLine).ToList());
         }).ToList();
         return new PagedResponse<RetailerOrderSummaryResponse>(items, total, page, pageSize);
     }

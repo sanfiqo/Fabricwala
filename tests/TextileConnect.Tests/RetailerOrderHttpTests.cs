@@ -88,6 +88,13 @@ public sealed class RetailerOrderHttpTests
         Assert.Equal("Quilted puffer jacket", row.GetProperty("firstItemTitle").GetString());
         Assert.Equal(60, row.GetProperty("totalQuantity").GetInt32());
         Assert.Equal("Kapoor Knits", row.GetProperty("sellerNames")[0].GetString());
+        // The list carries the order lines, so a client needs no second request per order.
+        var lines = row.GetProperty("items").EnumerateArray().ToList();
+        Assert.Equal(row.GetProperty("itemCount").GetInt32(), lines.Count);
+        Assert.Equal(60, lines.Sum(x => x.GetProperty("quantity").GetInt32()));
+        Assert.Equal("Quilted puffer jacket", lines[0].GetProperty("title").GetString());
+        Assert.True(lines[0].GetProperty("unitPrice").GetDecimal() > 0);
+        Assert.True(lines[0].GetProperty("lineTotal").GetDecimal() > 0);
 
         foreach (var bad in new[] { "?group=nope", "?page=0", "?pageSize=0", "?pageSize=101" })
             Assert.Equal(HttpStatusCode.BadRequest, (await retailer.GetAsync("/api/v1/orders" + bad)).StatusCode);

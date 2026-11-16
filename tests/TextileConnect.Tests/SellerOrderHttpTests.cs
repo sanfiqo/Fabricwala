@@ -74,6 +74,10 @@ public sealed class SellerOrderHttpTests
         var row = (await Tab("new")).GetProperty("items")[0];
         Assert.Equal("PendingAcceptance", row.GetProperty("status").GetString());
         Assert.Equal("Retailer", row.GetProperty("retailerName").GetString());
+        var lines = row.GetProperty("items").EnumerateArray().ToList();
+        Assert.Equal(row.GetProperty("itemCount").GetInt32(), lines.Count);
+        Assert.Equal(row.GetProperty("totalQuantity").GetInt32(), lines.Sum(x => x.GetProperty("quantity").GetInt32()));
+        Assert.Equal(row.GetProperty("firstItemTitle").GetString(), lines[0].GetProperty("title").GetString());
         Assert.Equal(28800m + 1440m + 1200m, row.GetProperty("orderValue").GetDecimal());
         Assert.Equal(576m, row.GetProperty("platformFee").GetDecimal());
         Assert.Equal(31440m - 576m, row.GetProperty("youGet").GetDecimal());

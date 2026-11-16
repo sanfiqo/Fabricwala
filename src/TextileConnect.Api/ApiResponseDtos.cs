@@ -82,6 +82,8 @@ public sealed record OrderResponse(long Id, string OrderNumber, DateTime? Placed
 
 public static class ApiResponseMappings
 {
+    public static OrderItemResponse OrderLine(TextileConnect.Domain.Orders.OrderItem x)
+        => new(x.Id, x.ProductId, x.Title, x.Size, x.Colour, x.Quantity, x.UnitPrice, x.GstRate, x.LineTotal) { GstAmount = x.GstAmount };
     public static ProductSummaryResponse Product(Product value) => ProductSummaryResponse.From(value);
     public static ProductDetailResponse ProductDetail(ProductDetail value) => ProductDetailResponse.From(value);
     public static CartResponse Cart(CartView value) => CartResponse.From(value);

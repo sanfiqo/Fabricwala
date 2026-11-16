@@ -5,9 +5,9 @@ using TextileConnect.Infrastructure.Persistence;
 
 namespace TextileConnect.Api;
 
-/// <summary>One row of the seller's orders list. Tab is new, to_pack, shipped or done.</summary>
+/// <summary>One row of the seller's orders list. Tab is new, to_pack, shipped or done. Items are the order lines (same shape as in the order detail).</summary>
 public sealed record SellerOrderSummaryResponse(long Id, string OrderNumber, DateTime PlacedAt, string Status, string Tab, string RetailerName, string DeliveryCity,
-    int ItemCount, int TotalQuantity, string FirstItemTitle, decimal OrderValue, decimal PlatformFee, decimal YouGet, DateTime? AcceptDeadline);
+    int ItemCount, int TotalQuantity, string FirstItemTitle, decimal OrderValue, decimal PlatformFee, decimal YouGet, DateTime? AcceptDeadline, IReadOnlyList<OrderItemResponse> Items);
 
 /// <summary>Read side of the seller's orders. Sellers only see orders the retailer has paid for, and only their own.</summary>
 public sealed class SellerOrderReader(MarketplaceDbContext db)
@@ -47,7 +47,7 @@ public sealed class SellerOrderReader(MarketplaceDbContext db)
             var lines = x.Items.OrderBy(i => i.Id).ToList();
             return new SellerOrderSummaryResponse(x.Id, x.Order!.OrderNumber, x.PlacedAtUtc, Display(x.Status), TabOf(x.Status), names.GetValueOrDefault(x.Order.RetailerBusinessId) ?? string.Empty,
                 x.Order.DeliveryCity, lines.Count, lines.Sum(i => i.Quantity), lines.FirstOrDefault()?.Title ?? string.Empty, x.Total, x.CommissionAmount, x.Total - x.CommissionAmount,
-                x.Status == "Pending" ? x.AcceptDeadlineUtc : null);
+                x.Status == "Pending" ? x.AcceptDeadlineUtc : null, lines.Select(ApiResponseMappings.OrderLine).ToList());
         }).ToList();
         return new PagedResponse<SellerOrderSummaryResponse>(items, total, page, pageSize);
     }
