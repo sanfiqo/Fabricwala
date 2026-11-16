@@ -39,12 +39,22 @@ public static class MarketplaceSeed
             ["Commission.DefaultRate"] = "0.02",
             ["Retailer.PlatformFeeRate"] = "0",
             ["Settlement.AutoReleaseDays"] = "7",
+            ["Seller.AcceptWindowHours"] = "24",
+            ["Orders.UnpaidExpiryMinutes"] = "60",
             ["Brand.Name"] = "TextileConnect"
         };
         foreach (var setting in settings)
             if (!await db.PlatformSettings.AnyAsync(x => x.Key == setting.Key, cancellationToken))
                 db.PlatformSettings.Add(new PlatformSetting { Key = setting.Key, Value = setting.Value });
 
+        await db.SaveChangesAsync(cancellationToken);
+        // Exact, verified postal mappings; never infer a city from a delivery-zone prefix.
+        foreach (var (pincode, cityName) in new[] { ("452001", "Indore"), ("141001", "Ludhiana") })
+        {
+            var city = await db.Cities.OrderBy(x => x.Id).FirstOrDefaultAsync(x => x.Name == cityName, cancellationToken);
+            if (city is not null && !await db.PostalCodes.AnyAsync(x => x.Pincode == pincode, cancellationToken))
+                db.PostalCodes.Add(new PostalCode { Pincode = pincode, CityId = city.Id });
+        }
         await db.SaveChangesAsync(cancellationToken);
         Console.WriteLine($"Marketplace seed counts: States={await db.States.CountAsync(cancellationToken)}, Cities={await db.Cities.CountAsync(cancellationToken)}, Zones={await db.DeliveryZones.CountAsync(cancellationToken)}, Categories={await db.Categories.CountAsync(cancellationToken)}, PlatformSettings={await db.PlatformSettings.CountAsync(cancellationToken)}");
     }

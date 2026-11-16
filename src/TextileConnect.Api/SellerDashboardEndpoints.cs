@@ -1,21 +1,64 @@
 using Microsoft.EntityFrameworkCore;
 using TextileConnect.Application.Businesses;
+using TextileConnect.Domain.Catalogue;
 using TextileConnect.Infrastructure.Persistence;
 
 namespace TextileConnect.Api;
 
+public sealed record SellerMonthlySales(string Month, decimal Sales, int Orders);
+public sealed record SellerLowStockItem(long ProductId, string Title, string Sku, string? Size, string? Colour, int StockQty);
+public sealed record SellerLowStock(int Threshold, int Count, IReadOnlyList<SellerLowStockItem> Items);
+public sealed record SellerBestSeller(long ProductId, string Title, string Slug, int Quantity, decimal Revenue);
+
+/// <summary>Rating is the average of the retailer stars (1 to 5, one decimal) over the rated orders that contain this seller, null until there is one. A rated order counts for every seller in it.
+/// Sales = goods value (before GST and freight) of paid orders that were not rejected or cancelled, by the month they were placed.</summary>
+public sealed record SellerDashboardResponse(int NewOrders, int ToPack, decimal SalesThisMonth, decimal NextPayoutAmount, DateTime? NextPayoutDate, decimal OnHoldAmount,
+    IReadOnlyList<SellerMonthlySales> MonthlySales, SellerLowStock LowStock, IReadOnlyList<SellerBestSeller> BestSellers,
+    decimal? Rating, int RatingCount);
+
 public static class SellerDashboardEndpoints
 {
+    public const int LowStockThreshold = 5;
+
     public static void MapSellerDashboardEndpoints(this WebApplication app)
     {
-        app.MapGet("/api/v1/seller/dashboard", async (ICurrentBusiness current, MarketplaceDbContext db, CancellationToken ct) =>
+        app.MapGet("/api/v1/seller/dashboard", async (ICurrentBusiness current, MarketplaceDbContext db, TimeProvider clock, CancellationToken ct) =>
         {
-            var businessId = current.RequireBusinessId(); var monthStart = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1, 0, 0, 0, DateTimeKind.Utc);
-            var sellerOrders = db.SellerOrders.Where(x => x.ManufacturerBusinessId == businessId);
-            var monthly = sellerOrders.Where(x => x.AcceptedAt >= monthStart);
-            var topProducts = await db.OrderItems.Where(x => x.SellerOrder != null && x.SellerOrder.ManufacturerBusinessId == businessId).GroupBy(x => x.ProductId).Select(x => new { productId = x.Key, quantity = x.Sum(y => y.Quantity) }).OrderByDescending(x => x.quantity).Take(5).ToListAsync(ct);
-            var lowStock = await db.ProductVariants.Join(db.Products, variant => variant.ProductId, product => product.Id, (variant, product) => new { variant, product }).Where(x => x.product.SellerBusinessId == businessId && x.variant.IsActive && x.variant.StockQty <= 5).Select(x => new { x.variant.Id, x.variant.ProductId, x.variant.Sku, x.variant.StockQty }).ToListAsync(ct);
-            return Results.Ok(new { newOrders = await sellerOrders.CountAsync(x => x.Status == "Pending", ct), pendingDispatch = await sellerOrders.CountAsync(x => x.Status == "Accepted", ct), salesThisMonth = await monthly.SumAsync(x => (decimal?)x.SubTotal, ct) ?? 0, payoutDue = await db.Settlements.Where(x => x.ManufacturerBusinessId == businessId && x.Status == "Pending").SumAsync(x => (decimal?)x.Amount, ct) ?? 0, topProducts, lowStock });
-        }).RequireAuthorization("ApprovedBusiness");
+            var sellerId = current.RequireBusinessId();
+            var now = clock.GetUtcNow().UtcDateTime;
+            var thisMonth = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+            var firstMonth = thisMonth.AddMonths(-5);
+            var paid = db.SellerOrders.AsNoTracking().Where(x => x.ManufacturerBusinessId == sellerId && x.Order!.PaymentStatus != "Pending" && x.Order.PaymentStatus != "Cancelled");
+            var counted = paid.Where(x => x.Status != "Rejected" && x.Status != "Cancelled");
+
+            var grouped = await counted.Where(x => x.PlacedAtUtc >= firstMonth)
+                .GroupBy(x => new { x.PlacedAtUtc.Year, x.PlacedAtUtc.Month })
+                .Select(g => new { g.Key.Year, g.Key.Month, Sales = g.Sum(x => x.SubTotal), Orders = g.Count() }).ToListAsync(ct);
+            var chart = Enumerable.Range(0, 6).Select(i => firstMonth.AddMonths(i)).Select(month =>
+            {
+                var row = grouped.FirstOrDefault(g => g.Year == month.Year && g.Month == month.Month);
+                return new SellerMonthlySales($"{month:yyyy-MM}", row?.Sales ?? 0m, row?.Orders ?? 0);
+            }).ToList();
+
+            var lowQuery = db.ProductVariants.AsNoTracking().Where(v => v.IsActive && v.StockQty <= LowStockThreshold)
+                .Join(db.Products.Where(p => p.SellerBusinessId == sellerId && !p.IsDeleted && p.Status != ProductStatus.Draft), v => v.ProductId, p => p.Id, (v, p) => new { v, p });
+            var lowItems = await lowQuery.OrderBy(x => x.v.StockQty).ThenBy(x => x.v.Id).Take(10)
+                .Select(x => new SellerLowStockItem(x.p.Id, x.p.Title, x.v.Sku, x.v.Size, x.v.Colour, x.v.StockQty)).ToListAsync(ct);
+
+            var best = await db.OrderItems.AsNoTracking().Where(i => counted.Select(s => s.Id).Contains(i.SellerOrderId))
+                .GroupBy(i => i.ProductId).Select(g => new { ProductId = g.Key, Quantity = g.Sum(i => i.Quantity), Revenue = g.Sum(i => i.Quantity * i.UnitPrice) })
+                .OrderByDescending(x => x.Quantity).ThenBy(x => x.ProductId).Take(5).ToListAsync(ct);
+            var bestIds = best.Select(x => x.ProductId).ToArray();
+            var products = await db.Products.AsNoTracking().Where(p => bestIds.Contains(p.Id)).ToDictionaryAsync(p => p.Id, ct);
+
+            var stars = await db.OrderRatings.AsNoTracking().Where(r => db.SellerOrders.Any(s => s.OrderId == r.OrderId && s.ManufacturerBusinessId == sellerId)).Select(r => r.Stars).ToListAsync(ct);
+            var payouts = await new SellerPayoutReader(db, clock).SummaryAsync(sellerId, null, 1, 1, ct);
+            return Results.Ok(new SellerDashboardResponse(
+                await paid.CountAsync(x => x.Status == "Pending", ct), await paid.CountAsync(x => x.Status == "Accepted", ct),
+                chart[^1].Sales, payouts.NextPayoutAmount, payouts.NextPayoutDate, payouts.OnHoldAmount, chart,
+                new SellerLowStock(LowStockThreshold, await lowQuery.CountAsync(ct), lowItems),
+                best.Select(x => new SellerBestSeller(x.ProductId, products.GetValueOrDefault(x.ProductId)?.Title ?? string.Empty, products.GetValueOrDefault(x.ProductId)?.Slug ?? string.Empty, x.Quantity, x.Revenue)).ToList(),
+                stars.Count == 0 ? null : decimal.Round((decimal)stars.Average(), 1, MidpointRounding.AwayFromZero), stars.Count));
+        }).RequireAuthorization("ApprovedBusiness").RequireAuthorization(policy => policy.RequireRole("Manufacturer"));
     }
 }

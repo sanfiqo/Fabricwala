@@ -1,8 +1,7 @@
-using TextileConnect.Domain.Orders;
-
 namespace TextileConnect.Application.Orders;
 
 public interface ICheckoutService
 {
-    Task<Order?> CheckoutAsync(long retailerBusinessId, string userId, long deliveryAddressId, CancellationToken cancellationToken = default);
+    /// <summary>Creates one order (split per seller) from the cart. Throws RuleViolationException with a stable code when it cannot.</summary>
+    Task<CheckoutResult> CheckoutAsync(long retailerBusinessId, string userId, long deliveryAddressId, string idempotencyKey, CancellationToken cancellationToken = default);
 }

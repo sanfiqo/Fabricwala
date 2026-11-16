@@ -4,7 +4,7 @@ namespace TextileConnect.Application.Businesses;
 
 public interface IBusinessDirectory
 {
-    Business Create(string userId, Business business);
+    Business Create(string userId, Business business, string? pincode = null);
     Business? GetForUser(string userId);
     Business? UpdateForUser(string userId, Action<Business> update);
     BusinessAddress AddAddress(string userId, BusinessAddress address);

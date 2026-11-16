@@ -16,6 +16,7 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
     public DbSet<BusinessDocument> BusinessDocuments => Set<BusinessDocument>();
     public DbSet<State> States => Set<State>();
     public DbSet<City> Cities => Set<City>();
+    public DbSet<PostalCode> PostalCodes => Set<PostalCode>();
     public DbSet<DeliveryZone> DeliveryZones => Set<DeliveryZone>();
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<HomeBanner> HomeBanners => Set<HomeBanner>();
@@ -29,6 +30,9 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<SellerOrder> SellerOrders => Set<SellerOrder>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+    public DbSet<OrderRating> OrderRatings => Set<OrderRating>();
+    public DbSet<OrderStatusHistory> OrderStatusHistories => Set<OrderStatusHistory>();
+    public DbSet<IdempotencyRecord> IdempotencyRecords => Set<IdempotencyRecord>();
     public DbSet<Shipment> Shipments => Set<Shipment>();
     public DbSet<PayoutAccount> PayoutAccounts => Set<PayoutAccount>();
     public DbSet<Payment> Payments => Set<Payment>();
@@ -49,6 +53,7 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
             entity.ToTable("Businesses");
             entity.HasKey(x => x.Id);
             entity.Property(x => x.LegalName).HasMaxLength(200).IsRequired();
+            entity.Property(x => x.OwnerName).HasMaxLength(120);
             entity.Property(x => x.DisplayName).HasMaxLength(200).IsRequired();
             entity.Property(x => x.Gstin).HasMaxLength(15);
             entity.Property(x => x.Pan).HasMaxLength(10);
@@ -57,11 +62,19 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
             entity.HasIndex(x => x.Gstin).IsUnique();
         });
         builder.Entity<BusinessUser>().HasKey(x => new { x.BusinessId, x.UserId });
+        builder.Entity<BusinessUser>().HasIndex(x => x.UserId).IsUnique();
         builder.Entity<BusinessAddress>().HasKey(x => x.Id);
         builder.Entity<BusinessDocument>().HasKey(x => x.Id);
         builder.Entity<State>().HasKey(x => x.Id);
         builder.Entity<City>().HasKey(x => x.Id);
         builder.Entity<City>().HasIndex(x => new { x.StateId, x.Name }).IsUnique();
+        builder.Entity<PostalCode>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Pincode).HasMaxLength(6).IsRequired();
+            entity.HasIndex(x => x.Pincode).IsUnique();
+            entity.HasOne<City>().WithMany().HasForeignKey(x => x.CityId).OnDelete(DeleteBehavior.Restrict);
+        });
         builder.Entity<DeliveryZone>(entity =>
         {
             entity.HasKey(x => x.Id);
@@ -76,12 +89,22 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
         {
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Title).HasMaxLength(200).IsRequired();
+            entity.Property(x => x.Material).HasMaxLength(100);
+            entity.Property(x => x.FabricSpec).HasMaxLength(500);
+            entity.Property(x => x.Season).HasMaxLength(80);
+            entity.Property(x => x.HsnCode).HasMaxLength(20);
+            entity.Property(x => x.WeightPerUnitGrams).HasPrecision(18, 2);
+            entity.HasIndex(x => new { x.Status, x.IsDeleted, x.CategoryId, x.Id });
             entity.Property(x => x.Slug).HasMaxLength(240).IsRequired();
             entity.Property(x => x.GstRate).HasPrecision(5, 2);
             entity.HasIndex(x => x.Slug).IsUnique();
         });
         builder.Entity<ProductVariant>().HasKey(x => x.Id);
         builder.Entity<ProductVariant>().HasIndex(x => x.Sku).IsUnique();
+        builder.Entity<ProductVariant>().HasIndex(x => new { x.ProductId, x.IsActive });
+        builder.Entity<PriceSlab>().HasIndex(x => new { x.ProductId, x.PricePerUnit });
+        builder.Entity<ProductMedia>().HasIndex(x => new { x.ProductId, x.SortOrder, x.Id });
+        builder.Entity<BusinessAddress>().HasIndex(x => new { x.BusinessId, x.AddressType, x.IsDefault, x.Id });
         builder.Entity<PriceSlab>().HasKey(x => x.Id);
         builder.Entity<PriceSlab>().Property(x => x.PricePerUnit).HasPrecision(18, 2);
         builder.Entity<ProductMedia>().HasKey(x => x.Id);
@@ -103,6 +126,31 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
         builder.Entity<Order>().Property(x => x.PlacedByUserId).HasMaxLength(450).IsRequired();
         builder.Entity<Order>().Property(x => x.GrandTotal).HasPrecision(18, 2);
         builder.Entity<SellerOrder>().HasKey(x => x.Id);
+        builder.Entity<SellerOrder>().Property(x => x.Status).HasMaxLength(40).IsConcurrencyToken();
+        builder.Entity<SellerOrder>().HasMany(x => x.History).WithOne(x => x.SellerOrder).HasForeignKey(x => x.SellerOrderId);
+        builder.Entity<OrderStatusHistory>(entity => { entity.HasKey(x => x.Id); entity.Property(x => x.Status).HasMaxLength(40).IsRequired(); entity.Property(x => x.Note).HasMaxLength(1000); entity.HasIndex(x => new { x.SellerOrderId, x.ChangedAtUtc, x.Id }); });
+        builder.Entity<OrderRating>(entity => { entity.HasKey(x => x.Id); entity.Property(x => x.Comment).HasMaxLength(1000); entity.HasIndex(x => x.OrderId).IsUnique(); });
+        builder.Entity<IdempotencyRecord>(entity => { entity.HasKey(x => x.Id); entity.Property(x => x.Scope).HasMaxLength(40).IsRequired(); entity.Property(x => x.Key).HasMaxLength(100).IsRequired(); entity.Property(x => x.RequestHash).HasMaxLength(64).IsRequired(); entity.Property(x => x.ResourceKey).HasMaxLength(100).IsRequired(); entity.HasIndex(x => new { x.BusinessId, x.Scope, x.Key }).IsUnique(); });
+        builder.Entity<OrderItem>().Property(x => x.Title).HasMaxLength(200);
+        builder.Entity<OrderItem>().Property(x => x.Size).HasMaxLength(40);
+        builder.Entity<OrderItem>().Property(x => x.Colour).HasMaxLength(40);
+        builder.Entity<OrderItem>().Property(x => x.UnitPrice).HasPrecision(18, 2);
+        builder.Entity<OrderItem>().Property(x => x.GstRate).HasPrecision(5, 2);
+        builder.Entity<OrderItem>().Property(x => x.GstAmount).HasPrecision(18, 2);
+        builder.Entity<Order>().Property(x => x.SubTotal).HasPrecision(18, 2);
+        builder.Entity<Order>().Property(x => x.ShippingTotal).HasPrecision(18, 2);
+        builder.Entity<Order>().Property(x => x.TaxTotal).HasPrecision(18, 2);
+        builder.Entity<Order>().Property(x => x.DeliveryLine1).HasMaxLength(200);
+        builder.Entity<Order>().Property(x => x.DeliveryLine2).HasMaxLength(200);
+        builder.Entity<Order>().Property(x => x.DeliveryCity).HasMaxLength(100);
+        builder.Entity<Order>().Property(x => x.DeliveryPincode).HasMaxLength(6);
+        builder.Entity<SellerOrder>().Property(x => x.ShippingAmount).HasPrecision(18, 2);
+        builder.Entity<SellerOrder>().Property(x => x.TaxAmount).HasPrecision(18, 2);
+        builder.Entity<SellerOrder>().Property(x => x.CommissionAmount).HasPrecision(18, 2);
+        builder.Entity<SellerOrder>().Property(x => x.Total).HasPrecision(18, 2);
+        builder.Entity<SellerOrder>().HasIndex(x => new { x.ManufacturerBusinessId, x.Status, x.Id });
+        builder.Entity<Order>().HasIndex(x => new { x.RetailerBusinessId, x.Id });
+        builder.Entity<ProductVariant>().Property(x => x.StockQty).IsConcurrencyToken();
         builder.Entity<SellerOrder>().Property(x => x.SubTotal).HasPrecision(18, 2);
         builder.Entity<SellerOrder>().Property(x => x.CommissionRate).HasPrecision(5, 4);
         builder.Entity<Shipment>().HasKey(x => x.Id);
@@ -113,12 +161,16 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
         builder.Entity<PayoutAccount>().HasKey(x => x.Id);
         builder.Entity<PayoutAccount>().HasIndex(x => x.BusinessId).IsUnique();
         builder.Entity<Payment>().HasKey(x => x.Id);
+        builder.Entity<Payment>().Property(x => x.Status).HasMaxLength(32).IsConcurrencyToken();
         builder.Entity<Payment>().HasIndex(x => x.GatewayOrderId).IsUnique();
         builder.Entity<Payment>().Property(x => x.Amount).HasPrecision(18, 2);
         builder.Entity<Settlement>().HasKey(x => x.Id);
         builder.Entity<Settlement>().Property(x => x.Amount).HasPrecision(18, 2);
         builder.Entity<Settlement>().Property(x => x.CommissionAmount).HasPrecision(18, 2);
         builder.Entity<Refund>().HasKey(x => x.Id);
+        builder.Entity<Refund>().Property(x => x.Status).HasMaxLength(32);
+        builder.Entity<Refund>().Property(x => x.GatewayRefundId).HasMaxLength(100);
+        builder.Entity<Refund>().HasIndex(x => new { x.SellerOrderId, x.Status });
         builder.Entity<Refund>().Property(x => x.Amount).HasPrecision(18, 2);
         builder.Entity<Invoice>().HasKey(x => x.Id);
         builder.Entity<Invoice>().HasIndex(x => x.InvoiceNumber).IsUnique();

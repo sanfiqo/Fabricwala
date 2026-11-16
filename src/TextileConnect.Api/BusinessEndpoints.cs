@@ -16,15 +16,19 @@ public static class BusinessEndpoints
     public static void MapBusinessEndpoints(this WebApplication app)
     {
         var group = app.MapGroup("/api/v1/businesses").RequireAuthorization();
-        group.MapPost("", (Business business, ClaimsPrincipal principal, IBusinessDirectory directory) =>
-            Results.Ok(directory.Create(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "", business)));
-        group.MapGet("/me", (ClaimsPrincipal principal, IBusinessDirectory directory) =>
+        group.MapPost("", async (BusinessCreateRequest request, ClaimsPrincipal principal, IBusinessDirectory directory, UserManager<ApplicationUser> users, MarketplaceDbContext db) =>
+        {
+            var user = await users.GetUserAsync(principal);
+            var business = directory.Create(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "", request.ToBusiness(user?.PhoneNumber), request.Pincode);
+            return Results.Created("/api/v1/businesses/me", Profile(business, db));
+        }).RequireAuthorization(policy => policy.RequireRole("Retailer", "Manufacturer"));
+        group.MapGet("/me", (ClaimsPrincipal principal, IBusinessDirectory directory, MarketplaceDbContext db) =>
             directory.GetForUser(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "") is { } business
-                ? Results.Ok(business) : Results.NotFound());
-        group.MapPut("/me", (BusinessUpdate request, ClaimsPrincipal principal, IBusinessDirectory directory) =>
+                ? Results.Ok(Profile(business, db)) : Results.NotFound());
+        group.MapPut("/me", (BusinessUpdate request, ClaimsPrincipal principal, IBusinessDirectory directory, MarketplaceDbContext db) =>
             directory.UpdateForUser(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "", b =>
             { b.DisplayName = request.DisplayName; b.Email = request.Email; }) is { } business
-                ? Results.Ok(business) : Results.NotFound());
+                ? Results.Ok(Profile(business, db)) : Results.NotFound());
         group.MapPost("/me/addresses", (BusinessAddress address, ClaimsPrincipal principal, IBusinessDirectory directory) =>
             Results.Ok(directory.AddAddress(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "", address)));
         group.MapGet("/me/addresses", (ClaimsPrincipal principal, IBusinessDirectory directory) =>
@@ -53,35 +57,20 @@ public static class BusinessEndpoints
         group.MapPost("/me/users", (StaffRequest request, ClaimsPrincipal principal, IBusinessDirectory directory) =>
             Results.Ok(directory.AddStaff(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "", request.UserId)));
 
-        var admin = app.MapGroup("/api/v1/admin/businesses").RequireAuthorization(p => p.RequireRole("Admin"));
-        admin.MapGet("", (IBusinessDirectory directory) => Results.Ok(directory.ListPending()));
-        admin.MapPost("/{id:long}/approve", async (long id, ClaimsPrincipal principal, IBusinessDirectory directory, MarketplaceDbContext db, UserManager<ApplicationUser> users) =>
-        {
-            var business = directory.SetVerification(id, VerificationStatus.Approved, null, principal.FindFirstValue(ClaimTypes.NameIdentifier));
-            if (business is null) return Results.NotFound();
-            var ownerId = db.BusinessUsers.Where(x => x.BusinessId == id && x.IsPrimary).Select(x => x.UserId).SingleOrDefault();
-            if (ownerId is not null && await users.FindByIdAsync(ownerId) is { } owner)
-            {
-                var targetRole = business.BusinessType.ToString();
-                var roles = await users.GetRolesAsync(owner);
-                foreach (var role in roles.Where(x => x != targetRole)) await users.RemoveFromRoleAsync(owner, role);
-                if (!roles.Contains(targetRole, StringComparer.Ordinal)) await users.AddToRoleAsync(owner, targetRole);
-                var oldClaims = await users.GetClaimsAsync(owner);
-                var oldBusinessClaims = oldClaims.Where(x => BusinessClaimTypes.All.Contains(x.Type)).ToList();
-                if (oldBusinessClaims.Count != 0) await users.RemoveClaimsAsync(owner, oldBusinessClaims);
-                await users.AddClaimsAsync(owner,
-                [
-                    new Claim(BusinessClaimTypes.BusinessId, business.Id.ToString()),
-                    new Claim(BusinessClaimTypes.BusinessType, business.BusinessType.ToString()),
-                    new Claim(BusinessClaimTypes.Approved, "true")
-                ]);
-                await users.UpdateSecurityStampAsync(owner);
-            }
-            return Results.Ok(business);
-        });
-        admin.MapPost("/{id:long}/reject", (long id, Rejection request, ClaimsPrincipal principal, IBusinessDirectory directory) =>
-            directory.SetVerification(id, VerificationStatus.Rejected, request.Note, principal.FindFirstValue(ClaimTypes.NameIdentifier)) is { } business
-                ? Results.Ok(business) : Results.NotFound());
+        app.MapBusinessApprovalEndpoints();
+    }
+
+    internal static BusinessProfileResponse Profile(Business business, MarketplaceDbContext db)
+    {
+        var address = (from item in db.BusinessAddresses.AsNoTracking()
+                       join city in db.Cities on item.CityId equals city.Id
+                       join state in db.States on city.StateId equals state.Id
+                       where item.BusinessId == business.Id && item.AddressType == AddressType.Registered
+                       orderby item.Id
+                       select new { item.Pincode, CityId = city.Id, City = city.Name, State = state.Name }).FirstOrDefault();
+        return new(business.Id, business.BusinessType, business.LegalName, business.DisplayName,
+            business.Gstin, business.Phone, business.Email, business.VerificationStatus, business.RejectionNote,
+            business.CreatedAtUtc, business.UpdatedAtUtc, address?.Pincode, address?.CityId, address?.City, address?.State, business.OwnerName);
     }
 
     public sealed record BusinessUpdate(string DisplayName, string? Email);

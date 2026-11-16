@@ -45,7 +45,18 @@ public sealed class EfOtpChallengeStore : IOtpChallengeStore
             || mobile24HourCount >= policy.MobileSendsPer24Hours
             || ipEvents.Count(x => x.OccurredAtUtc > utcNow.AddMinutes(-15)) >= policy.IpSendsPer15Minutes
             || ip24HourCount >= policy.IpSendsPer24Hours))
-            throw new OtpRateLimitException();
+        {
+            // Every limit that is currently exceeded has to clear, so the caller must wait for the longest of them.
+            var wait = new[]
+            {
+                mobileEvents.Length > 0 ? mobileEvents[0].OccurredAtUtc + policy.ResendCooldown - utcNow : TimeSpan.Zero,
+                OtpRateLimitWait.For(mobileEvents.Select(e => e.OccurredAtUtc), TimeSpan.FromMinutes(15), policy.MobileSendsPer15Minutes, utcNow),
+                OtpRateLimitWait.For(mobileEvents.Select(e => e.OccurredAtUtc), TimeSpan.FromHours(24), policy.MobileSendsPer24Hours, utcNow),
+                OtpRateLimitWait.For(ipEvents.Select(e => e.OccurredAtUtc), TimeSpan.FromMinutes(15), policy.IpSendsPer15Minutes ?? int.MaxValue, utcNow),
+                OtpRateLimitWait.For(ipEvents.Select(e => e.OccurredAtUtc), TimeSpan.FromHours(24), policy.IpSendsPer24Hours ?? int.MaxValue, utcNow)
+            }.Max();
+            throw new OtpRateLimitException(wait);
+        }
 
         _db.OtpSendEvents.Add(new OtpSendEvent
         {

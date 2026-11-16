@@ -11,13 +11,18 @@ public static class OtpRegistration
         IConfiguration configuration, string environmentName)
     {
         var policy = configuration.GetSection("Otp:Policy").Get<OtpPolicy>() ?? new OtpPolicy();
-        policy.DevFixedCode = configuration["Otp:DevFixedCode"];
+        var development = environmentName.Equals("Development", StringComparison.OrdinalIgnoreCase);
+        policy.DevFixedCode = development ? "123456" : null;
+        // A predictable Development code must not disable resend or abuse limits.
+        policy.RelaxRateLimits = false;
+        if (development)
+        {
+            policy.IpSendsPer15Minutes ??= 20;
+            policy.IpSendsPer24Hours ??= 100;
+        }
         var identityOptions = new SanfiqoIdentityOptions();
         configuration.GetSection(SanfiqoIdentityOptions.SectionName).Bind(identityOptions);
         policy.StorageHmacKey = configuration[identityOptions.OtpStorageHmacKeyConfiguration] ?? policy.StorageHmacKey;
-        if (environmentName.Equals("Development", StringComparison.OrdinalIgnoreCase)
-            && policy.DevFixedCode is { Length: 6 } fixedCode && fixedCode.All(char.IsDigit))
-            policy.RelaxRateLimits = true;
         var policyErrors = policy.Validate();
         if (policyErrors.Count != 0)
             throw new InvalidOperationException("User OTP policy configuration is invalid: " + string.Join(" ", policyErrors));

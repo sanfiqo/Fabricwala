@@ -53,3 +53,28 @@ Handover: Phase 1 complete. Phase 2 complete except P2.3 migration tooling block
 2026-11-13 | P5.10 | done | Added payment webhook completion, private document download, validated shipping DTOs/city references, full-flow integration coverage; 63 tests passed
 2026-11-13 | Clean MySQL verification | done | Dropped textileconnect_dev, applied both migration chains from zero, original PlatformSettings migration succeeded, seeds: States=1/Cities=12/Categories=8/PlatformSettings=4; API health 200
 2026-11-13 | Real flow fixes | partial | Added environment-over-local precedence, approved-business claim, approval role assignment, and product variant/slab persistence; build passed; 63 tests passed; full flow still blocked by invalid local HMAC lengths
+2026-11-14 | P-NIGHT B4.2 | done | landed-cost quote service; 119 tests passed
+2026-11-14 | P-NIGHT B5 | done | cart tier pricing, GST fix, add-more savings; 129 tests passed
+2026-11-14 | P-NIGHT B6 | done | idempotent checkout + payments + webhook; 137 tests passed
+2026-11-14 | P-NIGHT B7 | done | retailer order groups, timeline, confirm delivery; 140 tests passed
+2026-11-14 | P-NIGHT B8 | done | seller order tabs/actions, expiry + refund with fake clock; 146 tests passed
+2026-11-14 | P-NIGHT B9 | done | seller products: list/filters, draft/publish, edit, toggle, admin hold; 150 tests passed
+2026-11-14 | P-NIGHT B10 | done | payouts: hold, 7-day/delivery release, claim hold, summary + CSV; 155 tests passed
+2026-11-14 | P-NIGHT B11 | done | Seller dashboard with real counts, 6-month chart, low stock and best sellers; 156 tests passed
+2026-11-14 | P-NIGHT B12 | done | Notifications paged list, unread filter/count, read one, read all; 157 tests passed
+2026-11-14 | P-NIGHT B13 | done | Problem reports with reason, pieces, 3 photos, payout hold and admin decision; 160 tests passed
+2026-11-14 | P-NIGHT B14 | done | Account profile, language en/hi and address book CRUD; 163 tests passed
+2026-11-14 | P-NIGHT B15 | done | Admin home stats for today, 7 and 30 days with decision counts; 164 tests passed
+2026-11-14 | P-NIGHT C1-C3 | done | FullJourney + expired-acceptance refund + problem-report payout hold over HTTP; 167 tests passed
+2026-11-14 | P-NIGHT D1 | done | OpenAPI export to docs/openapi.json with drift check; 168 tests passed
+2026-11-14 | P-NIGHT D2 | done | Development-only design seed with demo businesses, products and users; 170 tests passed
+2026-11-14 | P-NIGHT D3 | done | docs/RUN_LOCAL.md (secret names only); MySQL start and migrations not verified here
+2026-11-14 | P-NIGHT D4 | done | Development-only CORS for the Vite dev server and LAN, strict outside Development; 189 tests passed
+2026-11-14 | P-NIGHT E1 | done | Admin lists: orders, claims with photos, sellers, retailers, products, payouts, commission; 194 tests passed
+2026-11-14 | P-NIGHT E2 | done | Saved products, order rating, invoice list, pincode check and reorder; 199 tests passed
+2026-11-16 | FE-REQ 1-2 | done | GET /states and GET /cities?stateId= added; Development OTP IP limits raised to 200 per 15 min and 1000 per day (per-number 3 per 15 min and 10 per day stay)
+2026-11-16 | FE-REQ 3 | done | Business OwnerName (signup, profile, admin review) with migration NightOwnerName; docType upload already existed as a query value, now documented and tested; 203 tests expected
+2026-11-16 | FE-REQ 4 | done | Retry-After header (seconds) on every 429: OTP request uses the exact wait from the sliding windows, auth and search limiters use the limiter's reset time; tests added
+2026-11-16 | FE-REQ 5 | done | Order list rows (retailer, seller and admin orders) now include items (OrderItemResponse, same shape as the detail); 207 tests passed
+2026-11-16 | FE-REQ 6 | done | Product photo upload: POST/DELETE /seller/products/{id}/media, media list in the seller product detail, owner can open draft photos; 210 tests passed
+2026-11-16 | FE-REQ 7 | done | Cart groups get sellerCity and arrivesBy, seller dashboard gets rating and ratingCount, product search gets a season filter; 211 tests passed

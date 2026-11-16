@@ -47,7 +47,11 @@ public interface ILocalOtpInspection
 
 public sealed class OtpRateLimitException : Exception
 {
-    public OtpRateLimitException() : base("The verification request cannot be completed right now.") { }
+    /// <summary>How long the caller should wait before the request can succeed (at least one second). Used for the Retry-After header.</summary>
+    public TimeSpan RetryAfter { get; }
+
+    public OtpRateLimitException(TimeSpan? retryAfter = null) : base("The verification request cannot be completed right now.")
+        => RetryAfter = retryAfter is { } wait && wait > TimeSpan.FromSeconds(1) ? wait : TimeSpan.FromSeconds(1);
 }
 
 public sealed class OtpDeliveryUnavailableException : Exception

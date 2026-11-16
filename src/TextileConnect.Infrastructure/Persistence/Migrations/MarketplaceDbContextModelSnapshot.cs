@@ -64,6 +64,10 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("varchar(200)");
 
+                    b.Property<string>("OwnerName")
+                        .HasMaxLength(120)
+                        .HasColumnType("varchar(120)");
+
                     b.Property<string>("Pan")
                         .HasMaxLength(10)
                         .HasColumnType("varchar(10)");
@@ -75,6 +79,9 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("RejectionNote")
                         .HasColumnType("longtext");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("datetime(6)");
 
                     b.Property<int>("VerificationStatus")
                         .HasColumnType("int");
@@ -117,6 +124,8 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                         .HasColumnType("longtext");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("BusinessId", "AddressType", "IsDefault", "Id");
 
                     b.ToTable("BusinessAddresses");
                 });
@@ -166,6 +175,9 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("BusinessId", "UserId");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
 
                     b.ToTable("BusinessUsers");
                 });
@@ -222,6 +234,36 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("DeliveryZones");
+                });
+
+            modelBuilder.Entity("TextileConnect.Domain.Businesses.PostalCode", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("CityId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Pincode")
+                        .IsRequired()
+                        .HasMaxLength(6)
+                        .HasColumnType("varchar(6)");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CityId");
+
+                    b.HasIndex("Pincode")
+                        .IsUnique();
+
+                    b.ToTable("PostalCodes");
                 });
 
             modelBuilder.Entity("TextileConnect.Domain.Businesses.State", b =>
@@ -379,6 +421,8 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ProductId", "PricePerUnit");
+
                     b.ToTable("PriceSlabs");
                 });
 
@@ -388,21 +432,49 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
 
+                    b.Property<bool>("AdminHold")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<long>("CategoryId")
                         .HasColumnType("bigint");
 
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<string>("Description")
                         .HasColumnType("longtext");
+
+                    b.Property<int>("DispatchDays")
+                        .HasColumnType("int");
+
+                    b.Property<string>("FabricSpec")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
 
                     b.Property<decimal>("GstRate")
                         .HasPrecision(5, 2)
                         .HasColumnType("decimal(5,2)");
 
+                    b.Property<string>("HsnCode")
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("tinyint(1)");
 
+                    b.Property<string>("Material")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
                     b.Property<int>("Moq")
                         .HasColumnType("int");
+
+                    b.Property<string>("ReturnPolicy")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Season")
+                        .HasMaxLength(80)
+                        .HasColumnType("varchar(80)");
 
                     b.Property<long>("SellerBusinessId")
                         .HasColumnType("bigint");
@@ -423,10 +495,19 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                     b.Property<int>("Unit")
                         .HasColumnType("int");
 
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<decimal>("WeightPerUnitGrams")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Slug")
                         .IsUnique();
+
+                    b.HasIndex("Status", "IsDeleted", "CategoryId", "Id");
 
                     b.ToTable("Products");
                 });
@@ -452,6 +533,8 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ProductId", "SortOrder", "Id");
 
                     b.ToTable("ProductMedia");
                 });
@@ -479,12 +562,15 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                         .HasColumnType("varchar(255)");
 
                     b.Property<int>("StockQty")
+                        .IsConcurrencyToken()
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
                     b.HasIndex("Sku")
                         .IsUnique();
+
+                    b.HasIndex("ProductId", "IsActive");
 
                     b.ToTable("ProductVariants");
                 });
@@ -772,11 +858,70 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                     b.ToTable("CartItems");
                 });
 
+            modelBuilder.Entity("TextileConnect.Domain.Orders.IdempotencyRecord", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("BusinessId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("RequestHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("varchar(64)");
+
+                    b.Property<string>("ResourceKey")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("Scope")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("varchar(40)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BusinessId", "Scope", "Key")
+                        .IsUnique();
+
+                    b.ToTable("IdempotencyRecords");
+                });
+
             modelBuilder.Entity("TextileConnect.Domain.Orders.Order", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
+
+                    b.Property<string>("DeliveryCity")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("DeliveryLine1")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<string>("DeliveryLine2")
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<string>("DeliveryPincode")
+                        .IsRequired()
+                        .HasMaxLength(6)
+                        .HasColumnType("varchar(6)");
 
                     b.Property<decimal>("GrandTotal")
                         .HasPrecision(18, 2)
@@ -791,6 +936,9 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.Property<DateTime>("PlacedAtUtc")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<string>("PlacedByUserId")
                         .IsRequired()
                         .HasMaxLength(450)
@@ -799,10 +947,24 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                     b.Property<long>("RetailerBusinessId")
                         .HasColumnType("bigint");
 
+                    b.Property<decimal>("ShippingTotal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("SubTotal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("TaxTotal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("OrderNumber")
                         .IsUnique();
+
+                    b.HasIndex("RetailerBusinessId", "Id");
 
                     b.ToTable("Orders");
                 });
@@ -813,6 +975,18 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
 
+                    b.Property<string>("Colour")
+                        .HasMaxLength(40)
+                        .HasColumnType("varchar(40)");
+
+                    b.Property<decimal>("GstAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("GstRate")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
                     b.Property<long>("ProductId")
                         .HasColumnType("bigint");
 
@@ -822,14 +996,88 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                     b.Property<long>("SellerOrderId")
                         .HasColumnType("bigint");
 
+                    b.Property<string>("Size")
+                        .HasMaxLength(40)
+                        .HasColumnType("varchar(40)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
                     b.Property<decimal>("UnitPrice")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<long?>("VariantId")
+                        .HasColumnType("bigint");
 
                     b.HasKey("Id");
 
                     b.HasIndex("SellerOrderId");
 
                     b.ToTable("OrderItems");
+                });
+
+            modelBuilder.Entity("TextileConnect.Domain.Orders.OrderRating", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<long>("OrderId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("RetailerBusinessId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("Stars")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderId")
+                        .IsUnique();
+
+                    b.ToTable("OrderRatings");
+                });
+
+            modelBuilder.Entity("TextileConnect.Domain.Orders.OrderStatusHistory", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("ChangedAtUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
+
+                    b.Property<long>("SellerOrderId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("varchar(40)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SellerOrderId", "ChangedAtUtc", "Id");
+
+                    b.ToTable("OrderStatusHistories");
                 });
 
             modelBuilder.Entity("TextileConnect.Domain.Orders.ReturnClaim", b =>
@@ -848,10 +1096,16 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<int>("Pieces")
+                        .HasColumnType("int");
+
                     b.Property<string>("Reason")
                         .IsRequired()
                         .HasMaxLength(2000)
                         .HasColumnType("varchar(2000)");
+
+                    b.Property<int>("ReasonCode")
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("ResolvedAtUtc")
                         .HasColumnType("datetime(6)");
@@ -900,8 +1154,15 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
 
+                    b.Property<DateTime?>("AcceptDeadlineUtc")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<DateTime?>("AcceptedAt")
                         .HasColumnType("datetime(6)");
+
+                    b.Property<decimal>("CommissionAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("CommissionRate")
                         .HasPrecision(5, 4)
@@ -919,20 +1180,39 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                     b.Property<long>("OrderId")
                         .HasColumnType("bigint");
 
+                    b.Property<DateTime>("PlacedAtUtc")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<string>("RejectReason")
                         .HasColumnType("longtext");
 
+                    b.Property<decimal>("ShippingAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<string>("Status")
+                        .IsConcurrencyToken()
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(40)
+                        .HasColumnType("varchar(40)");
 
                     b.Property<decimal>("SubTotal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("TaxAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("Total")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("OrderId");
+
+                    b.HasIndex("ManufacturerBusinessId", "Status", "Id");
 
                     b.ToTable("SellerOrders");
                 });
@@ -1065,8 +1345,10 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("Status")
+                        .IsConcurrencyToken()
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(32)
+                        .HasColumnType("varchar(32)");
 
                     b.HasKey("Id");
 
@@ -1115,6 +1397,13 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("GatewayRefundId")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
                     b.Property<long>("PaymentId")
                         .HasColumnType("bigint");
 
@@ -1127,9 +1416,12 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(32)
+                        .HasColumnType("varchar(32)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("SellerOrderId", "Status");
 
                     b.ToTable("Refunds");
                 });
@@ -1172,10 +1464,30 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                     b.ToTable("Settlements");
                 });
 
+            modelBuilder.Entity("TextileConnect.Domain.Businesses.PostalCode", b =>
+                {
+                    b.HasOne("TextileConnect.Domain.Businesses.City", null)
+                        .WithMany()
+                        .HasForeignKey("CityId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("TextileConnect.Domain.Orders.OrderItem", b =>
                 {
                     b.HasOne("TextileConnect.Domain.Orders.SellerOrder", "SellerOrder")
                         .WithMany("Items")
+                        .HasForeignKey("SellerOrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("SellerOrder");
+                });
+
+            modelBuilder.Entity("TextileConnect.Domain.Orders.OrderStatusHistory", b =>
+                {
+                    b.HasOne("TextileConnect.Domain.Orders.SellerOrder", "SellerOrder")
+                        .WithMany("History")
                         .HasForeignKey("SellerOrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1226,6 +1538,8 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("TextileConnect.Domain.Orders.SellerOrder", b =>
                 {
+                    b.Navigation("History");
+
                     b.Navigation("Items");
                 });
 #pragma warning restore 612, 618

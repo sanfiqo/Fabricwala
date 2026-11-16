@@ -19,7 +19,7 @@ public sealed class EfFinanceService(MarketplaceDbContext db, IFileStorage stora
 
     public async Task<IReadOnlyList<Settlement>> ReleaseDueSettlementsAsync(DateTime now, CancellationToken cancellationToken = default)
     {
-        var due = await db.Settlements.Where(x => x.Status == "Pending" && x.ReleaseAfter <= now).ToListAsync(cancellationToken);
+        var due = await db.Settlements.Where(x => x.Status == "Pending" && x.ReleaseAfter <= now && !db.ReturnClaims.Any(c => c.SellerOrderId == x.SellerOrderId && c.ResolvedAtUtc == null)).ToListAsync(cancellationToken);
         foreach (var settlement in due) { settlement.Status = "Released"; settlement.SettledAt = now; }
         await db.SaveChangesAsync(cancellationToken);
         return due;
