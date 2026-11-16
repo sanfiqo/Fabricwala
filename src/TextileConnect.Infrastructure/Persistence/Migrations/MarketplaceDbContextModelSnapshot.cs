@@ -64,6 +64,10 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("varchar(200)");
 
+                    b.Property<string>("OwnerName")
+                        .HasMaxLength(120)
+                        .HasColumnType("varchar(120)");
+
                     b.Property<string>("Pan")
                         .HasMaxLength(10)
                         .HasColumnType("varchar(10)");

@@ -70,7 +70,7 @@ public static class BusinessEndpoints
                        select new { item.Pincode, CityId = city.Id, City = city.Name, State = state.Name }).FirstOrDefault();
         return new(business.Id, business.BusinessType, business.LegalName, business.DisplayName,
             business.Gstin, business.Phone, business.Email, business.VerificationStatus, business.RejectionNote,
-            business.CreatedAtUtc, business.UpdatedAtUtc, address?.Pincode, address?.CityId, address?.City, address?.State);
+            business.CreatedAtUtc, business.UpdatedAtUtc, address?.Pincode, address?.CityId, address?.City, address?.State, business.OwnerName);
     }
 
     public sealed record BusinessUpdate(string DisplayName, string? Email);

@@ -140,6 +140,10 @@
             "nullable": true,
             "type": "string"
           },
+          "ownerName": {
+            "nullable": true,
+            "type": "string"
+          },
           "phone": {
             "nullable": true,
             "type": "string"

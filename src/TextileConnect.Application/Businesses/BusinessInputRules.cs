@@ -27,6 +27,7 @@ public static class BusinessInputRules
         if (business.BusinessType is not (BusinessType.Retailer or BusinessType.Manufacturer)) errors.Add(new("businessType", "Choose a business type."));
         if (string.IsNullOrWhiteSpace(business.LegalName) || business.LegalName.Length > 200) errors.Add(new("legalName", "Enter a legal name."));
         if (business.Phone is null || !Regex.IsMatch(business.Phone, "^\\+?[1-9][0-9]{7,14}$")) errors.Add(new("phone", "Enter a valid phone number."));
+        if (business.OwnerName is { Length: > 120 }) errors.Add(new("ownerName", "Enter a name up to 120 characters."));
         if (!IsGstin(business.Gstin)) errors.Add(new("gstin", "Enter a 15-character GST number."));
         if (pincode is not null && !IsPincode(pincode)) errors.Add(new("pincode", "Enter a six-digit pincode."));
         if (errors.Count != 0) throw new ValidationException(errors);

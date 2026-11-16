@@ -53,6 +53,7 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
             entity.ToTable("Businesses");
             entity.HasKey(x => x.Id);
             entity.Property(x => x.LegalName).HasMaxLength(200).IsRequired();
+            entity.Property(x => x.OwnerName).HasMaxLength(120);
             entity.Property(x => x.DisplayName).HasMaxLength(200).IsRequired();
             entity.Property(x => x.Gstin).HasMaxLength(15);
             entity.Property(x => x.Pan).HasMaxLength(10);

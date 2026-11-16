@@ -15,6 +15,7 @@ public sealed class EfBusinessDirectory(MarketplaceDbContext db) : IBusinessDire
             BusinessType = business.BusinessType, LegalName = business.LegalName?.Trim() ?? string.Empty,
             DisplayName = business.DisplayName?.Trim() ?? string.Empty, Phone = business.Phone?.Trim() ?? string.Empty,
             Email = string.IsNullOrWhiteSpace(business.Email) ? null : business.Email.Trim(),
+            OwnerName = string.IsNullOrWhiteSpace(business.OwnerName) ? null : business.OwnerName.Trim(),
             Gstin = string.IsNullOrWhiteSpace(business.Gstin) ? null : business.Gstin.Trim().ToUpperInvariant()
         };
         BusinessInputRules.ValidateRegistration(business, pincode);

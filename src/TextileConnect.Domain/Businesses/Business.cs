@@ -11,6 +11,8 @@ public sealed class Business
     public required string DisplayName { get; set; }
     public string? Gstin { get; set; }
     public string? Pan { get; set; }
+    /// <summary>Name of the person who owns or runs the business (asked at signup as "Your name").</summary>
+    public string? OwnerName { get; set; }
     public required string Phone { get; set; }
     public string? Email { get; set; }
     public VerificationStatus VerificationStatus { get; set; } = VerificationStatus.Pending;
