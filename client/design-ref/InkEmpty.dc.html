@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Empty orders, Charcoal ink</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0}a{color:#1C1B19;text-decoration:none}
+.cd{background:#FFFFFF;border:1px solid #E9E7E2;border-radius:20px;overflow:hidden}
+.sf{background:#F2F1ED;border-radius:20px}
+.b1{min-height:56px;border-radius:28px;background:#1C1B19;color:#FFFFFF;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:500}
+.b2{min-height:48px;border-radius:24px;border:1px solid #E9E7E2;background:#FFFFFF;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:500;padding:0 16px}
+.ch{min-height:40px;padding:0 16px;border-radius:20px;background:#FFFFFF;border:1px solid #E9E7E2;font-size:14px;display:flex;align-items:center;white-space:nowrap}
+.on{background:#1C1B19;border-color:#1C1B19;color:#FFFFFF}
+.sv{display:inline-block;padding:4px 10px;border-radius:10px;background:#FCEBC4;color:#6B4A06;font-size:12px;font-weight:500}
+.ok{display:inline-block;padding:4px 10px;border-radius:10px;background:#DDF1E6;color:#14502F;font-size:12px;font-weight:500}
+.mt{font-size:13px;color:#5C5A55}
+.ic{width:46px;height:46px;border-radius:23px;background:#F2F1ED;display:flex;align-items:center;justify-content:center;flex:none}
+.tab{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:12px;color:#5C5A55;min-height:52px;justify-content:center}
+.rw{display:flex;align-items:center;gap:12px;padding:14px 16px;border-top:1px solid #E9E7E2;font-size:15px}
+.rw:first-child{border-top:none}
+.lb{display:block;font-size:14px;font-weight:500;margin-bottom:8px}
+.in{min-height:56px;border-radius:16px;background:#FFFFFF;border:1px solid #E9E7E2;padding:0 16px;display:flex;align-items:center;font-size:16px;box-sizing:border-box}
+</style>
+</helmet>
+<div style="position:relative;width:390px;height:760px;box-sizing:border-box;background:#FAF9F6;font-family:'Inter',system-ui,sans-serif;color:#1C1B19;display:flex;flex-direction:column;overflow:hidden">
+<h1 style="margin:28px 20px 0;font-size:30px;line-height:1.1;font-weight:600;letter-spacing:-0.02em">Your orders</h1>
+<nav aria-label="Order filter" style="margin:16px 20px 0;display:flex;gap:8px"><a href="#" class="ch on">Active</a><a href="#" class="ch">Delivered</a><a href="#" class="ch">Problems</a></nav>
+<div style="margin:70px 28px 0;display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px"><span class="sf" style="width:150px;height:150px;border-radius:75px;display:flex;align-items:center;justify-content:center"><svg width="86" height="86" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 12 88 32v36L50 88 12 68V32z" fill="#FFFFFF" stroke="#CFCBC2" stroke-width="3"/><path d="M12 32l38 20 38-20M50 52v36" fill="none" stroke="#CFCBC2" stroke-width="3"/></svg></span><span style="font-size:22px;font-weight:600;margin-top:12px">No orders yet</span><span style="font-size:15px;line-height:1.5;color:#5C5A55">Pick products from factories across India. Your orders and tracking will show here.</span></div>
+<a href="InkHomeV2.dc.html" class="b1" style="margin:26px 40px 0">Browse winter wear</a>
+<a href="#" style="margin-top:8px;min-height:48px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:15px;font-weight:500"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l1.3-4A8 8 0 1 1 8 18.7z"/></svg>Need help? Ask on WhatsApp</a>
+<nav aria-label="Main" style="position:absolute;left:24px;right:24px;bottom:22px;z-index:5;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));background:rgba(255,255,255,0.82);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,0.9);border-radius:34px;padding:6px;box-shadow:0 14px 40px rgba(28,27,25,0.22)"><a href="InkHomeV2.dc.html" class="tab"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V21h-6v-6H9v6H3z"/></svg>Home</a><a href="InkSearch.dc.html" class="tab"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Search</a><a href="InkOrdersV2.dc.html" aria-current="page" class="tab" style="color:#FFFFFF;font-weight:600;background:#1C1B19;border-radius:28px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>Orders</a><a href="InkAccount.dc.html" class="tab"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>Account</a></nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":760}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

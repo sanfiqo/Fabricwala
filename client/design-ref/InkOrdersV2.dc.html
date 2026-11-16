@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Orders V2, Charcoal ink</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#1C1B19;text-decoration:none}
+.card{margin:0 20px;background:#FFFFFF;border:1px solid #E9E7E2;border-radius:20px;overflow:hidden}
+.hd{display:flex;justify-content:space-between;align-items:baseline;padding:14px 16px 10px}
+.sr{display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid #E9E7E2}
+.im{width:52px;height:52px;border-radius:12px;background:#F2F1ED;display:flex;align-items:center;justify-content:center;flex:none}
+.dot{width:8px;height:8px;border-radius:4px;flex:none}
+.b2{min-height:44px;padding:0 16px;border-radius:22px;border:1px solid #E9E7E2;font-size:14px;font-weight:500;display:flex;align-items:center;justify-content:center;flex:1}
+.tab{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:12px;color:#5C5A55;min-height:52px;justify-content:center}
+</style>
+</helmet>
+<div style="position:relative;width:390px;height:1000px;box-sizing:border-box;background:#FAF9F6;font-family:'Inter',system-ui,sans-serif;color:#1C1B19;display:flex;flex-direction:column;overflow:hidden">
+
+<h1 style="margin:28px 20px 0;font-size:30px;font-weight:600;letter-spacing:-0.02em">Your orders</h1>
+
+<nav aria-label="Order filter" style="margin:16px 20px 0;display:flex;gap:8px">
+<a href="#" aria-current="page" style="min-height:40px;padding:0 16px;border-radius:20px;background:#1C1B19;color:#FFFFFF;font-size:14px;display:flex;align-items:center">Active · 2</a>
+<a href="#" style="min-height:40px;padding:0 16px;border-radius:20px;background:#FFFFFF;border:1px solid #E9E7E2;font-size:14px;display:flex;align-items:center">Delivered</a>
+<a href="#" style="min-height:40px;padding:0 16px;border-radius:20px;background:#FFFFFF;border:1px solid #E9E7E2;font-size:14px;display:flex;align-items:center">Problems</a>
+</nav>
+
+<div style="margin:20px 20px 8px;font-size:13px;color:#5C5A55">Needs your action</div>
+<div class="card" style="border-color:#1C1B19">
+<div class="hd"><span style="font-size:15px;font-weight:600">Delivered on 12 Nov</span><span style="font-size:13px;color:#5C5A55">TC-10391</span></div>
+<div class="sr">
+<span class="im"><svg width="40" height="40" viewBox="0 0 100 100" aria-hidden="true"><path d="M38 12 50 18 62 12 76 22 84 46 74 48 68 34 76 90H24L32 34 26 48 16 46 24 22Z" fill="#C9705A"/></svg></span>
+<span style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:15px;font-weight:500">300 rayon kurtis</span><span style="font-size:13px;color:#5C5A55">Shree Kurti House · ₹69,000</span></span>
+</div>
+<div style="padding:12px 16px 16px;border-top:1px solid #E9E7E2;display:flex;flex-direction:column;gap:10px">
+<span style="font-size:13px;color:#5C5A55;line-height:1.45">Check the parcel. The seller gets paid only after you confirm. Auto-confirms on 19 Nov.</span>
+<div style="display:flex;gap:8px">
+<a href="InkReport.dc.html" class="b2">Report a problem</a>
+<a href="#" style="min-height:44px;padding:0 16px;border-radius:22px;background:#1C1B19;color:#FFFFFF;font-size:14px;font-weight:500;display:flex;align-items:center;justify-content:center;flex:1">All good, confirm</a>
+</div>
+</div>
+</div>
+
+<div style="margin:22px 20px 8px;font-size:13px;color:#5C5A55">On the way</div>
+<a href="InkTrack.dc.html" class="card" style="display:block">
+<div class="hd"><span style="font-size:15px;font-weight:600">Ordered 14 Nov · ₹1,69,300</span><span style="font-size:13px;color:#5C5A55">TC-10482</span></div>
+<div class="sr">
+<span class="im"><svg width="40" height="40" viewBox="0 0 100 100" aria-hidden="true"><path d="M35 16 50 22 65 16 82 28 90 68 78 71 72 46 72 88H28V46L22 71 10 68 18 28Z" fill="#E6DCCB"/></svg></span>
+<span style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:15px;font-weight:500">Kapoor Knits</span><span style="font-size:13px;color:#5C5A55">300 pieces · arrives 19 Nov</span></span>
+<span style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500"><span class="dot" style="background:#1C1B19"></span>Shipped</span>
+</div>
+<div class="sr">
+<span class="im"><svg width="40" height="40" viewBox="0 0 100 100" aria-hidden="true"><path d="M38 12 50 18 62 12 76 22 84 46 74 48 68 34 76 90H24L32 34 26 48 16 46 24 22Z" fill="#C9705A"/></svg></span>
+<span style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:15px;font-weight:500">Shree Kurti House</span><span style="font-size:13px;color:#5C5A55">150 pieces · arrives 18 Nov</span></span>
+<span style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500"><span class="dot" style="background:#B9B5AC"></span>Packed</span>
+</div>
+<div style="padding:12px 16px;border-top:1px solid #E9E7E2;display:flex;justify-content:space-between;align-items:center;font-size:14px;font-weight:500"><span>Where is my order</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></div>
+</a>
+
+<div style="margin:22px 20px 8px;font-size:13px;color:#5C5A55">Earlier</div>
+<div class="card">
+<div class="sr" style="border-top:none">
+<span class="im"><svg width="40" height="40" viewBox="0 0 100 100" aria-hidden="true"><path d="M35 16 50 22 65 16 82 28 90 68 78 71 72 46 72 88H28V46L22 71 10 68 18 28Z" fill="#E6DCCB"/></svg></span>
+<span style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:15px;font-weight:500">200 puffer jackets</span><span style="font-size:13px;color:#5C5A55">Kapoor Knits · 2 Nov · ₹1,00,000</span></span>
+<a href="InkCartV2.dc.html" style="min-height:44px;padding:0 14px;border-radius:22px;border:1px solid #E9E7E2;font-size:13px;font-weight:500;display:flex;align-items:center">Order again</a>
+</div>
+</div>
+
+<nav aria-label="Main" style="position:absolute;left:24px;right:24px;bottom:22px;z-index:5;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));background:rgba(255,255,255,0.82);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,0.9);border-radius:34px;padding:6px;box-shadow:0 14px 40px rgba(28,27,25,0.22)">
+<a href="InkHomeV2.dc.html" class="tab"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V21h-6v-6H9v6H3z"/></svg>Home</a>
+<a href="InkSearch.dc.html" class="tab"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Search</a>
+<a href="InkOrdersV2.dc.html" aria-current="page" class="tab" style="color:#FFFFFF;font-weight:600;background:#1C1B19;border-radius:28px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>Orders</a>
+<a href="InkAccount.dc.html" class="tab"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>Account</a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>OTP, Charcoal ink</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#1C1B19;text-decoration:none}
+.bx{height:58px;border-radius:14px;background:#FFFFFF;border:1px solid #E9E7E2;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:600;box-sizing:border-box}
+.k{min-height:58px;border-radius:14px;background:#FFFFFF;display:flex;align-items:center;justify-content:center;font-size:22px}
+</style>
+</helmet>
+<div style="width:390px;height:900px;box-sizing:border-box;background:#FAF9F6;font-family:'Inter',system-ui,sans-serif;color:#1C1B19;display:flex;flex-direction:column;overflow:hidden">
+
+<div style="padding:18px 16px 0">
+<a href="InkLogin.dc.html" aria-label="Back" style="width:48px;height:48px;display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></a>
+</div>
+
+<div style="padding:8px 20px 0">
+<h1 style="margin:0;font-size:30px;line-height:1.1;font-weight:600;letter-spacing:-0.02em">Enter the code</h1>
+<p style="margin:8px 0 0;font-size:15px;color:#5C5A55">Sent to +91 98765 43210 · <a href="InkLogin.dc.html" style="color:#1C1B19;font-weight:500;text-decoration:underline">Change</a></p>
+</div>
+
+<a href="InkBusiness.dc.html" aria-label="Code, 4 of 6 digits entered" style="padding:26px 20px 0;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px">
+<span class="bx">4</span><span class="bx">8</span><span class="bx">2</span><span class="bx">7</span><span class="bx" style="border:2px solid #1C1B19"><span style="width:2px;height:26px;background:#1C1B19"></span></span><span class="bx"></span>
+</a>
+
+<div style="padding:16px 20px 0;display:flex;justify-content:space-between;align-items:center;font-size:14px">
+<span style="display:flex;align-items:center;gap:8px;color:#5C5A55"><span style="width:8px;height:8px;border-radius:4px;background:#1C1B19"></span>Reading SMS automatically</span>
+<span style="color:#5C5A55">Resend in 0:24</span>
+</div>
+
+<a href="#" style="margin:18px 20px 0;display:flex;align-items:center;gap:10px;min-height:48px;font-size:14px;color:#5C5A55"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l1.3-4A8 8 0 1 1 8 18.7z"/></svg>Didn't get it? <span style="color:#1C1B19;font-weight:500;text-decoration:underline">Get code on WhatsApp</span></a>
+
+<div style="margin-top:auto;background:#F2F1ED;padding:10px 10px 22px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px" aria-label="Number pad">
+<span class="k">1</span><span class="k">2</span><span class="k">3</span>
+<span class="k">4</span><span class="k">5</span><span class="k">6</span>
+<span class="k">7</span><span class="k">8</span><span class="k">9</span>
+<span class="k" style="background:transparent"></span><span class="k">0</span><span class="k" style="background:transparent" aria-label="Delete"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5h11v14H9l-6-7z"/><path d="m12 9 5 6M17 9l-5 6"/></svg></span>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

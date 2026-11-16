@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Search and filters, Charcoal ink</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#1C1B19;text-decoration:none}
+.fc{flex:none;min-height:40px;padding:0 14px;border-radius:20px;background:#FFFFFF;border:1px solid #E9E7E2;font-size:14px;display:flex;align-items:center;gap:6px}
+.cell{background:#FFFFFF;padding:12px;display:flex;flex-direction:column;gap:2px}
+.ph{height:120px;border-radius:12px;background:#F2F1ED;display:flex;align-items:center;justify-content:center;margin-bottom:8px}
+.sl{font-size:12px;color:#5C5A55}
+.nm{font-size:14px;font-weight:500}
+.pr{display:flex;justify-content:space-between;align-items:baseline;font-size:15px;font-weight:600}
+.pr span{font-size:12px;font-weight:400;color:#5C5A55}
+.gl{font-size:15px;font-weight:600;margin-bottom:10px}
+.ch{min-height:44px;padding:0 14px;border-radius:22px;border:1px solid #E9E7E2;font-size:14px;display:flex;align-items:center;background:#FFFFFF}
+.on{background:#1C1B19;border-color:#1C1B19;color:#FFFFFF}
+</style>
+</helmet>
+<div style="position:relative;width:390px;height:1000px;box-sizing:border-box;background:#FAF9F6;font-family:'Inter',system-ui,sans-serif;color:#1C1B19;display:flex;flex-direction:column;overflow:hidden">
+
+<div style="padding:20px 16px 0;display:flex;gap:8px;align-items:center">
+<a href="InkHome.dc.html" aria-label="Back" style="width:44px;height:48px;display:flex;align-items:center;justify-content:center;flex:none"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></a>
+<span style="flex:1;min-height:52px;padding:0 6px 0 16px;border-radius:26px;background:#FFFFFF;border:1px solid #1C1B19;display:flex;align-items:center;gap:8px">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+<span style="flex:1;font-size:16px">jacket</span>
+<a href="#" aria-label="Search by photo" style="width:40px;height:40px;border-radius:20px;display:flex;align-items:center;justify-content:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></a>
+<a href="#" aria-label="Search by voice" style="width:40px;height:40px;border-radius:20px;background:#F2F1ED;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></a>
+</span>
+</div>
+
+<div style="margin:14px 0 0;padding:0 20px;display:flex;gap:8px;overflow:hidden">
+<a href="#" class="fc on" style="background:#1C1B19;color:#FFFFFF;border-color:#1C1B19"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg>Filters · 2</a>
+<a href="#" class="fc">Popular ▾</a>
+<a href="#" class="fc">₹300–₹600</a>
+<a href="#" class="fc">Ludhiana</a>
+</div>
+
+<div style="padding:14px 20px 10px;font-size:13px;color:#5C5A55">128 jackets · prices landed in Indore</div>
+
+<section aria-label="Results" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:#E9E7E2;border-top:1px solid #E9E7E2">
+<a href="InkProduct.dc.html" class="cell"><span class="ph"><svg width="84" height="84" viewBox="0 0 100 100" aria-hidden="true"><path d="M35 16 50 22 65 16 82 28 90 68 78 71 72 46 72 88H28V46L22 71 10 68 18 28Z" fill="#E6DCCB"/><path d="M28 50h44M28 62h44M28 74h44" stroke="#CDBFA6" stroke-width="2"/></svg></span><span class="sl">Kapoor Knits</span><span class="nm">Quilted puffer jacket</span><span class="pr">₹500<span>Min 50 pcs</span></span></a>
+<a href="#" class="cell"><span class="ph"><svg width="84" height="84" viewBox="0 0 100 100" aria-hidden="true"><path d="M35 16 50 22 65 16 82 28 90 68 78 71 72 46 72 88H28V46L22 71 10 68 18 28Z" fill="#6F8FB3"/><path d="M38 18 50 34 62 18" fill="#F1EADB"/></svg></span><span class="sl">Blue Line Denim</span><span class="nm">Sherpa denim jacket</span><span class="pr">₹612<span>Min 30 pcs</span></span></a>
+</section>
+
+<div aria-hidden="true" style="position:absolute;inset:0;background:rgba(28,27,25,0.45)"></div>
+
+<div role="dialog" aria-label="Filters" style="position:absolute;left:0;right:0;bottom:0;background:#FFFFFF;border-radius:28px 28px 0 0;padding:10px 20px 22px;display:flex;flex-direction:column;gap:20px">
+<span style="align-self:center;width:40px;height:5px;border-radius:3px;background:#D9D6CF"></span>
+<div style="display:flex;justify-content:space-between;align-items:center;margin-top:-6px"><span style="font-size:22px;font-weight:600;letter-spacing:-0.01em">Filters</span><a href="#" aria-label="Close" style="width:44px;height:44px;border-radius:22px;background:#F2F1ED;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></a></div>
+
+<div>
+<div class="gl">Price per piece</div>
+<div style="position:relative;height:28px">
+<span style="position:absolute;left:0;right:0;top:12px;height:4px;border-radius:2px;background:#E9E7E2"></span>
+<span style="position:absolute;left:20%;right:40%;top:12px;height:4px;border-radius:2px;background:#1C1B19"></span>
+<span style="position:absolute;left:calc(20% - 14px);top:0;width:28px;height:28px;border-radius:14px;background:#FFFFFF;border:2px solid #1C1B19;box-sizing:border-box"></span>
+<span style="position:absolute;left:calc(60% - 14px);top:0;width:28px;height:28px;border-radius:14px;background:#FFFFFF;border:2px solid #1C1B19;box-sizing:border-box"></span>
+</div>
+<div style="display:flex;justify-content:space-between;font-size:14px;margin-top:6px"><span>₹300</span><span>₹600</span></div>
+</div>
+
+<div>
+<div class="gl">Minimum order</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap"><span class="ch">Any</span><span class="ch">Up to 50 pcs</span><span class="ch on">Up to 100 pcs</span><span class="ch">Up to 200 pcs</span></div>
+</div>
+
+<div>
+<div class="gl">Seller city</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap"><span class="ch on">Ludhiana</span><span class="ch">Surat</span><span class="ch">Tiruppur</span><span class="ch">Jaipur</span><span class="ch">+ 12 more</span></div>
+</div>
+
+<div>
+<div class="gl">Material</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap"><span class="ch">Polyester</span><span class="ch">Cotton</span><span class="ch">Wool</span><span class="ch">Denim</span></div>
+</div>
+
+<div style="display:flex;gap:10px;align-items:center;padding-top:4px">
+<a href="#" style="min-height:56px;padding:0 20px;font-size:15px;font-weight:500;display:flex;align-items:center;text-decoration:underline">Clear all</a>
+<a href="#" style="flex:1;min-height:56px;border-radius:28px;background:#1C1B19;color:#FFFFFF;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:500">Show 128 jackets</a>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>
