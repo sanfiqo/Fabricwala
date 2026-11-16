@@ -27,7 +27,11 @@ public static class SanfiqoAuthEndpoints
                 httpContext.Response.Cookies.Append("tc_otp_challenge", challengeId.ToString(), new CookieOptions { HttpOnly = true, Secure = !environment.IsDevelopment() || httpContext.Request.IsHttps, SameSite = SameSiteMode.Lax, Path = "/api/v1/auth", MaxAge = TimeSpan.FromMinutes(5) });
                 return Results.NoContent();
             }
-            catch (OtpRateLimitException) { return Results.StatusCode(StatusCodes.Status429TooManyRequests); }
+            catch (OtpRateLimitException limit)
+            {
+                httpContext.Response.Headers.RetryAfter = ((int)Math.Ceiling(limit.RetryAfter.TotalSeconds)).ToString(System.Globalization.CultureInfo.InvariantCulture);
+                return Results.StatusCode(StatusCodes.Status429TooManyRequests);
+            }
             catch (OtpDeliveryUnavailableException) { return Results.StatusCode(StatusCodes.Status503ServiceUnavailable); }
         }).RequireRateLimiting("auth");
 

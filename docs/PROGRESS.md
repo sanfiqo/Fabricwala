@@ -74,3 +74,4 @@ Handover: Phase 1 complete. Phase 2 complete except P2.3 migration tooling block
 2026-11-14 | P-NIGHT E2 | done | Saved products, order rating, invoice list, pincode check and reorder; 199 tests passed
 2026-11-16 | FE-REQ 1-2 | done | GET /states and GET /cities?stateId= added; Development OTP IP limits raised to 200 per 15 min and 1000 per day (per-number 3 per 15 min and 10 per day stay)
 2026-11-16 | FE-REQ 3 | done | Business OwnerName (signup, profile, admin review) with migration NightOwnerName; docType upload already existed as a query value, now documented and tested; 203 tests expected
+2026-11-16 | FE-REQ 4 | done | Retry-After header (seconds) on every 429: OTP request uses the exact wait from the sliding windows, auth and search limiters use the limiter's reset time; tests added
