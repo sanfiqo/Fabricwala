@@ -36,16 +36,23 @@ public static class DevelopmentSeed
     public static async Task SeedAsync(IServiceProvider services, CancellationToken ct = default)
     {
         using var scope = services.CreateScope();
+        var log = services.GetRequiredService<ILoggerFactory>().CreateLogger("DevelopmentSeed");
         var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
+        log.LogInformation("Development seed: postal codes");
         await SeedPostalCodesAsync(db, ct);
         foreach (var persona in Personas)
         {
+            log.LogInformation("Development seed: user and business for {Name} - begin", persona.FullName);
             var userId = await EnsureUserAsync(scope.ServiceProvider, persona, ct);
             if (persona.Type is not null) await EnsureBusinessAsync(db, persona, userId, ct);
+            log.LogInformation("Development seed: user and business for {Name} - done", persona.FullName);
         }
+        log.LogInformation("Development seed: freight rates");
         await SeedFreightAsync(db, ct);
         var products = scope.ServiceProvider.GetRequiredService<ISellerProductService>();
-        await SeedProductsAsync(db, products, ct);
+        log.LogInformation("Development seed: products (each product is checked, and created only if missing)");
+        await SeedProductsAsync(db, products, log, ct);
+        log.LogInformation("Development seed: finished");
     }
 
     private static async Task SeedPostalCodesAsync(MarketplaceDbContext db, CancellationToken ct)
@@ -139,7 +146,7 @@ public static class DevelopmentSeed
 
     private sealed record Demo(string Seller, string Title, string Category, string Material, int Moq, decimal Gst, (int Min, decimal Price)[] Tiers, (string Size, string Colour, int Stock)[] Variants, bool Publish);
 
-    private static async Task SeedProductsAsync(MarketplaceDbContext db, ISellerProductService products, CancellationToken ct)
+    private static async Task SeedProductsAsync(MarketplaceDbContext db, ISellerProductService products, ILogger log, CancellationToken ct)
     {
         Demo[] demos =
         [
@@ -155,7 +162,8 @@ public static class DevelopmentSeed
         foreach (var demo in demos)
         {
             var seller = await db.Businesses.AsNoTracking().OrderBy(x => x.Id).FirstAsync(x => x.LegalName == demo.Seller, ct);
-            if (await db.Products.AnyAsync(x => x.SellerBusinessId == seller.Id && x.Title == demo.Title && !x.IsDeleted, ct)) continue;
+            if (await db.Products.AnyAsync(x => x.SellerBusinessId == seller.Id && x.Title == demo.Title && !x.IsDeleted, ct)) { log.LogInformation("Development seed: product {Title} already exists", demo.Title); continue; }
+            log.LogInformation("Development seed: creating product {Title}", demo.Title);
             await products.CreateAsync(seller.Id, new SellerProductRequest(demo.Title, categories[demo.Category], $"{demo.Title}, wholesale pack.", demo.Material, null, "Winter", "6101", 700, 3, "7 day return for damaged goods",
                 demo.Gst, demo.Moq, ProductUnit.Piece, demo.Variants.Select(v => new SellerVariantInput(null, null, v.Size, v.Colour, v.Stock)).ToList(),
                 demo.Tiers.Select(t => new SellerTierInput(t.Min, t.Price)).ToList(), demo.Publish), ct);

@@ -7,6 +7,7 @@ public sealed class OrderMaintenanceWorker(IServiceScopeFactory scopes, ILogger<
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        logger.LogInformation("Order maintenance worker: started (first run now, then every minute)");
         using var timer = new PeriodicTimer(TimeSpan.FromMinutes(1));
         do
         {

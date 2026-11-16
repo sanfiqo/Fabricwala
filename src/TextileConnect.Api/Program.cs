@@ -28,9 +28,17 @@ if (builder.Environment.IsDevelopment())
 
 ProductionSecretGuard.Validate(builder.Configuration, builder.Environment.EnvironmentName);
 
-builder.Host.UseSerilog((context, configuration) => configuration
-    .ReadFrom.Configuration(context.Configuration)
-    .Enrich.FromLogContext());
+// Serilog prints nothing unless a sink is configured. Without a "Serilog:WriteTo" section in configuration, write to the console
+// (so "Now listening" and the Startup lines are visible), and keep framework and per-query SQL logging quiet.
+builder.Host.UseSerilog((context, configuration) =>
+{
+    configuration.ReadFrom.Configuration(context.Configuration).Enrich.FromLogContext();
+    if (!context.Configuration.GetSection("Serilog:WriteTo").Exists())
+        configuration.MinimumLevel.Information()
+            .MinimumLevel.Override("Microsoft.AspNetCore", Serilog.Events.LogEventLevel.Warning)
+            .MinimumLevel.Override("Microsoft.EntityFrameworkCore", Serilog.Events.LogEventLevel.Warning)
+            .WriteTo.Console();
+});
 
 // Add services to the container.
 
@@ -85,11 +93,25 @@ var app = builder.Build();
 
 if (!app.Environment.IsEnvironment("Testing"))
 {
-    await SanfiqoRoleSeeder.SeedAsync(app.Services);
-    using var seedScope = app.Services.CreateScope();
-    await MarketplaceSeed.SeedAsync(seedScope.ServiceProvider.GetRequiredService<MarketplaceDbContext>());
-    if (app.Environment.IsDevelopment()) await DevelopmentSeed.SeedAsync(app.Services); // demo businesses, products and users; never in Production
+    // Each startup step logs when it begins and ends (with the time it took), so a slow or stuck step is easy to spot.
+    async Task StartupStepAsync(string name, Func<Task> work)
+    {
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        app.Logger.LogInformation("Startup: {Step} - begin", name);
+        try { await work(); }
+        catch (Exception exception) { app.Logger.LogError("Startup: {Step} - FAILED after {Ms} ms ({Type})", name, watch.ElapsedMilliseconds, exception.GetType().Name); throw; }
+        app.Logger.LogInformation("Startup: {Step} - done in {Ms} ms", name, watch.ElapsedMilliseconds);
+    }
+    await StartupStepAsync("roles (identity database)", () => SanfiqoRoleSeeder.SeedAsync(app.Services));
+    await StartupStepAsync("marketplace master data (states, cities, zones, categories, settings)", async () =>
+    {
+        using var seedScope = app.Services.CreateScope();
+        await MarketplaceSeed.SeedAsync(seedScope.ServiceProvider.GetRequiredService<MarketplaceDbContext>());
+    });
+    if (app.Environment.IsDevelopment())
+        await StartupStepAsync("development demo data (users, businesses, freight, products)", () => DevelopmentSeed.SeedAsync(app.Services)); // never in Production
 }
+app.Logger.LogInformation("Startup: seeding finished, starting hosted services and the web server");
 
 app.UseMiddleware<ApiErrorMiddleware>();
 app.UseRateLimiter();
