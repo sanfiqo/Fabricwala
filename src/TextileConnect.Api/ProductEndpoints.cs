@@ -10,6 +10,7 @@ public static class ProductEndpoints
     public static void MapProductEndpoints(this WebApplication app)
     {
         app.MapCatalogueEndpoints();
+        app.MapSellerProductMediaEndpoints();
         var group = app.MapGroup("/api/v1/seller/products").RequireAuthorization("ApprovedBusiness").RequireAuthorization(policy => policy.RequireRole("Manufacturer"));
         group.MapGet("", async (string? filter, string? q, int? threshold, int? page, int? pageSize, ICurrentBusiness current, ISellerProductService products, CancellationToken ct) =>
         {

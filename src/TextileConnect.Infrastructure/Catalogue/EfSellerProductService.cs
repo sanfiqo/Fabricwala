@@ -210,10 +210,12 @@ public sealed partial class EfSellerProductService(MarketplaceDbContext db, Time
     {
         var variants = await db.ProductVariants.AsNoTracking().Where(x => x.ProductId == product.Id).OrderBy(x => x.Id).ToListAsync(cancellationToken);
         var slabs = await db.PriceSlabs.AsNoTracking().Where(x => x.ProductId == product.Id).OrderBy(x => x.MinQty).ToListAsync(cancellationToken);
+        var media = await db.ProductMedia.AsNoTracking().Where(x => x.ProductId == product.Id).OrderBy(x => x.SortOrder).ThenBy(x => x.Id).ToListAsync(cancellationToken);
         return new SellerProductDetail(product.Id, product.Title, product.Slug, product.Status.ToString(), product.Status == ProductStatus.Active, product.CategoryId, product.Description,
             product.Material, product.FabricSpec, product.Season, product.HsnCode, product.WeightPerUnitGrams, product.DispatchDays, product.ReturnPolicy, product.GstRate, product.Moq, product.Unit,
             variants.Select(x => new SellerVariantResponse(x.Id, x.Sku, x.Size, x.Colour, x.StockQty, x.IsActive)).ToList(),
-            slabs.Select(x => new SellerTierResponse(x.MinQty, x.MaxQty, x.PricePerUnit)).ToList(), product.AdminHold, product.UpdatedAtUtc);
+            slabs.Select(x => new SellerTierResponse(x.MinQty, x.MaxQty, x.PricePerUnit)).ToList(), product.AdminHold, product.UpdatedAtUtc,
+            media.Select((x, index) => new SellerMediaResponse(x.Id, MediaUrl(product.Slug, x), x.MediaType, x.SortOrder, index == 0)).ToList());
     }
 
     private static string MediaUrl(string slug, ProductMedia media)

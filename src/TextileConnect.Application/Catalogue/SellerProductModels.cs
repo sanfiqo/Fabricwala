@@ -23,4 +23,8 @@ public sealed record SellerProductSummary(long Id, string Title, string Slug, st
 
 public sealed record SellerProductDetail(long Id, string Title, string Slug, string Status, bool IsActive, long CategoryId, string? Description, string? Material,
     string? FabricSpec, string? Season, string? HsnCode, decimal WeightPerUnitGrams, int DispatchDays, string? ReturnPolicy, decimal GstRate, int Moq, ProductUnit Unit,
-    IReadOnlyList<SellerVariantResponse> Variants, IReadOnlyList<SellerTierResponse> Tiers, bool AdminDeactivated, DateTime UpdatedAt);
+    IReadOnlyList<SellerVariantResponse> Variants, IReadOnlyList<SellerTierResponse> Tiers, bool AdminDeactivated, DateTime UpdatedAt,
+    IReadOnlyList<SellerMediaResponse> Media);
+
+/// <summary>A photo of the product for the edit screen. The first one (IsMain) is the main image.</summary>
+public sealed record SellerMediaResponse(long Id, string Url, string MediaType, int SortOrder, bool IsMain);

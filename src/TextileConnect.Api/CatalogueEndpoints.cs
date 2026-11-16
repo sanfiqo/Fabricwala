@@ -43,14 +43,21 @@ public static class CatalogueEndpoints
             }
             return Results.Ok(product);
         });
-        app.MapGet("/api/v1/products/{slug}/media/{mediaId:long}", async (string slug, long mediaId, MarketplaceDbContext db, IFileStorage storage, HttpContext context, CancellationToken ct) =>
+        app.MapGet("/api/v1/products/{slug}/media/{mediaId:long}", async (string slug, long mediaId, MarketplaceDbContext db, IFileStorage storage, ICurrentBusiness current, HttpContext context, CancellationToken ct) =>
         {
             var media = await (from product in new CatalogueReader(db).PublicProducts
                                join item in db.ProductMedia.AsNoTracking() on product.Id equals item.ProductId
                                where product.Slug == slug && item.Id == mediaId select item).SingleOrDefaultAsync(ct);
+            // A seller can also open the photos of their own products that are not live yet (drafts, switched off).
+            if (media is null && current.BusinessId is { } ownerId)
+                media = await (from product in db.Products.AsNoTracking()
+                               join item in db.ProductMedia.AsNoTracking() on product.Id equals item.ProductId
+                               where product.Slug == slug && item.Id == mediaId && product.SellerBusinessId == ownerId && !product.IsDeleted select item).SingleOrDefaultAsync(ct);
             if (media is null) return Results.NotFound();
             if (Uri.TryCreate(media.FileKey, UriKind.Absolute, out var uri) && uri.Scheme is "https" or "http") return Results.Redirect(uri.AbsoluteUri);
-            new FileExtensionContentTypeProvider().TryGetContentType(media.FileKey, out var contentType);
+            // Photos uploaded by sellers store the type found from the file bytes; older rows fall back to the file extension.
+            var contentType = media.MediaType is "image/jpeg" or "image/png" or "image/webp" ? media.MediaType
+                : new FileExtensionContentTypeProvider().TryGetContentType(media.FileKey, out var byName) ? byName : null;
             context.Response.Headers["X-Content-Type-Options"] = "nosniff";
             try
             {
