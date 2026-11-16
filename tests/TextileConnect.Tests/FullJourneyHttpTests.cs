@@ -24,6 +24,7 @@ public sealed class FullJourneyHttpTests
         {
             app.MapProductEndpoints(); app.MapLandedCostEndpoints(); app.MapCartEndpoints(); app.MapOrderEndpoints();
             app.MapPaymentEndpoints(); app.MapReturnClaimEndpoints(); app.MapPayoutEndpoints(); app.MapNotificationEndpoints(); app.MapAccountEndpoints();
+            app.MapRetailerExtrasEndpoints(); app.MapSellerDashboardEndpoints();
         });
         // Platform data an admin would configure: freight between the Punjab and Madhya Pradesh pincode zones.
         using var scope = fixture.Services.CreateScope();
@@ -125,6 +126,10 @@ public sealed class FullJourneyHttpTests
         Assert.Equal(HttpStatusCode.OK, cart.StatusCode);
         var cartBody = await cart.Content.ReadFromJsonAsync<JsonElement>();
         Assert.True(cartBody.GetProperty("canCheckout").GetBoolean());
+        // The cart group says where the seller is and when the goods arrive: today + 3 dispatch days + 4 transit days.
+        var cartGroup = cartBody.GetProperty("groups")[0];
+        Assert.Equal("Ludhiana", cartGroup.GetProperty("sellerCity").GetString());
+        Assert.Equal(DateOnly.FromDateTime(fixture.Clock.GetUtcNow().UtcDateTime).AddDays(3 + 4).ToString("yyyy-MM-dd"), cartGroup.GetProperty("arrivesBy").GetString());
         Assert.Equal(200 - 100, cartBody.GetProperty("groups")[0].GetProperty("items")[0].GetProperty("nextTier").GetProperty("addQuantity").GetInt32());
         using var checkoutRequest = new HttpRequestMessage(HttpMethod.Post, "/api/v1/checkout") { Content = JsonContent.Create(new { deliveryAddressId = addressId }) };
         checkoutRequest.Headers.Add("Idempotency-Key", "journey-checkout-1");
@@ -174,6 +179,12 @@ public sealed class FullJourneyHttpTests
         var retailerNotes = (await retailer.GetFromJsonAsync<JsonElement>("/api/v1/notifications")).GetProperty("items").EnumerateArray().Select(x => x.GetProperty("title").GetString()).ToList();
         Assert.Contains("Order shipped", retailerNotes);
         Assert.Single((await retailer.GetFromJsonAsync<JsonElement>("/api/v1/orders?group=delivered")).GetProperty("items").EnumerateArray());
+        // No rating yet, then the retailer rates the delivered order and the seller dashboard shows it.
+        Assert.Equal(JsonValueKind.Null, (await seller.GetFromJsonAsync<JsonElement>("/api/v1/seller/dashboard")).GetProperty("rating").ValueKind);
+        Assert.Equal(HttpStatusCode.OK, (await retailer.PostAsJsonAsync($"/api/v1/orders/{orderId}/rating", new { stars = 4 })).StatusCode);
+        var rated = await seller.GetFromJsonAsync<JsonElement>("/api/v1/seller/dashboard");
+        Assert.Equal(4.0m, rated.GetProperty("rating").GetDecimal());
+        Assert.Equal(1, rated.GetProperty("ratingCount").GetInt32());
         Assert.Single((await seller.GetFromJsonAsync<JsonElement>("/api/v1/seller/orders?status=done")).GetProperty("items").EnumerateArray());
         using (var scope = fixture.Services.CreateScope())
             Assert.Equal(500 - 100, (await scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>().ProductVariants.SingleAsync(x => x.Id == variantId)).StockQty);

@@ -10,9 +10,11 @@ public sealed record SellerLowStockItem(long ProductId, string Title, string Sku
 public sealed record SellerLowStock(int Threshold, int Count, IReadOnlyList<SellerLowStockItem> Items);
 public sealed record SellerBestSeller(long ProductId, string Title, string Slug, int Quantity, decimal Revenue);
 
-/// <summary>Sales = goods value (before GST and freight) of paid orders that were not rejected or cancelled, by the month they were placed.</summary>
+/// <summary>Rating is the average of the retailer stars (1 to 5, one decimal) over the rated orders that contain this seller, null until there is one. A rated order counts for every seller in it.
+/// Sales = goods value (before GST and freight) of paid orders that were not rejected or cancelled, by the month they were placed.</summary>
 public sealed record SellerDashboardResponse(int NewOrders, int ToPack, decimal SalesThisMonth, decimal NextPayoutAmount, DateTime? NextPayoutDate, decimal OnHoldAmount,
-    IReadOnlyList<SellerMonthlySales> MonthlySales, SellerLowStock LowStock, IReadOnlyList<SellerBestSeller> BestSellers);
+    IReadOnlyList<SellerMonthlySales> MonthlySales, SellerLowStock LowStock, IReadOnlyList<SellerBestSeller> BestSellers,
+    decimal? Rating, int RatingCount);
 
 public static class SellerDashboardEndpoints
 {
@@ -49,12 +51,14 @@ public static class SellerDashboardEndpoints
             var bestIds = best.Select(x => x.ProductId).ToArray();
             var products = await db.Products.AsNoTracking().Where(p => bestIds.Contains(p.Id)).ToDictionaryAsync(p => p.Id, ct);
 
+            var stars = await db.OrderRatings.AsNoTracking().Where(r => db.SellerOrders.Any(s => s.OrderId == r.OrderId && s.ManufacturerBusinessId == sellerId)).Select(r => r.Stars).ToListAsync(ct);
             var payouts = await new SellerPayoutReader(db, clock).SummaryAsync(sellerId, null, 1, 1, ct);
             return Results.Ok(new SellerDashboardResponse(
                 await paid.CountAsync(x => x.Status == "Pending", ct), await paid.CountAsync(x => x.Status == "Accepted", ct),
                 chart[^1].Sales, payouts.NextPayoutAmount, payouts.NextPayoutDate, payouts.OnHoldAmount, chart,
                 new SellerLowStock(LowStockThreshold, await lowQuery.CountAsync(ct), lowItems),
-                best.Select(x => new SellerBestSeller(x.ProductId, products.GetValueOrDefault(x.ProductId)?.Title ?? string.Empty, products.GetValueOrDefault(x.ProductId)?.Slug ?? string.Empty, x.Quantity, x.Revenue)).ToList()));
+                best.Select(x => new SellerBestSeller(x.ProductId, products.GetValueOrDefault(x.ProductId)?.Title ?? string.Empty, products.GetValueOrDefault(x.ProductId)?.Slug ?? string.Empty, x.Quantity, x.Revenue)).ToList(),
+                stars.Count == 0 ? null : decimal.Round((decimal)stars.Average(), 1, MidpointRounding.AwayFromZero), stars.Count));
         }).RequireAuthorization("ApprovedBusiness").RequireAuthorization(policy => policy.RequireRole("Manufacturer"));
     }
 }

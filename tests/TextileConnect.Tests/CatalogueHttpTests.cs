@@ -44,6 +44,29 @@ public sealed class CatalogueHttpTests
     }
 
     [Fact]
+    public async Task Search_filters_by_material_and_seasonAsync()
+    {
+        await using var fixture = await MarketplaceHttpFixture.StartAsync(app => app.MapCatalogueEndpoints());
+        await SeedAsync(fixture);
+        using (var scope = fixture.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
+            (await db.Products.SingleAsync(x => x.Slug == "puffer")).Season = "Winter";
+            (await db.Products.SingleAsync(x => x.Slug == "fleece-hoodie")).Season = "Autumn";
+            await db.SaveChangesAsync();
+        }
+        using var client = await fixture.ClientAsync(null);
+        async Task<string[]> SlugsAsync(string query)
+            => (await client.GetFromJsonAsync<JsonElement>("/api/v1/products?" + query)).GetProperty("items").EnumerateArray().Select(x => x.GetProperty("slug").GetString()!).ToArray();
+
+        Assert.Equal(new[] { "puffer" }, await SlugsAsync("season=Winter"));
+        Assert.Equal(new[] { "fleece-hoodie" }, await SlugsAsync("season=Autumn"));
+        Assert.Empty(await SlugsAsync("season=Summer"));
+        Assert.Equal(new[] { "puffer" }, await SlugsAsync("material=Polyester&season=Winter"));
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.GetAsync("/api/v1/products?season=" + new string('x', 81))).StatusCode);
+    }
+
+    [Fact]
     public async Task Catalogue_paging_is_stable_and_hidden_products_are_not_publicAsync()
     {
         await using var fixture = await MarketplaceHttpFixture.StartAsync(app => app.MapCatalogueEndpoints());

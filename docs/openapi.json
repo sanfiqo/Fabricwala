@@ -2930,6 +2930,13 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "Season",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {

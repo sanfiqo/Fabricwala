@@ -36,6 +36,7 @@ public sealed class CatalogueReader(MarketplaceDbContext db)
         if (!string.IsNullOrWhiteSpace(query.State)) rows = rows.Where(x => db.Cities.Any(c => c.Id == x.CityId && db.States.Any(s => s.Id == c.StateId && (s.Code == query.State || s.Name == query.State))));
         if (query.SellerCityId.HasValue) rows = rows.Where(x => x.CityId == query.SellerCityId);
         if (!string.IsNullOrWhiteSpace(query.Material)) rows = rows.Where(x => x.Product.Material != null && x.Product.Material.Contains(query.Material));
+        if (!string.IsNullOrWhiteSpace(query.Season)) rows = rows.Where(x => x.Product.Season != null && x.Product.Season.Contains(query.Season));
         if (!string.IsNullOrWhiteSpace(query.Size)) rows = rows.Where(x => db.ProductVariants.Any(v => v.ProductId == x.Product.Id && v.IsActive && v.Size == query.Size));
         if (!string.IsNullOrWhiteSpace(query.Colour)) rows = rows.Where(x => db.ProductVariants.Any(v => v.ProductId == x.Product.Id && v.IsActive && v.Colour == query.Colour));
         var total = await rows.CountAsync(ct);

@@ -77,3 +77,4 @@ Handover: Phase 1 complete. Phase 2 complete except P2.3 migration tooling block
 2026-11-16 | FE-REQ 4 | done | Retry-After header (seconds) on every 429: OTP request uses the exact wait from the sliding windows, auth and search limiters use the limiter's reset time; tests added
 2026-11-16 | FE-REQ 5 | done | Order list rows (retailer, seller and admin orders) now include items (OrderItemResponse, same shape as the detail); 207 tests passed
 2026-11-16 | FE-REQ 6 | done | Product photo upload: POST/DELETE /seller/products/{id}/media, media list in the seller product detail, owner can open draft photos; 210 tests passed
+2026-11-16 | FE-REQ 7 | done | Cart groups get sellerCity and arrivesBy, seller dashboard gets rating and ratingCount, product search gets a season filter; 211 tests passed

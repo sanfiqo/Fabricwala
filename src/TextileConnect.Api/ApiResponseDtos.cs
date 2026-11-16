@@ -47,7 +47,13 @@ public sealed record CartItemResponse(long Id, long VariantId, long ProductId, s
     public TextileConnect.Application.Orders.CartNextTier? NextTier { get; init; }
     public IReadOnlyList<string> Issues { get; init; } = [];
 }
-public sealed record CartGroupResponse(long ManufacturerId, string ManufacturerName, IReadOnlyList<CartItemResponse> Items, decimal SubTotal, decimal? ShippingAmount, decimal TaxAmount, decimal Total);
+public sealed record CartGroupResponse(long ManufacturerId, string ManufacturerName, IReadOnlyList<CartItemResponse> Items, decimal SubTotal, decimal? ShippingAmount, decimal TaxAmount, decimal Total)
+{
+    /// <summary>City of the seller (pickup address, else registered address).</summary>
+    public string? SellerCity { get; init; }
+    /// <summary>Expected arrival date (today + dispatch days + transit days to the default delivery address). Null when it cannot be worked out.</summary>
+    public DateOnly? ArrivesBy { get; init; }
+}
 public sealed record CartResponse(IReadOnlyList<CartGroupResponse> Groups, decimal SubTotal, decimal? ShippingTotal, decimal TaxTotal, decimal GrandTotal, IReadOnlyList<object> Addresses)
 {
     public bool CanCheckout { get; init; }
