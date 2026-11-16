@@ -184,6 +184,8 @@ export interface ProductInput {
   returnPolicy: string
   status: ProductStatus
   variants: Array<Omit<Variant, 'id'> & { id?: number }>
+  /** Price slabs, sent together with the product (the real API has no separate slab route). */
+  slabs?: PriceSlab[]
 }
 export interface LandedCost {
   productId: number
@@ -257,6 +259,11 @@ export interface Shipment {
   dispatchedAt: string
 }
 export interface SellerOrder {
+  /** Server-calculated money for the seller (real API). Shown as sent. */
+  orderValue?: number
+  platformFee?: number
+  youGet?: number
+  acceptDeadline?: string | null
   id: number
   orderId: number
   orderNumber: string

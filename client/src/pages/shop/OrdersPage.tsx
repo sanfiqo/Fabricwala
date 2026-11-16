@@ -5,7 +5,7 @@ import { ChevronRight, MessageCircle, Package, PackageCheck, Truck } from 'lucid
 import { orderApi } from '@/api/endpoints'
 import { qk } from '@/api/keys'
 import type { Order, SellerOrder } from '@/api/types'
-import { PaymentBadge, StatusTimeline, StepBar } from '@/components/OrderParts'
+import { canConfirm, PaymentBadge, StatusTimeline, StepBar } from '@/components/OrderParts'
 import { StickyActionBar } from '@/components/StickyActionBar'
 import { Button } from '@/components/ui/button'
 import { BackButton, Chip, EmptyState, ErrorState, LinkButton, Skeleton } from '@/components/ui/misc'
@@ -20,10 +20,10 @@ const AUTO_CONFIRM_DAYS = 7 // UX_RULES 3: paid after delivery is confirmed, or 
 
 const dotTone = (st: SellerOrder['status']) => (st === 'Delivered' || st === 'ReachedKashmir' || st === 'Dispatched' ? 'bg-ink' : st === 'Rejected' || st === 'Cancelled' ? 'bg-error' : 'bg-[#B9B5AC]')
 const pieces = (so: SellerOrder) => so.items.reduce((a, i) => a + i.quantity, 0)
-const needsAction = (o: Order) => o.sellerOrders.some((s) => s.status === 'ReachedKashmir')
+const needsAction = (o: Order) => o.sellerOrders.some((s) => canConfirm(s.status))
 const isProblem = (o: Order) => o.sellerOrders.length > 0 && o.sellerOrders.every((s) => s.status === 'Rejected' || s.status === 'Cancelled')
 const isDone = (o: Order) => o.sellerOrders.length > 0 && o.sellerOrders.every((s) => s.status === 'Delivered')
-const reachedAt = (so: SellerOrder) => so.history.find((h) => h.status === 'ReachedKashmir')?.changedAt ?? so.placedAt
+const reachedAt = (so: SellerOrder) => so.history.find((h) => h.status === 'ReachedKashmir' || h.status === 'Dispatched')?.changedAt ?? so.placedAt
 
 function OrderRow({ so, showStatus }: { so: SellerOrder; showStatus?: boolean }) {
   return (
@@ -48,7 +48,7 @@ function OrderRow({ so, showStatus }: { so: SellerOrder; showStatus?: boolean })
 function ConfirmCard({ o }: { o: Order }) {
   const qc = useQueryClient()
   const toast = useToast()
-  const so = o.sellerOrders.find((s) => s.status === 'ReachedKashmir')!
+  const so = o.sellerOrders.find((s) => canConfirm(s.status))!
   const auto = new Date(new Date(reachedAt(so)).getTime() + AUTO_CONFIRM_DAYS * 86_400_000).toISOString()
   const confirm = useMutation({
     mutationFn: () => orderApi.confirmDelivery(o.id),
@@ -207,10 +207,10 @@ export function OrderDetailPage() {
   const o = order.data
   const so = o.sellerOrders[Math.min(sel, o.sellerOrders.length - 1)]
   const failed = so.status === 'Rejected' || so.status === 'Cancelled'
-  const canReport = so.status === 'ReachedKashmir' || so.status === 'Delivered'
+  const canReport = canConfirm(so.status) || so.status === 'Delivered'
 
   return (
-    <div className={cn(so.status === 'ReachedKashmir' ? 'pb-48' : 'pb-6')}>
+    <div className={cn(canConfirm(so.status) ? 'pb-48' : 'pb-6')}>
       <DetailHeader title={fmt(S.orders.number, { n: o.orderNumber })} />
 
       <div className="px-5 pt-1.5">
@@ -283,7 +283,7 @@ export function OrderDetailPage() {
       </div>
       <p className="mx-5 mt-3 text-xs text-mute">{fmt(S.orders.placedOn, { d: formatDate(o.placedAt) })}</p>
 
-      {so.status === 'ReachedKashmir' && (
+      {canConfirm(so.status) && (
         <StickyActionBar>
           <p className="text-center text-xs text-mute">{S.cart.escrow}</p>
           <Button size="lg" block loading={confirm.isPending} onClick={() => confirm.mutate()}>

@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Inbox, PackageCheck } from 'lucide-react'
-import { sellerOrderApi } from '@/api/endpoints'
+import { sellerCanMarkDelivery, sellerOrderApi } from '@/api/endpoints'
 import { qk } from '@/api/keys'
 import type { SellerOrder, SellerOrderStatus } from '@/api/types'
 import { OrderStatusBadge, PaymentBadge, StatusTimeline } from '@/components/OrderParts'
@@ -19,7 +19,7 @@ import { formatDate, money } from '@/lib/utils'
 type Tab = 'new' | 'pack' | 'shipped' | 'done'
 const tabOf = (s: SellerOrderStatus): Tab => (s === 'PendingAcceptance' ? 'new' : s === 'Accepted' ? 'pack' : s === 'Dispatched' || s === 'ReachedKashmir' ? 'shipped' : 'done')
 const ACCEPT_HOURS = 24
-const deadline = (o: SellerOrder) => new Date(new Date(o.placedAt).getTime() + ACCEPT_HOURS * 3_600_000).toISOString()
+const deadline = (o: SellerOrder) => o.acceptDeadline ?? new Date(new Date(o.placedAt).getTime() + ACCEPT_HOURS * 3_600_000).toISOString()
 const time = (iso: string) => new Date(iso).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' })
 
 /** Accept, cannot do, and ship with LR number. One place, used by the list and the detail page. */
@@ -95,9 +95,9 @@ type Actions = ReturnType<typeof useActions>
 function Money({ o }: { o: SellerOrder }) {
   return (
     <div className="border-t border-line pb-1 pt-2.5 text-[13px] text-mute">
-      <div className="flex justify-between py-0.5"><span>{S.so.orderValue}</span><span className="tabular-nums">{money(o.subTotal)}</span></div>
-      <div className="flex justify-between py-0.5"><span>{fmt(S.so.fee, { r: o.commissionRate })}</span><span className="tabular-nums">− {money(o.commissionAmount)}</span></div>
-      <div className="flex justify-between pt-1.5 text-[15px] font-semibold text-ink"><span>{S.so.youGet}</span><span className="tabular-nums">{money(o.subTotal - o.commissionAmount)}</span></div>
+      <div className="flex justify-between py-0.5"><span>{S.so.orderValue}</span><span className="tabular-nums">{money(o.orderValue ?? o.subTotal)}</span></div>
+      <div className="flex justify-between py-0.5"><span>{fmt(S.so.fee, { r: o.commissionRate })}</span><span className="tabular-nums">− {money(o.platformFee ?? o.commissionAmount)}</span></div>
+      <div className="flex justify-between pt-1.5 text-[15px] font-semibold text-ink"><span>{S.so.youGet}</span><span className="tabular-nums">{money(o.youGet ?? o.subTotal - o.commissionAmount)}</span></div>
     </div>
   )
 }
@@ -226,6 +226,8 @@ export function SellerOrderDetailPage() {
     )
   } else if (o.status === 'Accepted') {
     bar = <Button size="lg" block onClick={() => a.openShip(o)}>{S.so.shipNow}</Button>
+  } else if (o.status === 'Dispatched' && !sellerCanMarkDelivery()) {
+    bar = null // The shopkeeper confirms delivery.
   } else if (o.status === 'Dispatched') {
     bar = (
       <div className="flex gap-2">

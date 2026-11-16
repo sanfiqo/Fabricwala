@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { Check, Clock, MessageCircle, ShieldAlert, XCircle } from 'lucide-react'
+import { authApi } from '@/api/endpoints'
+import { isReal } from '@/api/client'
 import { homeFor, useMe } from '@/auth'
 import { Button } from '@/components/ui/button'
 import { LinkButton, PageLoading } from '@/components/ui/misc'
@@ -43,6 +45,8 @@ export default function PendingPage() {
   const body = rejected ? S.pending.rejectedBody : suspended ? S.pending.suspendedBody : S.pending.body
   const refresh = async () => {
     setBusy(true)
+    // After an approval the session cookie must be renewed, or it still says "not approved".
+    if (isReal('auth/refresh')) await authApi.refresh().catch(() => undefined)
     await qc.invalidateQueries({ queryKey: ['me'] })
     setBusy(false)
   }

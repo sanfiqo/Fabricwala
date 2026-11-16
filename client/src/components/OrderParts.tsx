@@ -15,6 +15,9 @@ export function PaymentBadge({ status }: { status: PaymentStatus }) {
   return <Badge tone={status === 'Paid' ? 'good' : status === 'Pending' ? 'warn' : 'neutral'}>{label(S.payment, status)}</Badge>
 }
 
+/** The shopkeeper can confirm delivery once the parcel is on the way (real) or has reached the city (sample data). */
+export const canConfirm = (s: SellerOrderStatus) => s === 'ReachedKashmir' || s === 'Dispatched'
+
 /** Placed, Accepted, Shipped, Reached your city, Delivered. */
 export const ORDER_STEPS: SellerOrderStatus[] = ['PendingAcceptance', 'Accepted', 'Dispatched', 'ReachedKashmir', 'Delivered']
 

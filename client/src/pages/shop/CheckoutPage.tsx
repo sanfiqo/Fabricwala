@@ -55,8 +55,13 @@ export default function CheckoutPage() {
     try {
       const intent = await orderApi.pay(order.id, payKey.current)
       // Razorpay checkout.js is not wired yet (P5.9). Without a gateway key the payment stays pending.
-      void intent
-      return USE_MOCKS ? 'success' : 'pending'
+      if (USE_MOCKS) return 'success'
+      // Development has a fake gateway with no screen: complete it here. In production this route does not exist and the payment stays pending until the gateway confirms.
+      if (import.meta.env.DEV && intent.gatewayOrderId?.startsWith('dev_')) {
+        const done = await orderApi.devComplete(intent.gatewayOrderId).catch(() => null)
+        if (done?.status === 'Paid') return 'success'
+      }
+      return 'pending'
     } catch {
       payKey.current = crypto.randomUUID()
       return 'failed'

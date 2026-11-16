@@ -50,6 +50,8 @@ function readAreaList(envValue: unknown, storageKey: string): Set<string> {
 /** Areas forced to the real API even in demo mode (VITE_REAL_AREAS or localStorage tc_real_areas), and areas forced to sample data (VITE_MOCK_AREAS / tc_mock_areas). */
 const REAL_AREAS = readAreaList(import.meta.env.VITE_REAL_AREAS, 'tc_real_areas')
 const MOCK_AREAS = readAreaList(import.meta.env.VITE_MOCK_AREAS, 'tc_mock_areas')
+/** True when this path goes to the real backend. Adapters use it to reshape real answers into what the screens expect. */
+export const isReal = (path: string) => !isMockFor(path)
 export function isMockFor(path: string): boolean {
   const area = areaOfPath(path)
   if (REAL_AREAS.has(area)) return false

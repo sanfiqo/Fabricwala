@@ -16,9 +16,9 @@ function Row({ r }: { r: PayoutRow }) {
   return (
     <li className="flex items-center gap-3 border-t border-line px-4 py-3.5 first:border-t-0">
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <span className="truncate font-medium">{r.buyer}</span>
+        <span className="truncate font-medium">{r.buyer || r.orderNumber}</span>
         <span className="text-[13px] text-mute">
-          {r.orderNumber} · {r.deliveredAt ? fmt(S.po.delivered, { d: formatShortDate(r.deliveredAt) }) : fmt(S.po.placed, { d: formatShortDate(r.placedAt) })}
+          {r.buyer ? `${r.orderNumber} · ` : ''}{r.deliveredAt ? fmt(S.po.delivered, { d: formatShortDate(r.deliveredAt) }) : fmt(S.po.placed, { d: formatShortDate(r.placedAt) })}
         </span>
       </span>
       <span className="flex shrink-0 flex-col items-end gap-1">

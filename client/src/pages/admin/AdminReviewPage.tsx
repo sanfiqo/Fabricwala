@@ -20,8 +20,8 @@ export default function AdminReviewPage() {
   const toast = useToast()
   const [note, setNote] = useState('')
   const [noteError, setNoteError] = useState('')
-  const list = useQuery({ queryKey: qk.adminBusinesses(), queryFn: () => adminApi.businesses() })
-  const b = list.data?.find((x) => String(x.id) === id)
+  const list = useQuery({ queryKey: ['admin-business', id], queryFn: () => adminApi.business(Number(id)) })
+  const b = list.data
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -33,6 +33,7 @@ export default function AdminReviewPage() {
 
   const done = async (text: string) => {
     await qc.invalidateQueries({ queryKey: qk.adminBusinesses() })
+    await qc.invalidateQueries({ queryKey: ['admin-business', id] })
     await qc.invalidateQueries({ queryKey: qk.adminDashboard })
     toast.success(text)
     nav('/admin/businesses', { replace: true })

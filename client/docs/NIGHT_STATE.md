@@ -1,3 +1,26 @@
+# Real API run (16 Nov) — report
+API: http://127.0.0.1:5075 (Development, fake gateway). Frontend: `.env.local` VITE_USE_MOCKS=false, proxy to 127.0.0.1:5075. Demo users from RUN_LOCAL.md (+91 99999 000xx), OTP 123456.
+- **`npm run e2e:real`: PASSED, 18 of 18 steps, no browser errors** (new shopkeeper signs up with pincode 452001, admin approves, shopkeeper checks again, searches, orders and pays on the fake gateway, seller accepts and ships, shopkeeper confirms delivery, seller payout shows). Screenshots: `docs/e2e-real/`. Earlier failed runs were an OTP rate-limit clash from two overlapping runs, not app bugs.
+- Build, lint: pass. Smoke on demo data (EN 390, HI 360, 73 screens): pass. Mock `npm run e2e` still works.
+
+| Area | Status | Notes |
+| --- | --- | --- |
+| auth | REAL, pass | +91 phone, OTP, refresh after approval |
+| business | REAL, pass | signup with pincode lookup, addresses. Document upload not tested (needs docType, see requests) |
+| catalog | REAL, pass | home, search, product, landed cost. Material/season filters not supported by the API |
+| cart | REAL, pass | add, update, checkout addresses from account |
+| orders | REAL, pass | checkout with Idempotency-Key, dev payment, list, track, confirm delivery, reorder (reorder checked by API probe only) |
+| seller | REAL, partly | orders accept and ship: pass. Dashboard, products, on/off: adapters from live answers, not clicked through in a browser. Add/Edit product and photos not tested |
+| payouts | REAL, pass | shows after delivery confirm |
+| notifications | REAL adapter, NOT verified | list is empty on the API, shape guessed |
+| account | REAL adapter, NOT verified | problem report submit and photo not tested live |
+| admin | REAL, partly | approvals list, review, approve: pass. Home loads. Settings and freight not tested (freight needs a cities list) |
+
+- **Mismatches fixed in adapters:** phone format, paged lists, flat business profile, addresses from `account/addresses`, commission fraction, order summaries, seller dashboard and payouts fields, `/active` toggle, claim reasons, settings map, admin dashboard windows. Real delivery is confirmed by the shopkeeper from "Dispatched" (seller status route rejects every value), so seller "reached/delivered" buttons are hidden in real mode.
+- **Backend requests:** `docs/BACKEND_REQUESTS.md` now lists only real gaps (states/cities, order list content, single-product photo upload, owner name, document type, rating, GST check).
+- **Run it yourself:** start the API, then in `client/` run `npm run dev -- --host`. For phone, the dev proxy already points at 127.0.0.1:5075 on the PC, so the phone only opens the Vite address (e.g. http://10.221.52.48:5173); the API address does not need to change. If login fails on the phone, check CORS and the Windows firewall for port 5173.
+
+---
 # NIGHT STATE
 
 ## Morning report

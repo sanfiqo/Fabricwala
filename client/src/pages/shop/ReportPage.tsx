@@ -68,7 +68,7 @@ export default function ReportPage() {
     mutationFn: async (v: Values) => {
       if (!so) throw new Error(S.report.noOrder)
       const claim = await claimApi.create(so.id, { reason: v.reason as ClaimReason, pieces: v.pieces, note: v.note.trim() || undefined })
-      for (const p of photos) await claimApi.addPhoto(claim.id, p.file)
+      for (const p of photos) await claimApi.addPhoto(claim.id, p.file, so.id)
     },
     onSuccess: async () => {
       clearDraft(draftKey)

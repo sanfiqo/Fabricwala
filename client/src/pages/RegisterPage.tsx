@@ -97,6 +97,7 @@ export default function RegisterPage() {
           displayName: values.displayName.trim(),
           gstin: values.gstin.trim().toUpperCase(),
           phone: me?.phone ?? '',
+          pincode: values.pincode,
         })
         done.current.business = true
       }

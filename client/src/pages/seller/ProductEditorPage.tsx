@@ -86,8 +86,8 @@ function Editor({ product }: { product?: ProductDetail }) {
           sku: v.sku.trim() || `${(v.colour || 'X').slice(0, 3)}-${(v.size || 'X').slice(0, 4)}-${Date.now().toString(36)}${i}`.toUpperCase().replace(/\s+/g, ''),
         })),
       }
-      const saved = product ? await sellerProductApi.update(product.id, input) : await sellerProductApi.create(input)
-      await sellerProductApi.saveSlabs(saved.id, slabsFromRows(slabCheck.sorted))
+      const withSlabs = { ...input, slabs: slabsFromRows(slabCheck.sorted) }
+      const saved = product ? await sellerProductApi.update(product.id, withSlabs) : await sellerProductApi.create(withSlabs)
       return saved
     },
     onSuccess: async (saved) => {

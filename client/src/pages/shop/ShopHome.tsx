@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Bell, MapPin, Package, SlidersHorizontal } from 'lucide-react'
-import { cartApi, productApi } from '@/api/endpoints'
+import { cartApi, orderApi, productApi } from '@/api/endpoints'
+import { isReal } from '@/api/client'
 import { useMe } from '@/auth'
 import { AddressSheet } from '@/components/AddressSheet'
 import { CartLink, roundIcon } from '@/components/HeaderButtons'
@@ -34,6 +35,11 @@ function OrderAgainCard() {
   const toast = useToast()
   const again = useMutation({
     mutationFn: async () => {
+      if (isReal('orders')) {
+        // The server puts the items in the cart and tells us what it had to skip.
+        const r = await orderApi.reorder(last!.id)
+        return { prices: {}, failed: r.skipped.length }
+      }
       const items = (last?.sellerOrders ?? []).flatMap((s) => s.items)
       const prices: Record<number, number> = {}
       let failed = 0
