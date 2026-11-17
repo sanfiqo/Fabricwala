@@ -50,7 +50,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddProblemDetails();
 builder.Services.AddApiRateLimiter();
 builder.Services.AddFrontendCors(builder.Configuration, builder.Environment);
-builder.Services.AddHealthChecks();
+builder.Services.AddAppHealthChecks();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentBusiness, CurrentBusiness>();
 builder.Services.AddScoped<IAuditTrail, HttpAuditTrail>();
@@ -113,6 +113,12 @@ if (!app.Environment.IsEnvironment("Testing"))
 }
 app.Logger.LogInformation("Startup: seeding finished, starting hosted services and the web server");
 
+// Behind a reverse proxy the real client address comes from X-Forwarded-For, but only from the proxies named in configuration.
+if (ForwardedHeadersSetup.Options(app.Configuration) is { } forwarded) app.UseForwardedHeaders(forwarded);
+else if (!app.Environment.IsDevelopment() && !app.Environment.IsEnvironment("Testing"))
+    app.Logger.LogWarning("Proxy:KnownProxies and Proxy:KnownNetworks are not set. If this app runs behind a proxy or load balancer, every client will look like the proxy to the rate limits and the audit log. See docs/DEPLOY.md.");
+if (!app.Environment.IsDevelopment() && !app.Environment.IsEnvironment("Testing")) app.UseHsts();
+app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseMiddleware<ApiErrorMiddleware>();
 app.UseRateLimiter();
 app.UseCors(FrontendCors.PolicyName);
@@ -157,6 +163,6 @@ app.MapBusinessSuspensionEndpoints();
 app.MapCartEndpoints();
 app.MapOrderEndpoints();
 app.MapPaymentEndpoints();
-app.MapHealthChecks("/api/v1/health");
+app.MapHealthEndpoints();
 
 app.Run();

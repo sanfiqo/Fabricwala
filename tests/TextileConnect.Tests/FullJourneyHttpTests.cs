@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Builder;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -18,10 +19,11 @@ namespace TextileConnect.Tests;
 /// </summary>
 public sealed class FullJourneyHttpTests
 {
-    internal static async Task<MarketplaceHttpFixture> StartAsync()
+    internal static async Task<MarketplaceHttpFixture> StartAsync(Action<WebApplication>? moreRoutes = null)
     {
         var fixture = await MarketplaceHttpFixture.StartAsync(app =>
         {
+            moreRoutes?.Invoke(app);
             app.MapProductEndpoints(); app.MapLandedCostEndpoints(); app.MapCartEndpoints(); app.MapOrderEndpoints();
             app.MapPaymentEndpoints(); app.MapReturnClaimEndpoints(); app.MapPayoutEndpoints(); app.MapNotificationEndpoints(); app.MapAccountEndpoints();
             app.MapRetailerExtrasEndpoints(); app.MapSellerDashboardEndpoints();
