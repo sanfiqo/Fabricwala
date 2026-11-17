@@ -27,3 +27,6 @@ Decided by the owner: the public name is **Fabricwala**. The domain is still to 
 
 ## 17 Nov 2026 - GST on delivery
 Decided by the owner: keep the current rule, no GST on the delivery charge. Risk noted: freight billed with goods is normally taxed at the goods rate, so the seller could be questioned by the tax office. To be confirmed with an accountant before launch.
+
+## 17 Nov 2026 - GST on the platform fee
+Decided by the owner: charge 18% GST on the platform fee and issue a platform tax invoice to the seller (fee + GST taken from the payout). Needs the platform company legal name, GSTIN and address; not built yet.
