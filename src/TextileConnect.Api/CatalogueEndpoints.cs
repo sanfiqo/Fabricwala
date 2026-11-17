@@ -23,6 +23,9 @@ public static class CatalogueEndpoints
         });
         app.MapGet("/api/v1/products", async ([AsParameters] CatalogueQuery query, MarketplaceDbContext db, IProductPricing pricing, ICurrentBusiness current, CancellationToken ct)
             => !query.IsValid ? Results.BadRequest() : Results.Ok(await WithQuotesAsync(await new CatalogueReader(db).ListAsync(query, ct), query.Pincode, pricing, current, ct))).RequireRateLimiting("search");
+        // Counts for the filter sheet. Same query parameters as the list; page, page size and sort are ignored.
+        app.MapGet("/api/v1/products/filters", async ([AsParameters] CatalogueQuery query, MarketplaceDbContext db, CancellationToken ct)
+            => !query.IsValid ? Results.BadRequest() : Results.Ok(await new CatalogueReader(db).FacetsAsync(query, ct))).RequireRateLimiting("search");
         app.MapGet("/api/v1/home", async (string? pincode, MarketplaceDbContext db, IProductPricing pricing, ICurrentBusiness current, CancellationToken ct) =>
         {
             var categories = await db.Categories.AsNoTracking().Where(x => x.IsActive).OrderBy(x => x.SortOrder).ThenBy(x => x.Id).Take(100)

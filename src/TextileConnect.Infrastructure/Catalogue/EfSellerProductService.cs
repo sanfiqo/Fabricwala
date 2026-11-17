@@ -188,6 +188,7 @@ public sealed partial class EfSellerProductService(MarketplaceDbContext db, Time
     {
         var baseSlug = NonSlugPattern().Replace(title.Trim().ToLowerInvariant(), "-").Trim('-');
         if (baseSlug.Length == 0) baseSlug = "product";
+        if (baseSlug == "filters") baseSlug = "filters-product"; // /products/filters is the filter counts route, not a product page
         if (baseSlug.Length > 80) baseSlug = baseSlug[..80].Trim('-');
         var slug = baseSlug;
         for (var n = 2; await db.Products.AnyAsync(x => x.Slug == slug, cancellationToken); n++) slug = $"{baseSlug}-{n}";

@@ -23,7 +23,7 @@ What you need: a MySQL 8 server where a user can create and drop databases. **Do
 
 ```powershell
 $env:TEXTILECONNECT_TEST_MYSQL = "Server=localhost;Port=3306;Uid=<user>;Pwd=<password>;SslMode=Disabled"   # the database name in it is ignored
-dotnet test TextileConnect.slnx --filter "FullyQualifiedName~MySqlSuiteTests|FullyQualifiedName~MySqlFlowIntegrationTests"
+dotnet test TextileConnect.slnx --filter "FullyQualifiedName~MySqlSuiteTests|FullyQualifiedName~MySqlFlowIntegrationTests|FullyQualifiedName~ProductSearchMySqlTests"
 ```
 
 - A test takes a few seconds longer than its in-memory twin because it applies all migrations. That also checks the migrations themselves (foreign keys, indexes).

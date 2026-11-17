@@ -36,7 +36,7 @@ jobs:
           TEXTILECONNECT_TEST_MYSQL: "Server=127.0.0.1;Port=3306;Uid=root;Pwd=root;SslMode=Disabled"
         run: >-
           dotnet test TextileConnect.slnx --no-build
-          --filter "FullyQualifiedName~MySqlSuiteTests|FullyQualifiedName~MySqlFlowIntegrationTests"
+          --filter "FullyQualifiedName~MySqlSuiteTests|FullyQualifiedName~MySqlFlowIntegrationTests|FullyQualifiedName~ProductSearchMySqlTests"
           --logger "trx;LogFileName=mysql.trx"
       - name: Vulnerable packages (fails when any is found)
         run: |

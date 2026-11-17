@@ -31,6 +31,11 @@ public sealed class MySqlSuiteTests
     [MySqlFact] public Task Open_claim_keeps_the_payout_on_hold() => MySqlStore.RunAsync(() => new PayoutHttpTests().Open_claim_keeps_the_payout_on_hold_until_resolvedAsync());
     [MySqlFact] public Task Claim_decision_releases_the_payout_minus_the_refund() => MySqlStore.RunAsync(() => new ReturnClaimHttpTests().Open_claim_holds_the_payout_and_the_decision_releases_it_minus_the_refundAsync());
 
+    // Filter counts and the stored popularity counter
+    [MySqlFact] public Task Without_filters_every_facet_counts_the_whole_catalogue() => MySqlStore.RunAsync(() => new FilterFacetsHttpTests().Without_filters_every_facet_counts_the_whole_catalogueAsync());
+    [MySqlFact] public Task A_filter_narrows_the_other_facets_but_not_its_own() => MySqlStore.RunAsync(() => new FilterFacetsHttpTests().A_filter_narrows_the_other_facets_but_not_its_ownAsync());
+    [MySqlFact] public Task Delivery_adds_the_pieces_to_the_units_sold_counter() => MySqlStore.RunAsync(() => new UnitsSoldCounterTests().Delivery_adds_the_pieces_once_and_the_search_shows_themAsync());
+
     // Stock under concurrency
     [MySqlFact] public Task Two_checkouts_for_the_last_stock_only_one_wins() => MySqlStore.RunAsync(() => new ConcurrencyHttpTests().Two_checkouts_for_the_last_stock_only_one_winsAsync());
 }
