@@ -206,9 +206,10 @@ Indexes: unique (Series, FinancialYear)
 | InvoiceNumber | varchar(32) | no |  |
 | InvoiceType | varchar(32) | no |  |
 | IssuedAt | datetime(6) | no |  |
+| RefundId | bigint | no |  |
 | SellerOrderId | bigint | no | -> SellerOrders.Id |
 
-Indexes: unique (InvoiceNumber); unique (SellerOrderId, InvoiceType)
+Indexes: unique (InvoiceNumber); unique (SellerOrderId, InvoiceType, RefundId)
 
 ## Notifications
 
@@ -233,6 +234,7 @@ Indexes: (UserId, IsRead, CreatedAtUtc)
 | GstAmount | decimal(18,2) | no |  |
 | GstRate | decimal(5,2) | no |  |
 | HsnCode | varchar(8) | yes |  |
+| ImageUrl | varchar(400) | yes |  |
 | ProductId | bigint | no | -> Products.Id |
 | Quantity | int | no |  |
 | SellerOrderId | bigint | no | -> SellerOrders.Id |

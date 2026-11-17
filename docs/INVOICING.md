@@ -9,6 +9,11 @@ Written 17 Nov 2026 from the code. The PDF is made with QuestPDF (Community lice
   - For an order without GST on the fee it is the plain "Platform fee statement", marked "Not a tax invoice".
   - The platform company is entered by the admin: `GET/PUT /api/v1/admin/platform-company` (legal name, GSTIN checked with the check character, address, pincode that must be in the directory, GST rate). The change is written to the audit log. Until it is complete, new orders carry no GST on the fee and a fee invoice for an order that does carry it answers `409 platform_details_missing`.
 
+- **Credit note** (`CreditNote`): when a refund has gone through for an order that has a tax invoice. Route: `GET /api/v1/invoices/refunds/{refundId}/credit-note`, for the seller or the retailer of that order. One per refund (two refunds on one order give two notes). It names the invoice it corrects, takes the GST share out of the refund in the same proportion as the invoice carried it (`CreditNoteSplit`: tax = refund x invoice tax / invoice total, the rest is the taxable value) and uses the same CGST/SGST or IGST. Number series per seller and financial year with a "C" in front: `C12/2627/00001`.
+  - `409 refund_not_processed`: the refund is still waiting for the gateway or failed.
+  - `409 credit_note_not_applicable`: no tax invoice was issued for the order (for example it was rejected before dispatch), so there is nothing to correct.
+  - Simplification to confirm with an accountant: the refund is treated as one amount that includes GST, spread over the whole invoice, including the delivery charge, which carries no GST. A refund that is only for delivery or only for one line would need a line level credit note.
+
 ## When
 Only after the seller order is **Dispatched or Delivered**. Before that the route answers `409 invoice_not_ready`. The invoice is made the first time someone asks for it and is stored; later requests return the same file and the same number. A tax invoice never changes after it is issued (a correction would be a credit note, not built).
 
@@ -36,7 +41,7 @@ Every number is copied from the order as frozen at checkout (price, GST rate, GS
 2. **GST on the platform fee: decided, 18%** (17 Nov 2026). Left to confirm with an accountant: the service code (998599), the rate, and whether the platform may take the GST from the payout this way.
 3. **Who issues the invoice** if the platform collects the payment (e-commerce operator rules, TCS 1%): this is a legal question, not answered here.
 4. **Retailer without GSTIN** is allowed and invoiced as "not registered".
-5. Not built: credit notes for refunds, e-invoicing (IRN) for sellers above the turnover threshold, e-way bill, a seller logo, a second language.
+5. Not built: e-invoicing (IRN) for sellers above the turnover threshold, e-way bill, a seller logo, a second language.
 6. HSN is optional on products, so a line can print "-". A stricter rule (4 digits above a turnover, 6 above another) needs the seller's turnover.
 
 ## Before applying the migration `AddGstInvoicing`

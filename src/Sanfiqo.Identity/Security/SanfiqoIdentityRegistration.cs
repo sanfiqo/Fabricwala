@@ -62,12 +62,22 @@ public static class SanfiqoIdentityRegistration
                     return;
                 }
 
+                // While the admin second step is required, an Admin session that never passed it is not accepted (a session from before the switch is asked to sign in again).
+                var configuration = context.HttpContext.RequestServices.GetRequiredService<IConfiguration>();
+                if (AdminMfa.IsRequired(configuration) && context.Principal!.IsInRole(SanfiqoRoleNames.Admin) && !AdminMfa.HasPassed(context.Principal))
+                {
+                    context.RejectPrincipal();
+                    return;
+                }
+
                 var currentStamp = await userManager.GetSecurityStampAsync(user);
                 var cookieStamp = context.Principal?.FindFirstValue(new IdentityOptions().ClaimsIdentity.SecurityStampClaimType);
                 if (SecurityStampRefreshPolicy.NeedsRenewal(cookieStamp, currentStamp))
                 {
                     var factory = context.HttpContext.RequestServices.GetRequiredService<IUserClaimsPrincipalFactory<ApplicationUser>>();
-                    context.ReplacePrincipal(await factory.CreateAsync(user));
+                    var renewed = await factory.CreateAsync(user);
+                    AdminMfa.Apply(renewed, user, AdminMfa.IsRequired(configuration), AdminMfa.HasPassed(context.Principal!));
+                    context.ReplacePrincipal(renewed);
                     context.ShouldRenew = true;
                 }
             };

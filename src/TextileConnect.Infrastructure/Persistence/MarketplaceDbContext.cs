@@ -243,7 +243,7 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
         builder.Entity<Invoice>().HasIndex(x => x.InvoiceNumber).IsUnique();
         builder.Entity<Invoice>().Property(x => x.InvoiceNumber).HasMaxLength(32);
         builder.Entity<Invoice>().Property(x => x.InvoiceType).HasMaxLength(32);
-        builder.Entity<Invoice>().HasIndex(x => new { x.SellerOrderId, x.InvoiceType }).IsUnique();
+        builder.Entity<Invoice>().HasIndex(x => new { x.SellerOrderId, x.InvoiceType, x.RefundId }).IsUnique();
         builder.Entity<InvoiceSequence>(entity =>
         {
             entity.HasKey(x => x.Id);
@@ -253,6 +253,7 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
             entity.HasIndex(x => new { x.Series, x.FinancialYear }).IsUnique();
         });
         builder.Entity<OrderItem>().Property(x => x.HsnCode).HasMaxLength(8);
+        builder.Entity<OrderItem>().Property(x => x.ImageUrl).HasMaxLength(400);
         builder.Entity<AuditLog>().HasKey(x => x.Id);
         builder.Entity<AuditLog>().Property(x => x.Action).HasMaxLength(64).IsRequired();
         builder.Entity<AuditLog>().Property(x => x.EntityId).HasMaxLength(64);

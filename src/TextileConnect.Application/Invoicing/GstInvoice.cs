@@ -6,14 +6,14 @@ public sealed record GstParty(string Name, string? Gstin, string Address, string
 public sealed record GstItemInput(string Title, string? Size, string? Colour, string? HsnCode, int Quantity, decimal UnitPrice, decimal GstRate, decimal GstAmount);
 
 public sealed record GstInvoiceInput(string InvoiceNumber, DateTime IssuedAtUtc, GstParty Seller, GstParty Buyer, string DeliveryAddress, string PlaceOfSupplyName,
-    string PlaceOfSupplyCode, string OrderNumber, IReadOnlyList<GstItemInput> Items, decimal Shipping, decimal Total, string? Note = null);
+    string PlaceOfSupplyCode, string OrderNumber, IReadOnlyList<GstItemInput> Items, decimal Shipping, decimal Total, string? Note = null, string? Title = null);
 
 public sealed record GstLine(int Number, string Description, string? HsnCode, int Quantity, decimal UnitPrice, decimal Taxable, decimal GstRate, decimal Tax);
 
 /// <summary>Everything a printed tax invoice shows. Made by <see cref="GstInvoiceBuilder"/>; the PDF only draws it.</summary>
 public sealed record GstInvoice(string InvoiceNumber, DateOnly Date, GstParty Seller, GstParty Buyer, string DeliveryAddress, string PlaceOfSupplyName,
     string PlaceOfSupplyCode, string OrderNumber, bool InterState, IReadOnlyList<GstLine> Lines, decimal Taxable, decimal Shipping, decimal Cgst, decimal Sgst,
-    decimal Igst, decimal RoundOff, decimal Total, string AmountInWords, string? Note = null)
+    decimal Igst, decimal RoundOff, decimal Total, string AmountInWords, string? Note = null, string? Title = null)
 {
     public decimal Tax => Cgst + Sgst + Igst;
 }
@@ -36,7 +36,7 @@ public static class GstInvoiceBuilder
         var computed = taxable + input.Shipping + tax;
         return new GstInvoice(input.InvoiceNumber, FinancialYear.IndiaDate(input.IssuedAtUtc), input.Seller, input.Buyer, input.DeliveryAddress, input.PlaceOfSupplyName,
             input.PlaceOfSupplyCode, input.OrderNumber, interState, lines, taxable, input.Shipping, half, interState ? 0m : tax - half, interState ? tax : 0m,
-            input.Total - computed, input.Total, IndianCurrencyWords.Of(input.Total), input.Note);
+            input.Total - computed, input.Total, IndianCurrencyWords.Of(input.Total), input.Note, input.Title);
     }
 
     private static string Describe(GstItemInput item)
@@ -58,5 +58,19 @@ public static class InvoiceNumbers
         var text = $"{series}/{financialYear}/{number:D5}";
         if (text.Length > 16) throw new InvalidOperationException($"Invoice number {text} is longer than the 16 characters the GST rules allow.");
         return text;
+    }
+}
+
+public static class CreditNoteSplit
+{
+    /// <summary>
+    /// A refund is an amount the retailer gets back, GST included. The credit note takes the same share of GST out of it as the invoice carried:
+    /// tax = refund x (tax of the invoice / total of the invoice), the rest is the taxable value.
+    /// </summary>
+    public static (decimal Taxable, decimal Tax) Split(decimal refund, decimal invoiceTax, decimal invoiceTotal)
+    {
+        if (invoiceTotal <= 0m) return (refund, 0m);
+        var tax = decimal.Round(refund * invoiceTax / invoiceTotal, 2, MidpointRounding.AwayFromZero);
+        return (refund - tax, tax);
     }
 }

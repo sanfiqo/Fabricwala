@@ -21,5 +21,20 @@ public static class InvoiceEndpoints
             var stream = await storage.OpenPrivateAsync(invoice.FileKey!, ct);
             return Results.File(stream, "application/pdf", $"{invoice.InvoiceNumber.Replace('/', '-')}.pdf");
         }).RequireAuthorization("ApprovedBusiness");
+
+        // The credit note of one refund, for the seller or the retailer of that order. 409 while the refund has not gone through, or when no tax invoice was issued to correct.
+        app.MapGet("/api/v1/invoices/refunds/{refundId:long}/credit-note", async (long refundId, ICurrentBusiness current, MarketplaceDbContext db, IFinanceService finance, IFileStorage storage, CancellationToken ct) =>
+        {
+            var businessId = current.RequireBusinessId();
+            var allowed = await (from refund in db.Refunds.AsNoTracking()
+                                 join sellerOrder in db.SellerOrders.AsNoTracking() on refund.SellerOrderId equals sellerOrder.Id
+                                 join order in db.Orders.AsNoTracking() on sellerOrder.OrderId equals order.Id
+                                 where refund.Id == refundId && (sellerOrder.ManufacturerBusinessId == businessId || order.RetailerBusinessId == businessId)
+                                 select refund.Id).AnyAsync(ct);
+            if (!allowed) return Results.NotFound();
+            var note = await finance.CreateCreditNoteAsync(refundId, ct);
+            var stream = await storage.OpenPrivateAsync(note.FileKey!, ct);
+            return Results.File(stream, "application/pdf", $"{note.InvoiceNumber.Replace('/', '-')}.pdf");
+        }).RequireAuthorization("ApprovedBusiness");
     }
 }

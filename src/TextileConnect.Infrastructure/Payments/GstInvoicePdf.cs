@@ -27,7 +27,7 @@ public static class GstInvoicePdf
         {
             column.Item().Row(row =>
             {
-                row.RelativeItem().Text("TAX INVOICE").Bold().FontSize(18);
+                row.RelativeItem().Text(invoice.Title ?? "TAX INVOICE").Bold().FontSize(18);
                 row.RelativeItem().AlignRight().Text("Original for recipient").FontSize(8);
             });
             column.Item().PaddingTop(6).Row(row =>

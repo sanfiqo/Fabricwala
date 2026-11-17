@@ -22,6 +22,7 @@ Errors are always `{ "code": "...", "message": "...", "fields": { ... } }`. Requ
 
 | Method | Path | Who may call | Limit | Body | Returns |
 | --- | --- | --- | --- | --- | --- |
+| GET | `/api/v1/admin/audit-log` | Admin |  |  |  |
 | GET | `/api/v1/admin/businesses` | Admin |  |  |  |
 | GET | `/api/v1/admin/businesses/{id}` | Admin |  |  |  |
 | POST | `/api/v1/admin/businesses/{id}/approve` | Admin |  |  |  |
@@ -49,6 +50,7 @@ Errors are always `{ "code": "...", "message": "...", "fields": { ... } }`. Requ
 | GET | `/api/v1/admin/reports/{kind}` | Admin |  |  |  |
 | GET | `/api/v1/admin/retailers` | Admin |  |  |  |
 | GET | `/api/v1/admin/sellers` | Admin |  |  |  |
+| PUT | `/api/v1/admin/sellers/{id}/commission-rate` | Admin |  | CommissionRateRequest |  |
 | GET | `/api/v1/admin/settings` | Admin |  |  |  |
 | PUT | `/api/v1/admin/settings` | Admin |  | SettingsRequest |  |
 | GET | `/api/v1/admin/shipping-rates` | Admin |  |  |  |
@@ -63,6 +65,9 @@ Errors are always `{ "code": "...", "message": "...", "fields": { ... } }`. Requ
 | GET | `/api/v1/auth/csrf` | public |  |  |  |
 | POST | `/api/v1/auth/logout` | any signed-in user |  |  |  |
 | GET | `/api/v1/auth/me` | any signed-in user |  |  |  |
+| POST | `/api/v1/auth/mfa/enable` | any signed-in user | auth | MfaCodeRequest |  |
+| POST | `/api/v1/auth/mfa/setup` | any signed-in user | auth |  |  |
+| POST | `/api/v1/auth/mfa/verify` | any signed-in user | auth | MfaCodeRequest |  |
 | POST | `/api/v1/auth/otp/request` | public | auth | OtpRequest |  |
 | POST | `/api/v1/auth/otp/verify` | public | auth | OtpVerifyRequest |  |
 | POST | `/api/v1/auth/refresh` | any signed-in user |  |  |  |
@@ -133,6 +138,7 @@ Errors are always `{ "code": "...", "message": "...", "fields": { ... } }`. Requ
 | Method | Path | Who may call | Limit | Body | Returns |
 | --- | --- | --- | --- | --- | --- |
 | GET | `/api/v1/invoices` | Retailer or Manufacturer, approved business |  |  |  |
+| GET | `/api/v1/invoices/refunds/{refundId}/credit-note` | any signed-in user, approved business |  |  |  |
 | GET | `/api/v1/invoices/seller-orders/{sellerOrderId}/download` | any signed-in user, approved business |  |  |  |
 
 ## landed-cost

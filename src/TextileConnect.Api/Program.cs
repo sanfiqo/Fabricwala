@@ -120,6 +120,8 @@ app.UseApiRequestLogging(); // first, so every later line carries the correlatio
 if (ForwardedHeadersSetup.Options(app.Configuration) is { } forwarded) app.UseForwardedHeaders(forwarded);
 else if (!app.Environment.IsDevelopment() && !app.Environment.IsEnvironment("Testing"))
     app.Logger.LogWarning("Proxy:KnownProxies and Proxy:KnownNetworks are not set. If this app runs behind a proxy or load balancer, every client will look like the proxy to the rate limits and the audit log. See docs/DEPLOY.md.");
+if (!app.Environment.IsDevelopment() && !app.Environment.IsEnvironment("Testing") && !Sanfiqo.Identity.AdminMfa.IsRequired(app.Configuration))
+    app.Logger.LogWarning("Auth:AdminMfa is not set to Required, so an admin signs in with the mobile code alone. Enrol every admin, then set it to Required. See docs/DEPLOY.md.");
 if (!app.Environment.IsDevelopment() && !app.Environment.IsEnvironment("Testing")) app.UseHsts();
 app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseMiddleware<ApiErrorMiddleware>();
