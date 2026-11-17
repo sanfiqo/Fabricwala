@@ -56,6 +56,7 @@ builder.Services.AddHealthChecks();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentBusiness, CurrentBusiness>();
 builder.Services.AddScoped<IAuditTrail, HttpAuditTrail>();
+builder.Services.AddSingleton<IImageVariantMaker, SkiaImageVariantMaker>();
 builder.Services.AddSingleton<IAuthorizationHandler, ApprovedBusinessHandler>();
 builder.Services.AddMarketplacePersistence(builder.Configuration);
 builder.Services.AddScoped<IBusinessDirectory, EfBusinessDirectory>();

@@ -46,7 +46,7 @@ public sealed partial class EfSellerProductService(MarketplaceDbContext db, Time
             return new SellerProductSummary(product.Id, product.Title, product.Slug, product.Status.ToString(), product.Status == ProductStatus.Active, product.Moq,
                 prices.Count == 0 ? null : prices.Min(), prices.Count == 0 ? null : prices.Max(), active.Sum(x => x.StockQty),
                 product.Status != ProductStatus.Draft && active.Any(x => x.StockQty <= lowStockThreshold), active.Count,
-                media.TryGetValue(product.Id, out var image) ? MediaUrl(product.Slug, image) : null, product.UpdatedAtUtc);
+                media.TryGetValue(product.Id, out var image) ? ProductMediaLinks.Url(product.Slug, image, ProductMediaLinks.Card) : null, product.UpdatedAtUtc);
         }).ToList();
         return new PagedResponse<SellerProductSummary>(items, total, page, pageSize);
     }
@@ -216,10 +216,6 @@ public sealed partial class EfSellerProductService(MarketplaceDbContext db, Time
             product.Material, product.FabricSpec, product.Season, product.HsnCode, product.WeightPerUnitGrams, product.DispatchDays, product.ReturnPolicy, product.GstRate, product.Moq, product.Unit,
             variants.Select(x => new SellerVariantResponse(x.Id, x.Sku, x.Size, x.Colour, x.StockQty, x.IsActive)).ToList(),
             slabs.Select(x => new SellerTierResponse(x.MinQty, x.MaxQty, x.PricePerUnit)).ToList(), product.AdminHold, product.UpdatedAtUtc,
-            media.Select((x, index) => new SellerMediaResponse(x.Id, MediaUrl(product.Slug, x), x.MediaType, x.SortOrder, index == 0)).ToList());
+            media.Select((x, index) => new SellerMediaResponse(x.Id, ProductMediaLinks.Url(product.Slug, x, ProductMediaLinks.Main), x.MediaType, x.SortOrder, index == 0) { SrcSet = ProductMediaLinks.SrcSet(product.Slug, x), Lqip = ProductMediaLinks.Lqip(x) }).ToList());
     }
-
-    private static string MediaUrl(string slug, ProductMedia media)
-        => Uri.TryCreate(media.FileKey, UriKind.Absolute, out var uri) && uri.Scheme is "https" or "http"
-            ? uri.AbsoluteUri : $"/api/v1/products/{Uri.EscapeDataString(slug)}/media/{media.Id}";
 }

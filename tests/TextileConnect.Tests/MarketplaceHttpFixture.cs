@@ -69,6 +69,7 @@ public sealed class MarketplaceHttpFixture(WebApplication app) : IAsyncDisposabl
         builder.Services.AddSingleton<TextileConnect.Application.Payments.IPaymentGateway, TextileConnect.Application.Payments.DevelopmentPaymentGateway>();
         builder.Services.AddScoped<TextileConnect.Application.Payments.IPaymentService, TextileConnect.Infrastructure.Payments.EfPaymentService>();
         builder.Services.AddSingleton<IFileStorage, MemoryFileStorage>();
+        builder.Services.AddSingleton<IImageVariantMaker, TextileConnect.Infrastructure.Files.SkiaImageVariantMaker>();
         builder.Services.AddDataProtection().UseEphemeralDataProtectionProvider();
         builder.Services.AddAntiforgery(options => options.HeaderName = "X-CSRF-TOKEN");
         builder.Services.AddRateLimiter(options =>

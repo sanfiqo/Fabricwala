@@ -46,8 +46,9 @@ public static class CatalogueEndpoints
             }
             return Results.Ok(product);
         });
-        app.MapGet("/api/v1/products/{slug}/media/{mediaId:long}", async (string slug, long mediaId, MarketplaceDbContext db, IFileStorage storage, ICurrentBusiness current, HttpContext context, CancellationToken ct) =>
+        app.MapGet("/api/v1/products/{slug}/media/{mediaId:long}", async (string slug, long mediaId, string? size, MarketplaceDbContext db, IFileStorage storage, ICurrentBusiness current, HttpContext context, CancellationToken ct) =>
         {
+            if (size is not null && !ProductMediaLinks.Sizes.Contains(size)) return Results.BadRequest();
             var media = await (from product in new CatalogueReader(db).PublicProducts
                                join item in db.ProductMedia.AsNoTracking() on product.Id equals item.ProductId
                                where product.Slug == slug && item.Id == mediaId select item).SingleOrDefaultAsync(ct);
@@ -59,12 +60,15 @@ public static class CatalogueEndpoints
             if (media is null) return Results.NotFound();
             if (Uri.TryCreate(media.FileKey, UriKind.Absolute, out var uri) && uri.Scheme is "https" or "http") return Results.Redirect(uri.AbsoluteUri);
             // Photos uploaded by sellers store the type found from the file bytes; older rows fall back to the file extension.
-            var contentType = media.MediaType is "image/jpeg" or "image/png" or "image/webp" ? media.MediaType
+            // ?size=main|card|thumb gives the small WebP copy; a photo that has no copies (older uploads) gives the original.
+            var variantKey = size is null ? null : ProductMediaLinks.KeyOf(media, size);
+            var contentType = variantKey is not null ? "image/webp"
+                : media.MediaType is "image/jpeg" or "image/png" or "image/webp" ? media.MediaType
                 : new FileExtensionContentTypeProvider().TryGetContentType(media.FileKey, out var byName) ? byName : null;
             context.Response.Headers["X-Content-Type-Options"] = "nosniff";
             try
             {
-                var stream = await storage.OpenPrivateAsync(media.FileKey, ct);
+                var stream = await storage.OpenPrivateAsync(variantKey ?? media.FileKey, ct);
                 return contentType is "image/jpeg" or "image/png" or "image/webp" or "image/avif" or "image/gif" or "video/mp4"
                     ? Results.File(stream, contentType)
                     : Results.File(stream, "application/octet-stream", "product-media");

@@ -163,6 +163,10 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
         builder.Entity<PriceSlab>().HasKey(x => x.Id);
         builder.Entity<PriceSlab>().Property(x => x.PricePerUnit).HasPrecision(18, 2);
         builder.Entity<ProductMedia>().HasKey(x => x.Id);
+        builder.Entity<ProductMedia>().Property(x => x.MainKey).HasMaxLength(300);
+        builder.Entity<ProductMedia>().Property(x => x.CardKey).HasMaxLength(300);
+        builder.Entity<ProductMedia>().Property(x => x.ThumbKey).HasMaxLength(300);
+        builder.Entity<ProductMedia>().Property(x => x.Lqip).HasMaxLength(2000);
         builder.Entity<ShippingRate>().HasKey(x => new { x.FromCityId, x.ToCityId, x.RateType });
         builder.Entity<ShippingRate>().Property(x => x.Rate).HasPrecision(18, 2);
         builder.Entity<ShippingRate>().Property(x => x.MinCharge).HasPrecision(18, 2);

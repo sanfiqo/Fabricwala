@@ -3139,6 +3139,13 @@
               "format": "int64",
               "type": "integer"
             }
+          },
+          {
+            "in": "query",
+            "name": "size",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {

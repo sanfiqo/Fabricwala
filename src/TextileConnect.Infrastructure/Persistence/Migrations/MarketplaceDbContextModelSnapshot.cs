@@ -533,9 +533,21 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
 
+                    b.Property<string>("CardKey")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
                     b.Property<string>("FileKey")
                         .IsRequired()
                         .HasColumnType("longtext");
+
+                    b.Property<string>("Lqip")
+                        .HasMaxLength(2000)
+                        .HasColumnType("varchar(2000)");
+
+                    b.Property<string>("MainKey")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
 
                     b.Property<string>("MediaType")
                         .IsRequired()
@@ -546,6 +558,10 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
 
                     b.Property<int>("SortOrder")
                         .HasColumnType("int");
+
+                    b.Property<string>("ThumbKey")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
 
                     b.HasKey("Id");
 

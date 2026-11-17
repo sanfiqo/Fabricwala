@@ -121,9 +121,9 @@ public sealed class CatalogueReader(MarketplaceDbContext db)
         var stock = await db.ProductVariants.AsNoTracking().Where(x => ids.Contains(x.ProductId) && x.IsActive).GroupBy(x => x.ProductId).Select(x => new { Id = x.Key, Quantity = x.Sum(v => v.StockQty) }).ToDictionaryAsync(x => x.Id, x => x.Quantity, ct);
         return new(page.Select(x => new ProductSummaryResponse(x.Product.Id, x.Product.Slug, x.Product.Title, x.Product.CategoryId,
             x.Product.SellerBusinessId, x.SellerName, x.CityId.HasValue ? cities.GetValueOrDefault(x.CityId.Value) ?? string.Empty : string.Empty,
-            media.FirstOrDefault(m => m.ProductId == x.Product.Id) is { } image ? MediaUrl(x.Product.Slug, image) : null,
+            media.FirstOrDefault(m => m.ProductId == x.Product.Id) is { } image ? ProductMediaLinks.Url(x.Product.Slug, image, ProductMediaLinks.Card) : null,
             x.Product.Moq, x.Product.Unit, x.PriceFrom, x.PriceTo, x.Product.Material, x.Product.Status)
-            { AvailableStock = stock.GetValueOrDefault(x.Product.Id), UnitsSold = x.UnitsSold }).ToList(), total, query.Page, query.PageSize);
+            { AvailableStock = stock.GetValueOrDefault(x.Product.Id), UnitsSold = x.UnitsSold, ImageSrcSet = FirstImage(media, x.Product.Id) is { } first ? ProductMediaLinks.SrcSet(x.Product.Slug, first) : null, ImageLqip = FirstImage(media, x.Product.Id) is { } preview ? ProductMediaLinks.Lqip(preview) : null }).ToList(), total, query.Page, query.PageSize);
     }
 
     public async Task<ProductDetailResponse?> DetailAsync(string slug, CancellationToken ct)
@@ -139,12 +139,16 @@ public sealed class CatalogueReader(MarketplaceDbContext db)
         var media = await db.ProductMedia.AsNoTracking().Where(x => x.ProductId == product.Id).OrderBy(x => x.SortOrder).ThenBy(x => x.Id).ToListAsync(ct);
         var result = ProductDetailResponse.From(new(product, variants, slabs, media));
         return result with { SellerName = seller.DisplayName, SellerCity = city ?? string.Empty,
-            ImageUrl = media.FirstOrDefault() is { } image ? MediaUrl(slug, image) : null,
-            Media = media.Select(x => new ProductMediaResponse(x.Id, MediaUrl(slug, x), x.MediaType, x.SortOrder)).ToList() };
+            ImageUrl = media.FirstOrDefault() is { } image ? ProductMediaLinks.Url(slug, image, ProductMediaLinks.Main) : null,
+            ImageSrcSet = media.FirstOrDefault() is { } first ? ProductMediaLinks.SrcSet(slug, first) : null,
+            ImageLqip = media.FirstOrDefault() is { } preview ? ProductMediaLinks.Lqip(preview) : null,
+            Media = media.Select(x => new ProductMediaResponse(x.Id, ProductMediaLinks.Url(slug, x, ProductMediaLinks.Main), x.MediaType, x.SortOrder) { SrcSet = ProductMediaLinks.SrcSet(slug, x), Lqip = ProductMediaLinks.Lqip(x) }).ToList() };
     }
 
-    public static string MediaUrl(string slug, ProductMedia media) => Uri.TryCreate(media.FileKey, UriKind.Absolute, out var uri) && uri.Scheme is "https" or "http"
-        ? uri.AbsoluteUri : $"/api/v1/products/{Uri.EscapeDataString(slug)}/media/{media.Id}";
+    private static ProductMedia? FirstImage(IEnumerable<ProductMedia> media, long productId) => media.FirstOrDefault(m => m.ProductId == productId);
+
+    /// <summary>The address of a product photo. Kept here because other endpoints already call it; the rules are in ProductMediaLinks.</summary>
+    public static string MediaUrl(string slug, ProductMedia media) => ProductMediaLinks.Url(slug, media);
 
     private sealed class CatalogueRow
     {
