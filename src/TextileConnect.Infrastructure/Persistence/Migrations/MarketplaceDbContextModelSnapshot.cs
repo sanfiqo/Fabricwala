@@ -623,6 +623,9 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
 
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<long>("RaisedByBusinessId")
                         .HasColumnType("bigint");
 
@@ -637,6 +640,9 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("datetime(6)");
+
                     b.HasKey("Id");
 
                     b.ToTable("Disputes");
@@ -647,6 +653,9 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime(6)");
 
                     b.Property<string>("Description")
                         .IsRequired()
@@ -662,6 +671,9 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("datetime(6)");
+
                     b.HasKey("Id");
 
                     b.ToTable("Enquiries");
@@ -673,11 +685,17 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
 
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<long>("ProductId")
                         .HasColumnType("bigint");
 
                     b.Property<long>("RetailerBusinessId")
                         .HasColumnType("bigint");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("datetime(6)");
 
                     b.HasKey("Id");
 
@@ -696,6 +714,9 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                     b.Property<DateTime>("ClosesAtUtc")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<long>("OwnerBusinessId")
                         .HasColumnType("bigint");
 
@@ -708,6 +729,9 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
 
                     b.Property<int>("TargetQuantity")
                         .HasColumnType("int");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("datetime(6)");
 
                     b.HasKey("Id");
 
@@ -723,11 +747,17 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                     b.Property<long>("BusinessId")
                         .HasColumnType("bigint");
 
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<long>("GroupBuyId")
                         .HasColumnType("bigint");
 
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("datetime(6)");
 
                     b.HasKey("Id");
 
@@ -740,6 +770,9 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
 
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<long>("LogisticsBusinessId")
                         .HasColumnType("bigint");
 
@@ -749,6 +782,9 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("longtext");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("datetime(6)");
 
                     b.HasKey("Id");
 
@@ -760,6 +796,9 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime(6)");
 
                     b.Property<long>("EnquiryId")
                         .HasColumnType("bigint");
@@ -773,6 +812,9 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
 
                     b.Property<decimal>("UnitPrice")
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("datetime(6)");
 
                     b.Property<int>("ValidDays")
                         .HasColumnType("int");
@@ -791,6 +833,9 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                     b.Property<string>("Comment")
                         .HasColumnType("longtext");
 
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<long>("ProductId")
                         .HasColumnType("bigint");
 
@@ -799,6 +844,9 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
 
                     b.Property<long>("RetailerBusinessId")
                         .HasColumnType("bigint");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("datetime(6)");
 
                     b.HasKey("Id");
 
@@ -1464,6 +1512,9 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<long>("ManufacturerBusinessId")
                         .HasColumnType("bigint");
 
@@ -1482,6 +1533,9 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("longtext");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("datetime(6)");
 
                     b.HasKey("Id");
 

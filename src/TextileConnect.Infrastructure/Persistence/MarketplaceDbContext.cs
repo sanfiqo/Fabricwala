@@ -46,6 +46,33 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
     public DbSet<PlatformSetting> PlatformSettings => Set<PlatformSetting>();
     public DbSet<Enquiry> Enquiries => Set<Enquiry>(); public DbSet<Quotation> Quotations => Set<Quotation>(); public DbSet<Dispute> Disputes => Set<Dispute>(); public DbSet<Review> Reviews => Set<Review>(); public DbSet<Favourite> Favourites => Set<Favourite>(); public DbSet<GroupBuy> GroupBuys => Set<GroupBuy>(); public DbSet<GroupBuyParticipant> GroupBuyParticipants => Set<GroupBuyParticipant>(); public DbSet<LogisticsAssignment> LogisticsAssignments => Set<LogisticsAssignment>();
 
+    public override int SaveChanges(bool acceptAllChangesOnSuccess)
+    {
+        Stamp();
+        return base.SaveChanges(acceptAllChangesOnSuccess);
+    }
+
+    public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+    {
+        Stamp();
+        return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+    }
+
+    /// <summary>New rows get CreatedAtUtc and UpdatedAtUtc, changed rows get a new UpdatedAtUtc.</summary>
+    private void Stamp()
+    {
+        var now = DateTime.UtcNow;
+        foreach (var entry in ChangeTracker.Entries<TextileConnect.Domain.ITimestamped>())
+        {
+            if (entry.State == EntityState.Added)
+            {
+                if (entry.Entity.CreatedAtUtc == default) entry.Entity.CreatedAtUtc = now;
+                if (entry.Entity.UpdatedAtUtc == default) entry.Entity.UpdatedAtUtc = entry.Entity.CreatedAtUtc;
+            }
+            else if (entry.State == EntityState.Modified) entry.Entity.UpdatedAtUtc = now;
+        }
+    }
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         ConfigureRelationships(builder);

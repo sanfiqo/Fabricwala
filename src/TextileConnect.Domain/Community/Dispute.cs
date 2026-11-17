@@ -1,2 +1,2 @@
 namespace TextileConnect.Domain.Community;
-public sealed class Dispute { public long Id { get; set; } public long SellerOrderId { get; set; } public long RaisedByBusinessId { get; set; } public required string Reason { get; set; } public string Status { get; set; } = "Open"; }
+public sealed class Dispute : ITimestamped { public long Id { get; set; } public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow; public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow; public long SellerOrderId { get; set; } public long RaisedByBusinessId { get; set; } public required string Reason { get; set; } public string Status { get; set; } = "Open"; }
