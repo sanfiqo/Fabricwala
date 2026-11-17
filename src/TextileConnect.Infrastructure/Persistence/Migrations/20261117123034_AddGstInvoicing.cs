@@ -11,10 +11,6 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropIndex(
-                name: "IX_Invoices_SellerOrderId",
-                table: "Invoices");
-
             migrationBuilder.AddColumn<decimal>(
                 name: "CommissionGst",
                 table: "SellerOrders",
@@ -71,6 +67,11 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                 columns: new[] { "SellerOrderId", "InvoiceType" },
                 unique: true);
 
+            // The foreign key on SellerOrderId needs an index all the time, so the new composite index (which starts with SellerOrderId) is built before the old one is dropped.
+            migrationBuilder.DropIndex(
+                name: "IX_Invoices_SellerOrderId",
+                table: "Invoices");
+
             migrationBuilder.CreateIndex(
                 name: "IX_InvoiceSequences_Series_FinancialYear",
                 table: "InvoiceSequences",
@@ -83,6 +84,11 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
         {
             migrationBuilder.DropTable(
                 name: "InvoiceSequences");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Invoices_SellerOrderId",
+                table: "Invoices",
+                column: "SellerOrderId");
 
             migrationBuilder.DropIndex(
                 name: "IX_Invoices_SellerOrderId_InvoiceType",
@@ -113,11 +119,6 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                 oldClrType: typeof(string),
                 oldType: "varchar(32)",
                 oldMaxLength: 32);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Invoices_SellerOrderId",
-                table: "Invoices",
-                column: "SellerOrderId");
         }
     }
 }
