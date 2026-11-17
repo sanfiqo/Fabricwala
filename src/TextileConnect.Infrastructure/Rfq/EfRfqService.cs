@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using TextileConnect.Application.Businesses;
 using TextileConnect.Application.Common;
 using TextileConnect.Application.Rfq;
+using TextileConnect.Domain.Businesses;
 using TextileConnect.Domain.Catalogue;
 using TextileConnect.Domain.Notifications;
 using TextileConnect.Domain.Rfq;
@@ -15,6 +16,8 @@ public sealed class EfRfqService(MarketplaceDbContext db, IAuditTrail? audit = n
     public const int MaxOpenPerRetailer = 10;
     public const int DefaultDays = 14;
     public const int MaxDays = 30;
+    /// <summary>How many manufacturers of the category are told about a new request.</summary>
+    public const int MaxCategoryAlerts = 50;
 
     private DateTime Now => (clock ?? TimeProvider.System).GetUtcNow().UtcDateTime;
 
@@ -65,6 +68,14 @@ public sealed class EfRfqService(MarketplaceDbContext db, IAuditTrail? audit = n
         db.Rfqs.Add(rfq);
         await db.SaveChangesAsync(cancellationToken);
         audit?.Record("rfq.created", nameof(Domain.Rfq.Rfq), rfq.Id, $"quantity {rfq.Quantity}, {days} days");
+        // Tell the manufacturers who sell in the category of the request (at most MaxCategoryAlerts of them), so the request does not wait for somebody to open the feed.
+        if (rfq.CategoryId is { } alertCategory)
+        {
+            var sellers = await db.Products.AsNoTracking().Where(p => p.CategoryId == alertCategory && !p.IsDeleted && p.Status == ProductStatus.Active).Select(p => p.SellerBusinessId).Distinct().Take(MaxCategoryAlerts * 2).ToListAsync(cancellationToken);
+            var approved = await db.Businesses.AsNoTracking().Where(b => sellers.Contains(b.Id) && !b.IsDeleted && b.BusinessType == BusinessType.Manufacturer && b.VerificationStatus == VerificationStatus.Approved)
+                .Select(b => b.Id).Take(MaxCategoryAlerts).ToListAsync(cancellationToken);
+            await NotifyBusinessesAsync(approved, "New request for quotation", $"A buyer asks for {rfq.Quantity} pieces: \"{rfq.Title}\".", $"/seller/rfqs/{rfq.Id}", now, cancellationToken);
+        }
         await db.SaveChangesAsync(cancellationToken);
         return (await GetMineAsync(retailerBusinessId, rfq.Id, cancellationToken))!;
     }

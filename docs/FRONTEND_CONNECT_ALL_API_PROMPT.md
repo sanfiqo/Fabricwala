@@ -74,6 +74,21 @@ The profile (`auth/me`, `otp/verify`, `refresh`) has a new field `mfaPending`: `
 - When the profile comes back with `mfaPending = null` and roles filled, go to the admin home. A normal retailer or seller never sees any of this.
 - The second step is switched by the server setting `Auth:AdminMfa` (off by default); build the screens regardless and test them by running the backend with `Auth__AdminMfa=Required`.
 
+## 4b. Optional parts behind switches, and the register (added 18 Nov 2026)
+
+**Feature switches.** `GET /api/v1/features` returns `{ "Rfq": true|false }` (public). Load it once after sign-in and **hide the screens of a feature that is off**; a call to such a route answers `404` with code `feature_off`. An admin switches a part with `PUT /api/v1/admin/features/{name}` and `{ "on": true }` (add a small settings screen for it).
+
+**Requests for quotation** (read `docs/RFQ.md` first; all behind `Rfq`):
+- Retailer: "Ask for a price" form (`POST /api/v1/rfqs`: title, description, optional category, quantity, unit, optional target price, delivery pincode, optional needed-by date, days open 1 to 30; show `fields` errors), "My requests" (`GET /api/v1/rfqs?status=`), request detail with all quotations cheapest first (`GET /api/v1/rfqs/{id}`), cancel, and **accept** a quotation (confirm dialog: "the others are rejected"). After it is accepted the winner's `contact` (name, phone) is shown: say that the platform only connects the two.
+- Manufacturer: feed of open requests (`GET /api/v1/seller/rfqs?categoryId=&q=`; each row has `iHaveQuoted`), request detail (the buyer is not named), quote form (`PUT /api/v1/seller/rfqs/{id}/quotation`: price per piece, quantity up to what was asked, days to deliver, note), withdraw (`DELETE` same path), "My quotations" (`GET /api/v1/seller/quotations?status=`). After acceptance the detail has `buyerContact`.
+- Admin: list (`GET /api/v1/admin/rfqs?status=`) and close with a reason (`POST /api/v1/admin/rfqs/{id}/close`).
+- Statuses to show in both languages: Open, Expired, Awarded, Cancelled, Closed; quotation: Submitted, Withdrawn, Accepted, Rejected. The notification links look like `/rfqs/{id}` (retailer) and `/seller/rfqs/{id}` (manufacturer).
+- The error codes are `rfq_limit_reached`, `rfq_not_open`, `quotation_not_available`, `quotation_final`, `rfq_changed`, `pincode_unknown`, `pincode_invalid`, `validation_failed` (with `fields`): show a friendly line for each.
+
+**Invoice register for the accountant.** Manufacturer: `GET /api/v1/seller/invoices/register?from=yyyy-MM-dd&to=yyyy-MM-dd` (JSON, paged: `rows`, `sales` and `purchases` totals) and the same with `&format=csv` as a download button ("Download for my accountant"). Admin: `GET /api/v1/admin/invoices/register` (platform fee invoices, optional `sellerId`). Default is this month; show the totals above the table; credit notes are listed as `CreditNote` and count as minus.
+
+**Platform company** (admin): `GET/PUT /api/v1/admin/platform-company`: until it is complete (`isComplete`) new orders carry no GST on the platform fee; say so on the screen.
+
 ## 5. Things to check on every screen
 
 - Loading, empty, error and offline states; no spinner that never ends; a failed save keeps what the user typed.

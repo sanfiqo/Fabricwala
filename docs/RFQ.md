@@ -47,7 +47,7 @@ Errors use the usual `{ code, message, fields }`. Codes: `feature_off` (404), `v
 ## 5. What is not built (on purpose)
 - **No payable order comes out of an accepted quotation.** A request is for goods that are often not in the catalogue, and an order line needs a catalogue product and variant. Today the two businesses are given each other's contact and deal directly. That means the platform earns no commission on these deals. Turning a quotation into an order (a "custom order" with its own lines, payment, delivery and invoice) is the next step, and a decision for the owner: whether the commission applies and how the order lines are described.
 - No attachments (tech pack, photos) and no messages inside the request. B2B-4 and B2B-9 in the plan add milestones and files.
-- No matching or alerts to manufacturers by category; they look at the feed. A notification to manufacturers of a category is an easy later step.
+- Alerts go only to manufacturers who have an active product in the category of the request (at most 50, in-app notification); a request without a category is found in the feed only. There is no WhatsApp or SMS alert yet.
 - No limit on how many requests a retailer makes in a day beyond the 10 open ones.
 
 ## 6. Switching it on

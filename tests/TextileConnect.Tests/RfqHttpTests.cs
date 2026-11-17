@@ -296,6 +296,29 @@ public sealed class RfqHttpTests
     }
 
     [Fact]
+    public async Task Manufacturers_who_sell_in_the_category_are_told_about_a_new_request_and_the_others_are_not()
+    {
+        await using var world = await StartAsync();
+        using (var scope = world.Fixture.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
+            db.Products.Add(new Product { SellerBusinessId = SellerAId, CategoryId = world.CategoryId, Title = "Kids sweater", Slug = "kids-sweater-rfq", Moq = 10, Status = ProductStatus.Active });
+            db.Products.Add(new Product { SellerBusinessId = SellerBId, CategoryId = world.CategoryId, Title = "Old draft", Slug = "old-draft-rfq", Moq = 10, Status = ProductStatus.Draft });   // a draft does not count
+            await db.SaveChangesAsync();
+        }
+
+        var withCategory = await CreateAsync(world.Retailer, world.CategoryId);
+        await CreateAsync(world.Retailer, null, "A request without any category");
+
+        using var check = world.Fixture.Services.CreateScope();
+        var notifications = check.ServiceProvider.GetRequiredService<MarketplaceDbContext>().Notifications;
+        var told = await notifications.Where(x => x.Title == "New request for quotation").ToListAsync();
+        var one = Assert.Single(told);
+        Assert.Equal("u-seller-a", one.UserId);
+        Assert.Equal($"/seller/rfqs/{withCategory}", one.Link);
+    }
+
+    [Fact]
     public async Task The_feed_can_be_filtered_by_category_and_words()
     {
         await using var world = await StartAsync();
