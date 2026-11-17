@@ -253,6 +253,7 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
             entity.HasIndex(x => new { x.Series, x.FinancialYear }).IsUnique();
         });
         builder.Entity<OrderItem>().Property(x => x.HsnCode).HasMaxLength(8);
+        builder.Entity<OrderItem>().Property(x => x.ImageUrl).HasMaxLength(400);
         builder.Entity<AuditLog>().HasKey(x => x.Id);
         builder.Entity<AuditLog>().Property(x => x.Action).HasMaxLength(64).IsRequired();
         builder.Entity<AuditLog>().Property(x => x.EntityId).HasMaxLength(64);

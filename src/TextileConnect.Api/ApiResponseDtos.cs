@@ -74,6 +74,8 @@ public sealed record CartResponse(IReadOnlyList<CartGroupResponse> Groups, decim
 public sealed record OrderItemResponse(long Id, long ProductId, string Title, string? Size, string? Colour, int Quantity, decimal UnitPrice, decimal GstRate, decimal LineTotal)
 {
     public decimal GstAmount { get; init; }
+    /// <summary>Small copy of the main product photo as it was at checkout; null when the product had none.</summary>
+    public string? ImageUrl { get; init; }
 }
 public sealed record StatusHistoryResponse(string Status, string? Note, DateTime ChangedAt);
 public sealed record ShipmentResponse(string? CarrierName, string? LrNumber, DateTime? DispatchedAt);
@@ -88,7 +90,7 @@ public sealed record SellerOrderResponse(long Id, long OrderId, string OrderNumb
     /// <summary>GST on the platform fee, taken from the payout together with the fee (0 when the platform has no GSTIN set up).</summary>
     public decimal PlatformFeeGst { get; init; }
     public DateTime? AcceptDeadline { get; init; }
-    public static SellerOrderResponse From(SellerOrder value) => new(value.Id, value.OrderId, value.Order?.OrderNumber ?? string.Empty, $"{value.Order?.OrderNumber ?? ""}-{value.Id}", string.Empty, string.Empty, value.Order?.DeliveryCity ?? string.Empty, value.Status == SellerOrderStatus.Pending ? "PendingAcceptance" : value.Status, value.Order?.PaymentStatus ?? TextileConnect.Domain.PaymentStatus.Pending, value.PlacedAtUtc, value.Items.Select(x => new OrderItemResponse(x.Id, x.ProductId, x.Title, x.Size, x.Colour, x.Quantity, x.UnitPrice, x.GstRate, x.LineTotal) { GstAmount = x.GstAmount }).ToList(), value.SubTotal, value.ShippingAmount, value.TaxAmount, value.Total, value.CommissionRate, value.CommissionAmount, value.RejectReason, value.History.OrderBy(x => x.ChangedAtUtc).ThenBy(x => x.Id).Select(x => new StatusHistoryResponse(x.Status, x.Note, x.ChangedAtUtc)).ToList(), null)
+    public static SellerOrderResponse From(SellerOrder value) => new(value.Id, value.OrderId, value.Order?.OrderNumber ?? string.Empty, $"{value.Order?.OrderNumber ?? ""}-{value.Id}", string.Empty, string.Empty, value.Order?.DeliveryCity ?? string.Empty, value.Status == SellerOrderStatus.Pending ? "PendingAcceptance" : value.Status, value.Order?.PaymentStatus ?? TextileConnect.Domain.PaymentStatus.Pending, value.PlacedAtUtc, value.Items.Select(x => new OrderItemResponse(x.Id, x.ProductId, x.Title, x.Size, x.Colour, x.Quantity, x.UnitPrice, x.GstRate, x.LineTotal) { GstAmount = x.GstAmount, ImageUrl = x.ImageUrl }).ToList(), value.SubTotal, value.ShippingAmount, value.TaxAmount, value.Total, value.CommissionRate, value.CommissionAmount, value.RejectReason, value.History.OrderBy(x => x.ChangedAtUtc).ThenBy(x => x.Id).Select(x => new StatusHistoryResponse(x.Status, x.Note, x.ChangedAtUtc)).ToList(), null)
         { OrderValue = value.Total, PlatformFee = value.CommissionAmount, YouGet = value.Total - value.CommissionAmount - value.CommissionGst, PlatformFeeGst = value.CommissionGst, AcceptDeadline = value.Status == SellerOrderStatus.Pending ? value.AcceptDeadlineUtc : null };
 }
 
@@ -102,7 +104,7 @@ public sealed record OrderResponse(long Id, string OrderNumber, DateTime? Placed
 public static class ApiResponseMappings
 {
     public static OrderItemResponse OrderLine(TextileConnect.Domain.Orders.OrderItem x)
-        => new(x.Id, x.ProductId, x.Title, x.Size, x.Colour, x.Quantity, x.UnitPrice, x.GstRate, x.LineTotal) { GstAmount = x.GstAmount };
+        => new(x.Id, x.ProductId, x.Title, x.Size, x.Colour, x.Quantity, x.UnitPrice, x.GstRate, x.LineTotal) { GstAmount = x.GstAmount, ImageUrl = x.ImageUrl };
     public static ProductSummaryResponse Product(Product value) => ProductSummaryResponse.From(value);
     public static ProductDetailResponse ProductDetail(ProductDetail value) => ProductDetailResponse.From(value);
     public static CartResponse Cart(CartView value) => CartResponse.From(value);

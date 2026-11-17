@@ -868,6 +868,10 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                         .HasMaxLength(8)
                         .HasColumnType("varchar(8)");
 
+                    b.Property<string>("ImageUrl")
+                        .HasMaxLength(400)
+                        .HasColumnType("varchar(400)");
+
                     b.Property<long>("ProductId")
                         .HasColumnType("bigint");
 

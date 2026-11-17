@@ -70,7 +70,12 @@ public sealed partial class EfCheckoutService(MarketplaceDbContext db, ICartServ
         // GST on the platform fee is charged only while the platform company is set up (GSTIN, name, address), so that the tax can be invoiced.
         var feeGstPercent = (await PlatformCompany.LoadAsync(db, cancellationToken))?.FeeGstRatePercent ?? 0m;
         var productIds = view.Sellers.SelectMany(g => g.Items).Select(i => i.ProductId).Distinct().ToList();
-        var hsnCodes = await db.Products.AsNoTracking().Where(x => productIds.Contains(x.Id)).ToDictionaryAsync(x => x.Id, x => x.HsnCode, cancellationToken);
+        var products = await db.Products.AsNoTracking().Where(x => productIds.Contains(x.Id)).Select(x => new { x.Id, x.HsnCode, x.Slug }).ToDictionaryAsync(x => x.Id, cancellationToken);
+        var hsnCodes = products.ToDictionary(x => x.Key, x => x.Value.HsnCode);
+        var firstPhotos = (await db.ProductMedia.AsNoTracking().Where(x => productIds.Contains(x.ProductId)).OrderBy(x => x.SortOrder).ThenBy(x => x.Id).ToListAsync(cancellationToken))
+            .GroupBy(x => x.ProductId).ToDictionary(g => g.Key, g => g.First());
+        string? PhotoOf(long productId) => firstPhotos.TryGetValue(productId, out var photo) && products.TryGetValue(productId, out var product)
+            ? TextileConnect.Application.Catalogue.ProductMediaLinks.Url(product.Slug, photo, TextileConnect.Application.Catalogue.ProductMediaLinks.Thumb) : null;
         foreach (var group in view.Sellers)
         {
             var rate = sellers[group.SellerBusinessId].CommissionRateOverride ?? defaultRate;
@@ -80,7 +85,7 @@ public sealed partial class EfCheckoutService(MarketplaceDbContext db, ICartServ
                 sellerOrder.Items.Add(new OrderItem
                 {
                     SellerOrder = sellerOrder, ProductId = line.ProductId, VariantId = line.VariantId, Title = line.Title, Size = line.Size, Colour = line.Colour,
-                    Quantity = line.Quantity, UnitPrice = line.SlabPrice, GstRate = line.GstRate, GstAmount = line.LineGst, HsnCode = hsnCodes.GetValueOrDefault(line.ProductId),
+                    Quantity = line.Quantity, UnitPrice = line.SlabPrice, GstRate = line.GstRate, GstAmount = line.LineGst, HsnCode = hsnCodes.GetValueOrDefault(line.ProductId), ImageUrl = PhotoOf(line.ProductId),
                 });
                 variants[line.VariantId].StockQty -= line.Quantity;
             }

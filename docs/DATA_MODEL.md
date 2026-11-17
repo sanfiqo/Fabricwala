@@ -233,6 +233,7 @@ Indexes: (UserId, IsRead, CreatedAtUtc)
 | GstAmount | decimal(18,2) | no |  |
 | GstRate | decimal(5,2) | no |  |
 | HsnCode | varchar(8) | yes |  |
+| ImageUrl | varchar(400) | yes |  |
 | ProductId | bigint | no | -> Products.Id |
 | Quantity | int | no |  |
 | SellerOrderId | bigint | no | -> SellerOrders.Id |

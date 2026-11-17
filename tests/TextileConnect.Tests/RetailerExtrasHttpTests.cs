@@ -186,6 +186,40 @@ public sealed class RetailerExtrasHttpTests
         Assert.Matches(@"^PF-\d{4}-00001\.pdf$", fee.Content.Headers.ContentDisposition!.FileName!.Trim('"'));
     }
 
+    [Fact]
+    public async Task An_order_line_shows_the_product_photo_as_it_was_at_checkoutAsync()
+    {
+        var (fixture, retailer, seller) = await StartAsync();
+        await using var _ = fixture; using var __ = retailer; using var ___ = seller;
+        var first = await SellerOrderHttpTests.PlaceAsync(retailer, pay: false);
+        var firstUrl = (await GetAsync(retailer, $"/api/v1/orders/{first.OrderId}")).GetProperty("sellerOrders")[0].GetProperty("items")[0].GetProperty("imageUrl");
+
+        var photos = new Dictionary<long, (string Slug, long PhotoId)>();
+        using (var scope = fixture.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
+            db.ProductMedia.RemoveRange(db.ProductMedia);                                               // the seller replaces the photos of every product
+            await db.SaveChangesAsync();
+            foreach (var product in await db.Products.ToListAsync())
+            {
+                var media = new ProductMedia { ProductId = product.Id, FileKey = "photo.jpg", MediaType = "image", SortOrder = 0, ThumbKey = "thumb.webp" };
+                db.ProductMedia.Add(media);
+                await db.SaveChangesAsync();
+                photos[product.Id] = (product.Slug, media.Id);
+            }
+        }
+        var second = await SellerOrderHttpTests.PlaceAsync(retailer);                            // paid, so the seller sees it too
+
+        var oldItem = (await GetAsync(retailer, $"/api/v1/orders/{first.OrderId}")).GetProperty("sellerOrders")[0].GetProperty("items")[0];
+        var newItem = (await GetAsync(retailer, $"/api/v1/orders/{second.OrderId}")).GetProperty("sellerOrders")[0].GetProperty("items")[0];
+        Assert.Equal(firstUrl.ValueKind == JsonValueKind.Null ? null : firstUrl.GetString(), oldItem.GetProperty("imageUrl").ValueKind == JsonValueKind.Null ? null : oldItem.GetProperty("imageUrl").GetString()); // the old order keeps what it showed
+        var (slug, photoId) = photos[newItem.GetProperty("productId").GetInt64()];
+        Assert.Equal($"/api/v1/products/{slug}/media/{photoId}?size=thumb", newItem.GetProperty("imageUrl").GetString());
+        Assert.NotEqual(firstUrl.ValueKind == JsonValueKind.Null ? null : firstUrl.GetString(), newItem.GetProperty("imageUrl").GetString());
+        var sellerView = await GetAsync(seller, "/api/v1/seller/orders?pageSize=50");
+        Assert.Contains(sellerView.GetProperty("items").EnumerateArray(), row => row.GetProperty("id").GetInt64() == second.SellerOrderId);
+    }
+
     /// <summary>Gives the seller of an order what a tax invoice needs (a valid GSTIN and a street address) and marks the order dispatched.</summary>
     internal static async Task MakeInvoiceableAsync(MarketplaceHttpFixture fixture, long sellerOrderId)
     {
