@@ -24,3 +24,6 @@ Decided by the owner: the India Post all-India pincode directory from data.gov.i
 
 ## 17 Nov 2026 - Brand
 Decided by the owner: the public name is **Fabricwala**. The domain is still to be bought by the owner. Code and project names (TextileConnect) stay as they are.
+
+## 17 Nov 2026 - GST on delivery
+Decided by the owner: keep the current rule, no GST on the delivery charge. Risk noted: freight billed with goods is normally taxed at the goods rate, so the seller could be questioned by the tax office. To be confirmed with an accountant before launch.
