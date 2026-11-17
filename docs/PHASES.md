@@ -215,3 +215,4 @@ One agent per folder at a time. A [WEB] task starts only after its [BE] task is 
 
 ### Phase F4 - Business correctness
 - [x] F4.5 `SellerOrderTransitions` is the one rule table for seller order moves; the order service applies it for accept, reject, dispatch, cancel and delivery. A table test covers every from-to pair (36) and every seller action in the service. Closed a loophole: the seller could set the shipment status to "Delivered" without moving the order or the payout; the shipment route now accepts only InTransit and ReachedCity for a shipped order. Unknown shipment statuses are refused on save like the other statuses.
+- [x] F4.3 GSTIN check character (mod 36 algorithm, verified on a published valid GSTIN) and state code added to the format check (`GstinRules`, 17 tests). A real GST portal lookup is not built: it needs an API account from the owner.

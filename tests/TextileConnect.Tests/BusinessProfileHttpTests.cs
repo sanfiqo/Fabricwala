@@ -74,8 +74,8 @@ public sealed class BusinessProfileHttpTests
         Assert.Equal("Punjab", location.State);
         Assert.Equal(HttpStatusCode.NotFound, (await owner.GetAsync("/api/v1/pincodes/141999")).StatusCode);
         Assert.Equal(HttpStatusCode.BadRequest, (await owner.GetAsync("/api/v1/pincodes/000000")).StatusCode);
-        var response = await owner.PostAsJsonAsync("/api/v1/businesses", new { businessType = "Retailer", legalName = "Shop", displayName = "Shop", gstin = "27abcde1234f1z5" });
+        var response = await owner.PostAsJsonAsync("/api/v1/businesses", new { businessType = "Retailer", legalName = "Shop", displayName = "Shop", gstin = "27abcde1234f1z0" });
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-        Assert.Equal("27ABCDE1234F1Z5", (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("gstin").GetString());
+        Assert.Equal("27ABCDE1234F1Z0", (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("gstin").GetString());
     }
 }
