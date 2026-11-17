@@ -15,6 +15,15 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                 name: "IX_Invoices_SellerOrderId",
                 table: "Invoices");
 
+            migrationBuilder.AddColumn<decimal>(
+                name: "CommissionGst",
+                table: "SellerOrders",
+                type: "decimal(18,2)",
+                precision: 18,
+                scale: 2,
+                nullable: false,
+                defaultValue: 0m);
+
             migrationBuilder.AddColumn<string>(
                 name: "HsnCode",
                 table: "OrderItems",
@@ -46,19 +55,13 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                 {
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("MySQL:ValueGenerationStrategy", MySQLValueGenerationStrategy.IdentityColumn),
-                    SellerBusinessId = table.Column<long>(type: "bigint", nullable: false),
+                    Series = table.Column<string>(type: "varchar(12)", maxLength: 12, nullable: false),
                     FinancialYear = table.Column<string>(type: "varchar(4)", maxLength: 4, nullable: false),
                     LastNumber = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_InvoiceSequences", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_InvoiceSequences_Businesses_SellerBusinessId",
-                        column: x => x.SellerBusinessId,
-                        principalTable: "Businesses",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
                 })
                 .Annotation("MySQL:Charset", "utf8mb4");
 
@@ -69,9 +72,9 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_InvoiceSequences_SellerBusinessId_FinancialYear",
+                name: "IX_InvoiceSequences_Series_FinancialYear",
                 table: "InvoiceSequences",
-                columns: new[] { "SellerBusinessId", "FinancialYear" },
+                columns: new[] { "Series", "FinancialYear" },
                 unique: true);
         }
 
@@ -84,6 +87,10 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
             migrationBuilder.DropIndex(
                 name: "IX_Invoices_SellerOrderId_InvoiceType",
                 table: "Invoices");
+
+            migrationBuilder.DropColumn(
+                name: "CommissionGst",
+                table: "SellerOrders");
 
             migrationBuilder.DropColumn(
                 name: "HsnCode",

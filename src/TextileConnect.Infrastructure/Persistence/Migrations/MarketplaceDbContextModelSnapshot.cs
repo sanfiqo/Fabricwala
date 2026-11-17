@@ -1049,6 +1049,10 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<decimal>("CommissionGst")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<decimal>("CommissionRate")
                         .HasPrecision(5, 4)
                         .HasColumnType("decimal(5,4)");
@@ -1237,12 +1241,14 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                         .IsConcurrencyToken()
                         .HasColumnType("int");
 
-                    b.Property<long>("SellerBusinessId")
-                        .HasColumnType("bigint");
+                    b.Property<string>("Series")
+                        .IsRequired()
+                        .HasMaxLength(12)
+                        .HasColumnType("varchar(12)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("SellerBusinessId", "FinancialYear")
+                    b.HasIndex("Series", "FinancialYear")
                         .IsUnique();
 
                     b.ToTable("InvoiceSequences");
@@ -1690,15 +1696,6 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                     b.HasOne("TextileConnect.Domain.Orders.SellerOrder", null)
                         .WithMany()
                         .HasForeignKey("SellerOrderId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("TextileConnect.Domain.Payments.InvoiceSequence", b =>
-                {
-                    b.HasOne("TextileConnect.Domain.Businesses.Business", null)
-                        .WithMany()
-                        .HasForeignKey("SellerBusinessId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

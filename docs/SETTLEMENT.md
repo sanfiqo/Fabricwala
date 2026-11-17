@@ -8,7 +8,8 @@ How money is split and when the seller is paid. Every rule below has a test (the
 - **Commission** = goods subtotal x rate, charged to the seller and taken from the seller's payout. GST and freight are not part of the base. [SettlementRulesTests]
 - The rate is the seller's own rate (`Business.CommissionRateOverride`) if there is one, else the platform setting `Commission.DefaultRate` (0.02 if the setting is missing). It is fixed on the seller order when the order is placed; a later change of the setting affects new orders only. [SettlementRulesTests]
 - Example: 100 pieces at 480 = 48,000 goods, 5% GST = 2,400, freight 2,000. The retailer pays 52,400. Commission at 2% = 960. The seller's payout is 51,440.
-- **[OWNER DECISION]** Who bears the commission (today: the seller) and the default rate are still open in `PHASES.md`.
+- **Decided (17 Nov 2026): the seller bears the commission.** The default rate is still a setting (`Commission.DefaultRate`).
+- **GST on the fee (decided 17 Nov 2026: 18%).** When the platform company is set up in the admin settings (name, valid GSTIN, address, pincode; `PUT /api/v1/admin/platform-company`), every **new** order freezes `CommissionGst` = fee x the GST rate (`Platform.FeeGstRate`, default 18) and the payout is reduced by the fee **and** that GST. Orders placed before the company was set up keep GST 0. Without the company details the fee has no GST. Example: fee 960 + GST 172.80 = 1,132.80 taken from the payout. [InvoiceTests, RetailerExtrasHttpTests]
 
 ## 2. Rounding
 
@@ -16,7 +17,7 @@ One rule everywhere: round to 2 decimals, a half goes **away from zero** (`Produ
 
 ## 3. The payout record
 
-When the retailer's payment is confirmed, each seller order gets one `Settlement`: `Amount` = seller order total - commission, `CommissionAmount`, status **Pending**, and `ReleaseAfter` = `Settlements.NoReleaseDate` (no date yet). The order must be paid before the seller can act on it.
+When the retailer's payment is confirmed, each seller order gets one `Settlement`: `Amount` = seller order total - commission - GST on the commission, `CommissionAmount`, status **Pending**, and `ReleaseAfter` = `Settlements.NoReleaseDate` (no date yet). The order must be paid before the seller can act on it.
 
 Status values (`SettlementStatus`): Pending (held), Released, Cancelled.
 

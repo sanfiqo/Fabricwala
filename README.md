@@ -21,7 +21,7 @@ In Development the sign-in code is always `123456` and payments use a fake gatew
 
 ## Check it
 ```
-dotnet test TextileConnect.slnx        # 499 pass, 25 skip (need MySQL: set TEXTILECONNECT_TEST_MYSQL)
+dotnet test TextileConnect.slnx        # 511 pass, 25 skip (need MySQL: set TEXTILECONNECT_TEST_MYSQL)
 ```
 
 ## Where things are

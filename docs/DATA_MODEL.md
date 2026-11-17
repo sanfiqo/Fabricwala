@@ -193,9 +193,9 @@ Indexes: unique (BusinessId, Scope, Key)
 | Id | bigint | no | key, auto number |
 | FinancialYear | varchar(4) | no |  |
 | LastNumber | int | no | concurrency check |
-| SellerBusinessId | bigint | no | -> Businesses.Id |
+| Series | varchar(12) | no |  |
 
-Indexes: unique (SellerBusinessId, FinancialYear)
+Indexes: unique (Series, FinancialYear)
 
 ## Invoices
 
@@ -473,6 +473,7 @@ Indexes: (SellerOrderId)
 | AcceptDeadlineUtc | datetime(6) | yes |  |
 | AcceptedAt | datetime(6) | yes |  |
 | CommissionAmount | decimal(18,2) | no |  |
+| CommissionGst | decimal(18,2) | no |  |
 | CommissionRate | decimal(5,4) | no |  |
 | DeliveredAt | datetime(6) | yes |  |
 | DispatchedAt | datetime(6) | yes |  |

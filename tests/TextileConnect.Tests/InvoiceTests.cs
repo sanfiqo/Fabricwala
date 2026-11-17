@@ -143,10 +143,10 @@ public sealed class InvoiceTests
 
         public EfFinanceService Service(DateTimeOffset? at = null) => new(Db, Storage, new FixedClock(at ?? new DateTimeOffset(2026, 11, 17, 10, 0, 0, TimeSpan.Zero)));
 
-        public async Task<SellerOrder> OrderAsync(string status = SellerOrderStatus.Dispatched, string pincode = "302001", long? sellerId = null)
+        public async Task<SellerOrder> OrderAsync(string status = SellerOrderStatus.Dispatched, string pincode = "302001", long? sellerId = null, decimal commissionGst = 0m)
         {
             var order = new Order { OrderNumber = $"TC-{Guid.NewGuid():N}"[..14], RetailerBusinessId = Retailer.Id, DeliveryLine1 = "5 Market", DeliveryCity = "Jaipur", DeliveryPincode = pincode };
-            var sellerOrder = new SellerOrder { Order = order, ManufacturerBusinessId = sellerId ?? Seller.Id, Status = status, SubTotal = 1000m, TaxAmount = 50m, ShippingAmount = 30m, Total = 1080m, CommissionRate = 0.02m, CommissionAmount = 20m };
+            var sellerOrder = new SellerOrder { Order = order, ManufacturerBusinessId = sellerId ?? Seller.Id, Status = status, SubTotal = 1000m, TaxAmount = 50m, ShippingAmount = 30m, Total = 1080m, CommissionRate = 0.02m, CommissionAmount = 20m, CommissionGst = commissionGst };
             sellerOrder.Items.Add(new OrderItem { ProductId = 1, Title = "Shirt", Size = "M", Quantity = 10, UnitPrice = 100m, GstRate = 5m, GstAmount = 50m, HsnCode = "6205" });
             Db.SellerOrders.Add(sellerOrder);
             await Db.SaveChangesAsync();
@@ -263,6 +263,69 @@ public sealed class InvoiceTests
         var statement = await world.Service().CreateInvoiceAsync((await world.OrderAsync(SellerOrderStatus.Pending)).Id, "PlatformCommission");
         Assert.StartsWith("TC-", statement.InvoiceNumber);
         Assert.Empty(world.Db.InvoiceSequences);
+    }
+
+    private static async Task SetPlatformAsync(World world, string gstin, string name = "Fabricwala Pvt Ltd", string pincode = "302001")
+    {
+        foreach (var (key, value) in new[] { ("Platform.LegalName", name), ("Platform.Gstin", gstin), ("Platform.Address", "9 Tech Park"), ("Platform.Pincode", pincode), ("Platform.FeeGstRate", "18") })
+            world.Db.PlatformSettings.Add(new TextileConnect.Domain.Catalogue.PlatformSetting { Key = key, Value = value, UpdatedAtUtc = DateTime.UtcNow });
+        await world.Db.SaveChangesAsync();
+    }
+
+    [Fact]
+    public async Task The_platform_company_is_complete_only_with_every_part_and_a_valid_gstin()
+    {
+        var world = await WorldAsync();
+        Assert.Null(await PlatformCompany.LoadAsync(world.Db));
+        await SetPlatformAsync(world, "08AAAAA0000A1Z9"); // wrong check character
+        Assert.Null(await PlatformCompany.LoadAsync(world.Db));
+        world.Db.PlatformSettings.Single(x => x.Key == "Platform.Gstin").Value = Gstin("08");
+        await world.Db.SaveChangesAsync();
+        var company = await PlatformCompany.LoadAsync(world.Db);
+        Assert.NotNull(company);
+        Assert.Equal(18m, company!.FeeGstRatePercent);
+        Assert.Equal("08", company.StateCode);
+    }
+
+    [Fact]
+    public async Task The_platform_fee_with_gst_is_a_tax_invoice_in_its_own_series()
+    {
+        var world = await WorldAsync();
+        await SetPlatformAsync(world, Gstin("08"));
+        var sellerInvoice = await world.Service().CreateInvoiceAsync((await world.OrderAsync(commissionGst: 3.60m)).Id, "SellerToRetailer");
+        var order = await world.OrderAsync(commissionGst: 3.60m);
+        var fee = await world.Service().CreateInvoiceAsync(order.Id, "PlatformCommission");
+        var again = await world.Service().CreateInvoiceAsync(order.Id, "PlatformCommission");
+        var second = await world.Service().CreateInvoiceAsync((await world.OrderAsync(commissionGst: 3.60m)).Id, "PlatformCommission");
+
+        Assert.Equal("PF/2627/00001", fee.InvoiceNumber);
+        Assert.Equal(fee.Id, again.Id);
+        Assert.Equal("PF/2627/00002", second.InvoiceNumber);
+        Assert.EndsWith("/2627/00001", sellerInvoice.InvoiceNumber);          // the seller series is untouched by the platform series
+        Assert.StartsWith("%PDF-", System.Text.Encoding.ASCII.GetString(world.Storage.Files[fee.FileKey!], 0, 5));
+    }
+
+    [Fact]
+    public async Task A_fee_invoice_needs_the_platform_company_and_a_dispatched_order()
+    {
+        var world = await WorldAsync();
+        var noPlatform = await Assert.ThrowsAsync<RuleViolationException>(async () => await world.Service().CreateInvoiceAsync((await world.OrderAsync(commissionGst: 3.60m)).Id, "PlatformCommission"));
+        Assert.Equal("platform_details_missing", noPlatform.Code);
+        await SetPlatformAsync(world, Gstin("08"));
+        var early = await Assert.ThrowsAsync<RuleViolationException>(async () => await world.Service().CreateInvoiceAsync((await world.OrderAsync(SellerOrderStatus.Accepted, commissionGst: 3.60m)).Id, "PlatformCommission"));
+        Assert.Equal("invoice_not_ready", early.Code);
+        Assert.Empty(world.Db.InvoiceSequences);
+    }
+
+    [Fact]
+    public void The_fee_invoice_splits_the_tax_like_any_other_invoice()
+    {
+        GstParty Party(string name, string code) => new(name, "x", "a", "s", code);
+        GstInvoice Fee(string platformCode) => GstInvoiceBuilder.Build(new GstInvoiceInput("PF/2627/00001", DateTime.UtcNow, Party("Platform", platformCode), Party("Seller", "08"), string.Empty, "Rajasthan", "08", "TC-1",
+            [new GstItemInput("Platform fee", null, null, "998599", 1, 20m, 18m, 3.60m)], 0m, 23.60m));
+        var same = Fee("08"); var other = Fee("07");
+        Assert.False(same.InterState); Assert.Equal(1.80m, same.Cgst); Assert.Equal(1.80m, same.Sgst);
+        Assert.True(other.InterState); Assert.Equal(3.60m, other.Igst);
     }
 
     [Fact]

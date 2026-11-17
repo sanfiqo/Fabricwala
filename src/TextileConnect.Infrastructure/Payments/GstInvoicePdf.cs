@@ -50,7 +50,7 @@ public static class GstInvoicePdf
             });
             column.Item().Text(text =>
             {
-                text.Span("Deliver to: ").SemiBold(); text.Span(invoice.DeliveryAddress + ". ");
+                if (invoice.DeliveryAddress.Length > 0) { text.Span("Deliver to: ").SemiBold(); text.Span(invoice.DeliveryAddress + ". "); }
                 text.Span("Place of supply: ").SemiBold(); text.Span($"{invoice.PlaceOfSupplyName} ({invoice.PlaceOfSupplyCode}). ");
                 text.Span(invoice.InterState ? "Supply between states: IGST applies." : "Supply within the state: CGST and SGST apply.");
             });
@@ -64,7 +64,7 @@ public static class GstInvoicePdf
                 });
                 table.Header(h =>
                 {
-                    foreach (var title in new[] { "#", "Description", "HSN", "Qty", "Rate", "Taxable", "GST %", "GST", "Amount" })
+                    foreach (var title in new[] { "#", "Description", "HSN/SAC", "Qty", "Rate", "Taxable", "GST %", "GST", "Amount" })
                         h.Cell().Background(Colors.Grey.Lighten3).Padding(3).Text(title).SemiBold();
                 });
                 foreach (var line in invoice.Lines)
@@ -103,7 +103,7 @@ public static class GstInvoicePdf
         page.Footer().Column(column =>
         {
             column.Item().LineHorizontal(0.5f);
-            column.Item().PaddingTop(3).Text("This is a computer generated invoice and needs no signature. Sold through the Fabricwala marketplace. The platform fee is charged to the seller and is not part of this invoice.").FontSize(7.5f);
+            column.Item().PaddingTop(3).Text(invoice.Note ?? "This is a computer generated invoice and needs no signature. Sold through the Fabricwala marketplace. The platform fee is charged to the seller and is not part of this invoice.").FontSize(7.5f);
         });
     }));
 

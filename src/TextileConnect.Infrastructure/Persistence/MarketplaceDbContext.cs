@@ -206,6 +206,7 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
         builder.Entity<SellerOrder>().Property(x => x.ShippingAmount).HasPrecision(18, 2);
         builder.Entity<SellerOrder>().Property(x => x.TaxAmount).HasPrecision(18, 2);
         builder.Entity<SellerOrder>().Property(x => x.CommissionAmount).HasPrecision(18, 2);
+        builder.Entity<SellerOrder>().Property(x => x.CommissionGst).HasPrecision(18, 2);
         builder.Entity<SellerOrder>().Property(x => x.Total).HasPrecision(18, 2);
         builder.Entity<SellerOrder>().HasIndex(x => new { x.ManufacturerBusinessId, x.Status, x.Id });
         builder.Entity<ProductVariant>().Property(x => x.StockQty).IsConcurrencyToken();
@@ -248,7 +249,8 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
             entity.HasKey(x => x.Id);
             entity.Property(x => x.FinancialYear).HasMaxLength(4).IsRequired();
             entity.Property(x => x.LastNumber).IsConcurrencyToken();
-            entity.HasIndex(x => new { x.SellerBusinessId, x.FinancialYear }).IsUnique();
+            entity.Property(x => x.Series).HasMaxLength(12).IsRequired();
+            entity.HasIndex(x => new { x.Series, x.FinancialYear }).IsUnique();
         });
         builder.Entity<OrderItem>().Property(x => x.HsnCode).HasMaxLength(8);
         builder.Entity<AuditLog>().HasKey(x => x.Id);
@@ -313,7 +315,6 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
         Link<Refund, Payment>(x => x.PaymentId);
         Link<Refund, SellerOrder>(x => x.SellerOrderId);
         Link<Invoice, SellerOrder>(x => x.SellerOrderId);
-        Link<InvoiceSequence, Business>(x => x.SellerBusinessId);
         // Saved products
         Link<Favourite, Business>(x => x.RetailerBusinessId);
         Link<Favourite, Product>(x => x.ProductId);

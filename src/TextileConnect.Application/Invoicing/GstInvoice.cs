@@ -6,14 +6,14 @@ public sealed record GstParty(string Name, string? Gstin, string Address, string
 public sealed record GstItemInput(string Title, string? Size, string? Colour, string? HsnCode, int Quantity, decimal UnitPrice, decimal GstRate, decimal GstAmount);
 
 public sealed record GstInvoiceInput(string InvoiceNumber, DateTime IssuedAtUtc, GstParty Seller, GstParty Buyer, string DeliveryAddress, string PlaceOfSupplyName,
-    string PlaceOfSupplyCode, string OrderNumber, IReadOnlyList<GstItemInput> Items, decimal Shipping, decimal Total);
+    string PlaceOfSupplyCode, string OrderNumber, IReadOnlyList<GstItemInput> Items, decimal Shipping, decimal Total, string? Note = null);
 
 public sealed record GstLine(int Number, string Description, string? HsnCode, int Quantity, decimal UnitPrice, decimal Taxable, decimal GstRate, decimal Tax);
 
 /// <summary>Everything a printed tax invoice shows. Made by <see cref="GstInvoiceBuilder"/>; the PDF only draws it.</summary>
 public sealed record GstInvoice(string InvoiceNumber, DateOnly Date, GstParty Seller, GstParty Buyer, string DeliveryAddress, string PlaceOfSupplyName,
     string PlaceOfSupplyCode, string OrderNumber, bool InterState, IReadOnlyList<GstLine> Lines, decimal Taxable, decimal Shipping, decimal Cgst, decimal Sgst,
-    decimal Igst, decimal RoundOff, decimal Total, string AmountInWords)
+    decimal Igst, decimal RoundOff, decimal Total, string AmountInWords, string? Note = null)
 {
     public decimal Tax => Cgst + Sgst + Igst;
 }
@@ -36,7 +36,7 @@ public static class GstInvoiceBuilder
         var computed = taxable + input.Shipping + tax;
         return new GstInvoice(input.InvoiceNumber, FinancialYear.IndiaDate(input.IssuedAtUtc), input.Seller, input.Buyer, input.DeliveryAddress, input.PlaceOfSupplyName,
             input.PlaceOfSupplyCode, input.OrderNumber, interState, lines, taxable, input.Shipping, half, interState ? 0m : tax - half, interState ? tax : 0m,
-            input.Total - computed, input.Total, IndianCurrencyWords.Of(input.Total));
+            input.Total - computed, input.Total, IndianCurrencyWords.Of(input.Total), input.Note);
     }
 
     private static string Describe(GstItemInput item)
@@ -51,9 +51,11 @@ public static class GstInvoiceBuilder
 public static class InvoiceNumbers
 {
     /// <summary>A GST invoice number has at most 16 characters made of letters, digits, / and -. This one is seller id, financial year and a running number: 12/2627/00001.</summary>
-    public static string Format(long sellerBusinessId, string financialYear, int number)
+    public static string Format(long sellerBusinessId, string financialYear, int number) => Format(sellerBusinessId.ToString(System.Globalization.CultureInfo.InvariantCulture), financialYear, number);
+
+    public static string Format(string series, string financialYear, int number)
     {
-        var text = $"{sellerBusinessId}/{financialYear}/{number:D5}";
+        var text = $"{series}/{financialYear}/{number:D5}";
         if (text.Length > 16) throw new InvalidOperationException($"Invoice number {text} is longer than the 16 characters the GST rules allow.");
         return text;
     }
