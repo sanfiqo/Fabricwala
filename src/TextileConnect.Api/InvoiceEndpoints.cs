@@ -19,7 +19,7 @@ public static class InvoiceEndpoints
             if (sellerOrder is null || (invoiceType == "PlatformCommission" && sellerOrder.ManufacturerBusinessId != businessId)) return Results.NotFound(); // the commission invoice is between the platform and the seller
             var invoice = await db.Invoices.SingleOrDefaultAsync(x => x.SellerOrderId == sellerOrderId && x.InvoiceType == invoiceType, ct) ?? await finance.CreateInvoiceAsync(sellerOrderId, invoiceType, ct);
             var stream = await storage.OpenPrivateAsync(invoice.FileKey!, ct);
-            return Results.File(stream, "application/pdf", $"{invoice.InvoiceNumber}.pdf");
+            return Results.File(stream, "application/pdf", $"{invoice.InvoiceNumber.Replace('/', '-')}.pdf");
         }).RequireAuthorization("ApprovedBusiness");
     }
 }

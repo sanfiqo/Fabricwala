@@ -85,9 +85,11 @@ public sealed record SellerOrderResponse(long Id, long OrderId, string OrderNumb
     public decimal PlatformFee { get; init; }
     /// <summary>OrderValue minus PlatformFee: what the seller receives.</summary>
     public decimal YouGet { get; init; }
+    /// <summary>GST on the platform fee, taken from the payout together with the fee (0 when the platform has no GSTIN set up).</summary>
+    public decimal PlatformFeeGst { get; init; }
     public DateTime? AcceptDeadline { get; init; }
     public static SellerOrderResponse From(SellerOrder value) => new(value.Id, value.OrderId, value.Order?.OrderNumber ?? string.Empty, $"{value.Order?.OrderNumber ?? ""}-{value.Id}", string.Empty, string.Empty, value.Order?.DeliveryCity ?? string.Empty, value.Status == SellerOrderStatus.Pending ? "PendingAcceptance" : value.Status, value.Order?.PaymentStatus ?? TextileConnect.Domain.PaymentStatus.Pending, value.PlacedAtUtc, value.Items.Select(x => new OrderItemResponse(x.Id, x.ProductId, x.Title, x.Size, x.Colour, x.Quantity, x.UnitPrice, x.GstRate, x.LineTotal) { GstAmount = x.GstAmount }).ToList(), value.SubTotal, value.ShippingAmount, value.TaxAmount, value.Total, value.CommissionRate, value.CommissionAmount, value.RejectReason, value.History.OrderBy(x => x.ChangedAtUtc).ThenBy(x => x.Id).Select(x => new StatusHistoryResponse(x.Status, x.Note, x.ChangedAtUtc)).ToList(), null)
-        { OrderValue = value.Total, PlatformFee = value.CommissionAmount, YouGet = value.Total - value.CommissionAmount, AcceptDeadline = value.Status == SellerOrderStatus.Pending ? value.AcceptDeadlineUtc : null };
+        { OrderValue = value.Total, PlatformFee = value.CommissionAmount, YouGet = value.Total - value.CommissionAmount - value.CommissionGst, PlatformFeeGst = value.CommissionGst, AcceptDeadline = value.Status == SellerOrderStatus.Pending ? value.AcceptDeadlineUtc : null };
 }
 
 public sealed record OrderResponse(long Id, string OrderNumber, DateTime? PlacedAt, decimal SubTotal, decimal ShippingTotal, decimal TaxTotal, decimal GrandTotal, string PaymentStatus, object? DeliveryAddress, IReadOnlyList<SellerOrderResponse> SellerOrders)

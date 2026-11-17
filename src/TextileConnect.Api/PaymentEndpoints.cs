@@ -1,3 +1,4 @@
+using TextileConnect.Infrastructure.Payments;
 using System.Text.Json;
 using TextileConnect.Application.Businesses;
 using TextileConnect.Application.Payments;
@@ -12,11 +13,11 @@ public static class PaymentEndpoints
         retailer.MapPost("", async (PaymentRequest request, HttpRequest http, ICurrentBusiness current, IPaymentService payments, CancellationToken ct) =>
         {
             var session = await payments.StartAsync(current.RequireBusinessId(), request.OrderId, http.Headers["Idempotency-Key"].ToString(), ct);
-            return Results.Ok(PaymentSessionResponse.From(session, app.Configuration["Razorpay:KeyId"] ?? "dev_key"));
+            return Results.Ok(PaymentSessionResponse.From(session, RazorpayPaymentGateway.Find(app.Configuration, "KeyId") ?? "dev_key"));
         });
         retailer.MapGet("/{gatewayOrderId}", async (string gatewayOrderId, ICurrentBusiness current, IPaymentService payments, CancellationToken ct) =>
             await payments.GetAsync(current.RequireBusinessId(), gatewayOrderId, ct) is { } session
-                ? Results.Ok(PaymentSessionResponse.From(session, app.Configuration["Razorpay:KeyId"] ?? "dev_key")) : Results.NotFound());
+                ? Results.Ok(PaymentSessionResponse.From(session, RazorpayPaymentGateway.Find(app.Configuration, "KeyId") ?? "dev_key")) : Results.NotFound());
         // Test gateway only: lets the frontend finish a payment locally. A real gateway has no such route (404).
         retailer.MapPost("/{gatewayOrderId}/dev-complete", async (string gatewayOrderId, bool? success, ICurrentBusiness current, IPaymentService payments, IPaymentGateway gateway, CancellationToken ct) =>
         {

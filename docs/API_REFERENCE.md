@@ -42,6 +42,8 @@ Errors are always `{ "code": "...", "message": "...", "fields": { ... } }`. Requ
 | GET | `/api/v1/admin/orders` | Admin |  |  |  |
 | GET | `/api/v1/admin/orders/{id}` | Admin |  |  |  |
 | GET | `/api/v1/admin/payouts` | Admin |  |  |  |
+| GET | `/api/v1/admin/platform-company` | Admin |  |  |  |
+| PUT | `/api/v1/admin/platform-company` | Admin |  | PlatformCompanyRequest |  |
 | GET | `/api/v1/admin/products` | Admin |  |  |  |
 | POST | `/api/v1/admin/products/{id}/moderate` | Admin |  | ModerationRequest |  |
 | GET | `/api/v1/admin/reports/{kind}` | Admin |  |  |  |

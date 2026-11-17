@@ -41,6 +41,7 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
     public DbSet<PaymentWebhookEvent> PaymentWebhookEvents => Set<PaymentWebhookEvent>();
     public DbSet<Refund> Refunds => Set<Refund>();
     public DbSet<Invoice> Invoices => Set<Invoice>();
+    public DbSet<InvoiceSequence> InvoiceSequences => Set<InvoiceSequence>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<ReturnClaim> ReturnClaims => Set<ReturnClaim>();
     public DbSet<ReturnClaimPhoto> ReturnClaimPhotos => Set<ReturnClaimPhoto>();
@@ -205,6 +206,7 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
         builder.Entity<SellerOrder>().Property(x => x.ShippingAmount).HasPrecision(18, 2);
         builder.Entity<SellerOrder>().Property(x => x.TaxAmount).HasPrecision(18, 2);
         builder.Entity<SellerOrder>().Property(x => x.CommissionAmount).HasPrecision(18, 2);
+        builder.Entity<SellerOrder>().Property(x => x.CommissionGst).HasPrecision(18, 2);
         builder.Entity<SellerOrder>().Property(x => x.Total).HasPrecision(18, 2);
         builder.Entity<SellerOrder>().HasIndex(x => new { x.ManufacturerBusinessId, x.Status, x.Id });
         builder.Entity<ProductVariant>().Property(x => x.StockQty).IsConcurrencyToken();
@@ -239,6 +241,18 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
         builder.Entity<Refund>().Property(x => x.Amount).HasPrecision(18, 2);
         builder.Entity<Invoice>().HasKey(x => x.Id);
         builder.Entity<Invoice>().HasIndex(x => x.InvoiceNumber).IsUnique();
+        builder.Entity<Invoice>().Property(x => x.InvoiceNumber).HasMaxLength(32);
+        builder.Entity<Invoice>().Property(x => x.InvoiceType).HasMaxLength(32);
+        builder.Entity<Invoice>().HasIndex(x => new { x.SellerOrderId, x.InvoiceType }).IsUnique();
+        builder.Entity<InvoiceSequence>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.FinancialYear).HasMaxLength(4).IsRequired();
+            entity.Property(x => x.LastNumber).IsConcurrencyToken();
+            entity.Property(x => x.Series).HasMaxLength(12).IsRequired();
+            entity.HasIndex(x => new { x.Series, x.FinancialYear }).IsUnique();
+        });
+        builder.Entity<OrderItem>().Property(x => x.HsnCode).HasMaxLength(8);
         builder.Entity<AuditLog>().HasKey(x => x.Id);
         builder.Entity<AuditLog>().Property(x => x.Action).HasMaxLength(64).IsRequired();
         builder.Entity<AuditLog>().Property(x => x.EntityId).HasMaxLength(64);

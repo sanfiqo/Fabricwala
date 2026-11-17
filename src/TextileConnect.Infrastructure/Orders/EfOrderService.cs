@@ -223,7 +223,7 @@ public sealed class EfOrderService(MarketplaceDbContext db, IPaymentGateway? gat
             audit?.Record("refund.processed", nameof(Refund), refund.Id, $"amount {AuditText.Money(refund.Amount)}");
             await db.SaveChangesAsync(cancellationToken);
         }
-        catch (Exception exception) when (exception is HttpRequestException or InvalidOperationException)
+        catch (Exception exception) when (exception is HttpRequestException or InvalidOperationException or Payments.PaymentGatewayException)
         {
             // Stays "Requested"; the next maintenance run retries it.
         }

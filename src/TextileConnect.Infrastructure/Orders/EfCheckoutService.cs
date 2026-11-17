@@ -1,3 +1,4 @@
+using TextileConnect.Infrastructure.Payments;
 using TextileConnect.Domain;
 using System.Globalization;
 using System.Security.Cryptography;
@@ -66,6 +67,10 @@ public sealed partial class EfCheckoutService(MarketplaceDbContext db, ICartServ
             OrderNumber = NewOrderNumber(now), RetailerBusinessId = retailerBusinessId, PlacedByUserId = userId, PlacedAtUtc = now,
             DeliveryLine1 = address.Line1, DeliveryLine2 = address.Line2, DeliveryCity = city, DeliveryPincode = address.Pincode,
         };
+        // GST on the platform fee is charged only while the platform company is set up (GSTIN, name, address), so that the tax can be invoiced.
+        var feeGstPercent = (await PlatformCompany.LoadAsync(db, cancellationToken))?.FeeGstRatePercent ?? 0m;
+        var productIds = view.Sellers.SelectMany(g => g.Items).Select(i => i.ProductId).Distinct().ToList();
+        var hsnCodes = await db.Products.AsNoTracking().Where(x => productIds.Contains(x.Id)).ToDictionaryAsync(x => x.Id, x => x.HsnCode, cancellationToken);
         foreach (var group in view.Sellers)
         {
             var rate = sellers[group.SellerBusinessId].CommissionRateOverride ?? defaultRate;
@@ -75,7 +80,7 @@ public sealed partial class EfCheckoutService(MarketplaceDbContext db, ICartServ
                 sellerOrder.Items.Add(new OrderItem
                 {
                     SellerOrder = sellerOrder, ProductId = line.ProductId, VariantId = line.VariantId, Title = line.Title, Size = line.Size, Colour = line.Colour,
-                    Quantity = line.Quantity, UnitPrice = line.SlabPrice, GstRate = line.GstRate, GstAmount = line.LineGst,
+                    Quantity = line.Quantity, UnitPrice = line.SlabPrice, GstRate = line.GstRate, GstAmount = line.LineGst, HsnCode = hsnCodes.GetValueOrDefault(line.ProductId),
                 });
                 variants[line.VariantId].StockQty -= line.Quantity;
             }
@@ -84,6 +89,7 @@ public sealed partial class EfCheckoutService(MarketplaceDbContext db, ICartServ
             sellerOrder.ShippingAmount = group.Items.Select(x => x.ProductId).Distinct().Sum(id => quotes[id].ShippingTotal!.Value);
             sellerOrder.Total = sellerOrder.SubTotal + sellerOrder.TaxAmount + sellerOrder.ShippingAmount;
             sellerOrder.CommissionAmount = ProductQuote.Money(sellerOrder.SubTotal * rate);
+            if (feeGstPercent > 0) sellerOrder.CommissionGst = ProductQuote.Money(sellerOrder.CommissionAmount * feeGstPercent / 100m);
             sellerOrder.History.Add(new OrderStatusHistory { Status = SellerOrderStatus.Pending, Note = "Order placed; waiting for payment.", ChangedAtUtc = now });
             order.SellerOrders.Add(sellerOrder);
             order.SubTotal += sellerOrder.SubTotal;

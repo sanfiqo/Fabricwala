@@ -1,14 +1,26 @@
-using TextileConnect.Domain;
 using Microsoft.EntityFrameworkCore;
-using TextileConnect.Application.Payments;
+using TextileConnect.Application.Businesses;
+using TextileConnect.Application.Common;
 using TextileConnect.Application.Files;
+using TextileConnect.Application.Invoicing;
+using TextileConnect.Application.Payments;
+using TextileConnect.Domain;
+using TextileConnect.Domain.Businesses;
 using TextileConnect.Domain.Payments;
 using TextileConnect.Infrastructure.Persistence;
 
 namespace TextileConnect.Infrastructure.Payments;
 
-public sealed class EfFinanceService(MarketplaceDbContext db, IFileStorage storage) : IFinanceService
+public sealed class EfFinanceService(MarketplaceDbContext db, IFileStorage storage, TimeProvider? clock = null) : IFinanceService
 {
+    private const int NumberingAttempts = 5;
+    private const string SellerInvoice = "SellerToRetailer";
+    private const string FeeInvoice = "PlatformCommission";
+    /// <summary>Series of the platform fee invoices. A seller series is the seller id, which is never letters.</summary>
+    private const string PlatformSeries = "PF";
+    /// <summary>Accounting code for the platform fee (other support services). To be confirmed with the owner's accountant.</summary>
+    private const string FeeServiceCode = "998599";
+
     public async Task<PayoutAccount> AddPayoutAccountAsync(long businessId, string linkedAccountId, CancellationToken cancellationToken = default)
     {
         var account = await db.PayoutAccounts.SingleOrDefaultAsync(x => x.BusinessId == businessId, cancellationToken);
@@ -20,27 +32,171 @@ public sealed class EfFinanceService(MarketplaceDbContext db, IFileStorage stora
 
     public async Task<Invoice> CreateInvoiceAsync(long sellerOrderId, string type, CancellationToken cancellationToken = default)
     {
-        var sellerOrder = await db.SellerOrders.Include(x => x.Order).Include(x => x.Items).SingleAsync(x => x.Id == sellerOrderId, cancellationToken);
-        var invoice = new Invoice { SellerOrderId = sellerOrderId, InvoiceNumber = $"TC-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid():N}"[..20], InvoiceType = type };
-        var pdf = InvoicePdf.Create(invoice, sellerOrder);
-        await using var content = new MemoryStream(pdf);
-        invoice.FileKey = await storage.SavePrivateAsync(content, $"{invoice.InvoiceNumber}.pdf", cancellationToken);
-        db.Invoices.Add(invoice); await db.SaveChangesAsync(cancellationToken); return invoice;
+        var sellerOrder = await LoadAsync(sellerOrderId, cancellationToken);
+        if (type == SellerInvoice) return await IssueAsync(sellerOrder, SellerInvoice, sellerOrder.ManufacturerBusinessId.ToString(System.Globalization.CultureInfo.InvariantCulture), BuildSellerInvoiceAsync, cancellationToken);
+        // The platform fee: a tax invoice when the order carries GST on the fee, otherwise the plain statement of before the platform company was set up.
+        return sellerOrder.CommissionGst > 0
+            ? await IssueAsync(sellerOrder, FeeInvoice, PlatformSeries, BuildFeeInvoiceAsync, cancellationToken)
+            : await CreateFeeStatementAsync(sellerOrder, cancellationToken);
     }
 
-    private static class InvoicePdf
+    private Task<Domain.Orders.SellerOrder> LoadAsync(long sellerOrderId, CancellationToken cancellationToken)
+        => db.SellerOrders.Include(x => x.Order).Include(x => x.Items).SingleAsync(x => x.Id == sellerOrderId, cancellationToken);
+
+    /// <summary>
+    /// Issues one tax invoice per seller order and type. Asking again returns the same document, because a tax invoice must not change after it is issued.
+    /// It is refused until the goods are dispatched (the invoice is raised for a supply). The number is the next value of the series, taken in the same save as the invoice.
+    /// </summary>
+    private async Task<Invoice> IssueAsync(Domain.Orders.SellerOrder sellerOrder, string type, string series, Func<Domain.Orders.SellerOrder, string, DateTime, CancellationToken, Task<GstInvoice>> build, CancellationToken cancellationToken)
     {
-        public static byte[] Create(Invoice invoice, Domain.Orders.SellerOrder order)
+        if (sellerOrder.Status is not (SellerOrderStatus.Dispatched or SellerOrderStatus.Delivered))
+            throw new RuleViolationException("invoice_not_ready", "The invoice is made when the seller dispatches the order.");
+
+        for (var attempt = 1; ; attempt++)
         {
-            var text = $"TextileConnect\\nInvoice {invoice.InvoiceNumber}\\nType: {invoice.InvoiceType}\\nSeller order: {order.Id}\\nAmount: INR {order.SubTotal:0.00}";
-            var stream = $"BT /F1 12 Tf 50 760 Td ({text.Replace("\\n", ") Tj 0 -18 Td (").Replace("(", "\\(").Replace(")", "\\)")}) Tj ET";
-            var objects = new[] { "<< /Type /Catalog /Pages 2 0 R >>", "<< /Type /Pages /Kids [3 0 R] /Count 1 >>", "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>", "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>", $"<< /Length {stream.Length} >>\\nstream\\n{stream}\\nendstream" };
-            using var output = new MemoryStream(); using var writer = new StreamWriter(output, System.Text.Encoding.ASCII, leaveOpen: true);
-            writer.Write("%PDF-1.4\\n"); var offsets = new List<long> { 0 };
-            for (var i = 0; i < objects.Length; i++) { writer.Flush(); offsets.Add(output.Position); writer.Write($"{i + 1} 0 obj\\n{objects[i]}\\nendobj\\n"); }
-            writer.Flush(); var xref = output.Position; writer.Write($"xref\\n0 {objects.Length + 1}\\n0000000000 65535 f \\n");
-            for (var i = 1; i < offsets.Count; i++) writer.Write($"{offsets[i]:D10} 00000 n \\n");
-            writer.Write($"trailer << /Size {objects.Length + 1} /Root 1 0 R >>\\nstartxref\\n{xref}\\n%%EOF"); writer.Flush(); return output.ToArray();
+            var existing = await db.Invoices.SingleOrDefaultAsync(x => x.SellerOrderId == sellerOrder.Id && x.InvoiceType == type, cancellationToken);
+            if (existing is not null) return existing;
+
+            var now = (clock ?? TimeProvider.System).GetUtcNow().UtcDateTime;
+            var year = FinancialYear.Code(now);
+            var sequence = await db.InvoiceSequences.SingleOrDefaultAsync(x => x.Series == series && x.FinancialYear == year, cancellationToken);
+            if (sequence is null) { sequence = new InvoiceSequence { Series = series, FinancialYear = year }; db.InvoiceSequences.Add(sequence); }
+            sequence.LastNumber++;
+            var number = InvoiceNumbers.Format(series, year, sequence.LastNumber);
+
+            Invoice invoice;
+            try
+            {
+                var model = await build(sellerOrder, number, now, cancellationToken);
+                await using var content = new MemoryStream(GstInvoicePdf.Render(model));
+                invoice = new Invoice { SellerOrderId = sellerOrder.Id, InvoiceNumber = number, InvoiceType = type, IssuedAt = now };
+                invoice.FileKey = await storage.SavePrivateAsync(content, $"{number.Replace('/', '-')}.pdf", cancellationToken);
+            }
+            catch
+            {
+                // Nothing was issued, so the number must not be used: forget the change to the counter, or the next save on this context would write it.
+                db.Entry(sequence).State = EntityState.Detached;
+                throw;
+            }
+            db.Invoices.Add(invoice);
+            try
+            {
+                await db.SaveChangesAsync(cancellationToken);
+                return invoice;
+            }
+            catch (DbUpdateException) when (attempt < NumberingAttempts)
+            {
+                // Another request took the same number (or made the same invoice) first. Start again from what is stored now.
+                db.ChangeTracker.Clear();
+                sellerOrder = await LoadAsync(sellerOrder.Id, cancellationToken);
+            }
         }
     }
+
+    // ---- the invoice of the seller to the retailer ---------------------------------------------------------------------------------
+
+    private async Task<GstInvoice> BuildSellerInvoiceAsync(Domain.Orders.SellerOrder sellerOrder, string number, DateTime now, CancellationToken cancellationToken)
+    {
+        var order = sellerOrder.Order!;
+        var seller = await db.Businesses.AsNoTracking().SingleAsync(x => x.Id == sellerOrder.ManufacturerBusinessId, cancellationToken);
+        var buyer = await db.Businesses.AsNoTracking().SingleAsync(x => x.Id == order.RetailerBusinessId, cancellationToken);
+        RequireGstin(seller);
+
+        var states = await db.States.AsNoTracking().ToListAsync(cancellationToken);
+        var address = await RegisteredAddressAsync(seller.Id, cancellationToken)
+            ?? throw new RuleViolationException("seller_address_missing", "The seller must add the registered address (street line, city and pincode) before a tax invoice can be made.");
+
+        var sellerStateCode = seller.Gstin![..2];
+        var supply = await StateOfPincodeAsync(order.DeliveryPincode, cancellationToken);
+        var supplyCode = supply is null ? null : GstStateCodes.For(supply.Code);
+        if (supply is null || supplyCode is null)
+            throw new RuleViolationException("place_of_supply_unknown", "The state of the delivery pincode is not known, so the GST cannot be split. Please contact support.");
+
+        var buyerAddress = await RegisteredAddressAsync(buyer.Id, cancellationToken);
+        var delivery = Join(order.DeliveryLine1, order.DeliveryLine2, order.DeliveryCity, order.DeliveryPincode);
+        var buyerText = buyerAddress is null ? delivery : Join(buyerAddress.Line1, buyerAddress.Line2, buyerAddress.City, buyerAddress.Pincode);
+        var buyerStateCode = buyer.Gstin is { Length: >= 2 } ? buyer.Gstin[..2] : supplyCode;
+
+        return GstInvoiceBuilder.Build(new GstInvoiceInput(
+            number, now,
+            new GstParty(seller.LegalName, seller.Gstin, Join(address.Line1, address.Line2, address.City, address.Pincode), StateName(states, sellerStateCode), sellerStateCode),
+            new GstParty(buyer.LegalName, buyer.Gstin, buyerText, StateName(states, buyerStateCode, supply.Name), buyerStateCode),
+            delivery, supply.Name, supplyCode, order.OrderNumber,
+            sellerOrder.Items.OrderBy(x => x.Id).Select(x => new GstItemInput(x.Title, x.Size, x.Colour, x.HsnCode, x.Quantity, x.UnitPrice, x.GstRate, x.GstAmount)).ToList(),
+            sellerOrder.ShippingAmount, sellerOrder.Total));
+    }
+
+    // ---- the invoice of the platform to the seller ---------------------------------------------------------------------------------
+
+    /// <summary>
+    /// The platform fee as a tax invoice: one line, the fee as the taxable value and the GST frozen on the order. The recipient is the seller, a registered person,
+    /// so the place of supply is the state of the seller GSTIN and the split between CGST/SGST and IGST follows from it and the state of the platform GSTIN.
+    /// </summary>
+    private async Task<GstInvoice> BuildFeeInvoiceAsync(Domain.Orders.SellerOrder sellerOrder, string number, DateTime now, CancellationToken cancellationToken)
+    {
+        var platform = await PlatformCompany.LoadAsync(db, cancellationToken)
+            ?? throw new RuleViolationException("platform_details_missing", "The platform company details (name, GSTIN, address) are not set in the admin settings, so the fee invoice cannot be made yet.");
+        var seller = await db.Businesses.AsNoTracking().SingleAsync(x => x.Id == sellerOrder.ManufacturerBusinessId, cancellationToken);
+        RequireGstin(seller);
+        var states = await db.States.AsNoTracking().ToListAsync(cancellationToken);
+        var sellerAddress = await RegisteredAddressAsync(seller.Id, cancellationToken)
+            ?? throw new RuleViolationException("seller_address_missing", "The seller must add the registered address (street line, city and pincode) before a tax invoice can be made.");
+        var sellerStateCode = seller.Gstin![..2];
+        var sellerStateName = StateName(states, sellerStateCode);
+        var ratePercent = sellerOrder.CommissionAmount == 0 ? 0m : decimal.Round(sellerOrder.CommissionGst * 100m / sellerOrder.CommissionAmount, 2, MidpointRounding.AwayFromZero);
+
+        return GstInvoiceBuilder.Build(new GstInvoiceInput(
+            number, now,
+            new GstParty(platform.LegalName, platform.Gstin, Join(platform.Address, platform.Pincode), StateName(states, platform.StateCode), platform.StateCode),
+            new GstParty(seller.LegalName, seller.Gstin, Join(sellerAddress.Line1, sellerAddress.Line2, sellerAddress.City, sellerAddress.Pincode), sellerStateName, sellerStateCode),
+            string.Empty, sellerStateName, sellerStateCode, sellerOrder.Order!.OrderNumber,
+            [new GstItemInput($"Platform fee for order {sellerOrder.Order.OrderNumber} ({sellerOrder.CommissionRate * 100m:0.##}% of goods Rs {sellerOrder.SubTotal:0.00})", null, null, FeeServiceCode, 1, sellerOrder.CommissionAmount, ratePercent, sellerOrder.CommissionGst)],
+            0m, sellerOrder.CommissionAmount + sellerOrder.CommissionGst,
+            "This is a computer generated invoice and needs no signature. The fee and its GST are deducted from the payout of the order."));
+    }
+
+    /// <summary>The platform fee note for the seller when the order carries no GST on the fee. It is not a tax invoice, so it has no GST series and no place of supply.</summary>
+    private async Task<Invoice> CreateFeeStatementAsync(Domain.Orders.SellerOrder sellerOrder, CancellationToken cancellationToken)
+    {
+        var now = (clock ?? TimeProvider.System).GetUtcNow().UtcDateTime;
+        var sellerName = await db.Businesses.AsNoTracking().Where(x => x.Id == sellerOrder.ManufacturerBusinessId).Select(x => x.LegalName).SingleAsync(cancellationToken);
+        var invoice = new Invoice { SellerOrderId = sellerOrder.Id, InvoiceNumber = $"TC-{now:yyyyMMdd}-{Guid.NewGuid():N}"[..20], InvoiceType = FeeInvoice, IssuedAt = now };
+        var pdf = GstInvoicePdf.RenderFeeStatement(invoice.InvoiceNumber, sellerOrder.Order!.OrderNumber, sellerName, sellerOrder.SubTotal, sellerOrder.CommissionRate * 100m, sellerOrder.CommissionAmount);
+        await using var content = new MemoryStream(pdf);
+        invoice.FileKey = await storage.SavePrivateAsync(content, $"{invoice.InvoiceNumber}.pdf", cancellationToken);
+        db.Invoices.Add(invoice);
+        await db.SaveChangesAsync(cancellationToken);
+        return invoice;
+    }
+
+    // ---- shared pieces ------------------------------------------------------------------------------------------------------------
+
+    private static void RequireGstin(Business seller)
+    {
+        if (string.IsNullOrWhiteSpace(seller.Gstin) || !GstinRules.IsValid(seller.Gstin))
+            throw new RuleViolationException("seller_gstin_missing", "The seller must add a valid GSTIN to the business profile before a tax invoice can be made.");
+    }
+
+    private static string StateName(IEnumerable<State> states, string gstCode, string? fallback = null)
+        => states.FirstOrDefault(x => GstStateCodes.For(x.Code) == gstCode)?.Name ?? fallback ?? $"State {gstCode}";
+
+    private sealed record AddressRow(string Line1, string? Line2, string Pincode, string City);
+
+    private Task<AddressRow?> RegisteredAddressAsync(long businessId, CancellationToken cancellationToken)
+        => (from a in db.BusinessAddresses.AsNoTracking()
+            join c in db.Cities.AsNoTracking() on a.CityId equals c.Id
+            where a.BusinessId == businessId && a.AddressType == AddressType.Registered && a.Line1 != string.Empty
+            orderby a.IsDefault descending, a.Id
+            select new AddressRow(a.Line1, a.Line2, a.Pincode, c.Name)).FirstOrDefaultAsync(cancellationToken);
+
+    private sealed record SupplyState(string Name, string Code);
+
+    private Task<SupplyState?> StateOfPincodeAsync(string pincode, CancellationToken cancellationToken)
+        => (from p in db.PostalCodes.AsNoTracking()
+            join c in db.Cities.AsNoTracking() on p.CityId equals c.Id
+            join s in db.States.AsNoTracking() on c.StateId equals s.Id
+            where p.Pincode == pincode
+            select new SupplyState(s.Name, s.Code)).FirstOrDefaultAsync(cancellationToken);
+
+    private static string Join(params string?[] parts) => string.Join(", ", parts.Where(x => !string.IsNullOrWhiteSpace(x)));
 }

@@ -864,6 +864,10 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                         .HasPrecision(5, 2)
                         .HasColumnType("decimal(5,2)");
 
+                    b.Property<string>("HsnCode")
+                        .HasMaxLength(8)
+                        .HasColumnType("varchar(8)");
+
                     b.Property<long>("ProductId")
                         .HasColumnType("bigint");
 
@@ -1045,6 +1049,10 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<decimal>("CommissionGst")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<decimal>("CommissionRate")
                         .HasPrecision(5, 4)
                         .HasColumnType("decimal(5,4)");
@@ -1193,11 +1201,13 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("InvoiceNumber")
                         .IsRequired()
-                        .HasColumnType("varchar(255)");
+                        .HasMaxLength(32)
+                        .HasColumnType("varchar(32)");
 
                     b.Property<string>("InvoiceType")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(32)
+                        .HasColumnType("varchar(32)");
 
                     b.Property<DateTime>("IssuedAt")
                         .HasColumnType("datetime(6)");
@@ -1210,9 +1220,38 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                     b.HasIndex("InvoiceNumber")
                         .IsUnique();
 
-                    b.HasIndex("SellerOrderId");
+                    b.HasIndex("SellerOrderId", "InvoiceType")
+                        .IsUnique();
 
                     b.ToTable("Invoices");
+                });
+
+            modelBuilder.Entity("TextileConnect.Domain.Payments.InvoiceSequence", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("FinancialYear")
+                        .IsRequired()
+                        .HasMaxLength(4)
+                        .HasColumnType("varchar(4)");
+
+                    b.Property<int>("LastNumber")
+                        .IsConcurrencyToken()
+                        .HasColumnType("int");
+
+                    b.Property<string>("Series")
+                        .IsRequired()
+                        .HasMaxLength(12)
+                        .HasColumnType("varchar(12)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Series", "FinancialYear")
+                        .IsUnique();
+
+                    b.ToTable("InvoiceSequences");
                 });
 
             modelBuilder.Entity("TextileConnect.Domain.Payments.Payment", b =>

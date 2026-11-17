@@ -69,7 +69,7 @@ Owners of work: [BE] backend, folders `src/` and `tests/`; [WEB] the web app, fo
 - [ ] P5.3 PayoutAccounts store a linked account id, but there is no onboarding flow (F3.5)
 - [ ] P5.4 Settlements: held, scheduled and released by rule (docs/SETTLEMENT.md), **but "release" only changes a status: no money moves to the seller** (F3.5)
 - [ ] P5.5 Refunds: created and sent to the gateway interface; the fake gateway is the only one tried; a real refund was never made (F3.4)
-- [ ] P5.6 Invoices are stored with a number and a PDF, **but the PDF is not a GST invoice** (F4.1)
+- [x] P5.6 Invoices are stored with a number series and a real GST PDF (F4.1); the platform fee note is a statement, not a tax invoice
 - [x] P5.7 Audit log: rebuilt (docs/AUDIT.md)
 - [x] P5.8 Rate limits per client address on sign-in and search plus an overall limit; CORS for the frontend only outside Development
 - [ ] P5.9 BLOCKED: needs accounts (MSG91 and WhatsApp)
@@ -109,7 +109,7 @@ These were "backend foundations": empty stubs. They were reviewed and removed on
 - [x] P10.6 [BE] Search: word search through the MySQL full-text index with a "contains" fallback, filters, filter counts, sort, paging. (The full-text path has not been run on a real MySQL yet, F5.2.)
 - [ ] P10.7 [WEB] Search screen with filter bottom sheet and sort
 - [x] P10.8 [BE] Address book: several delivery addresses, default address
-- [ ] P10.9 [BE] Invoices: a PDF per seller order is stored and downloadable, **but it is not a GST invoice** (F4.1)
+- [x] P10.9 [BE] Invoices: a GST tax invoice PDF per seller order after dispatch (F4.1); GST on delivery and on the platform fee are open questions (INVOICING.md)
 - [ ] P10.10 [WEB] Invoice download on order detail
 - [x] P10.11 [BE] Problem report on a shipped or delivered order: reason, photos, seller reply, admin decision, partial refund
 - [ ] P10.12 [WEB] Report a problem screen + claim status
@@ -208,7 +208,7 @@ These were "backend foundations": empty stubs. They were reviewed and removed on
 - [x] F4.3 GSTIN check character (mod 36 algorithm, verified on a published valid GSTIN) and state code added to the format check (`GstinRules`, 17 tests). A real GST portal lookup is not built: it needs an API account from the owner.
 - [x] F4.2 `docs/SETTLEMENT.md` written from the code, each rule with a test: commission on goods only with default and override rates (3 orders, rate frozen per order), one rounding rule (half away from zero; the Razorpay paise conversion now uses it too, it truncated before), payout date from `Settlement.AutoReleaseDays` after dispatch, claim refund reduces the held payout and never below 0. Removed two unused duplicates in `IFinanceService` (a second release routine and a second refund creator) so there is one implementation of each. Open: who bears the commission, commission on refunded goods, clawback of a released payout.
 - [x] F4.4 Audit log reviewed and rebuilt (`docs/AUDIT.md`): the old interceptor wrote nothing useful (sync saves only, no user), so only product moderation was ever recorded. Now every admin write is recorded by `AdminAuditMiddleware` (user, route, id, IP) and the money and order events (payment, order moves, refunds, payout release, claim decision, settings change) are recorded in the same save as the change through `IAuditTrail`. Columns added: `IpAddress`, `Details` (migration `AddAuditDetails`). 6 tests; request bodies, OTPs and document keys are never stored. Open: no endpoint to read the log, proxy IP (F9.5), no endpoint to set a seller commission override.
-- [ ] F4.1 Real GST invoice: **waiting for the owner's choice of PDF library** (plan says ask first). Findings for it: the invoice PDF today is one text block with the order id and the subtotal; `OrderItems` do not keep the HSN code; the seller registered address has no street line (sign-up only takes the pincode); invoice numbers are a truncated GUID, not a series per seller and financial year. Needs: HSN snapshot at checkout, seller and buyer address lines, a numbering table, CGST/SGST or IGST by state of supply.
+- [x] F4.1 GST invoice (`docs/INVOICING.md`, QuestPDF): number series per seller and financial year (`InvoiceSequences`, concurrency checked), HSN frozen on order lines, seller and buyer GSTIN, place of supply from the delivery pincode, CGST+SGST or IGST, amount in words, made only after dispatch and never changed once issued, clear errors for a missing GSTIN or address. Platform fee: 18% GST charged on new orders once the admin has entered the platform company (`PUT /api/v1/admin/platform-company`), taken from the payout, invoiced in the `PF` series. Migration `AddGstInvoicing` not yet applied to MySQL. **Open:** accountant check of freight GST (decided: none), the fee service code, credit notes, e-invoicing.
 
 ### Phase F5 - Search and catalogue quality
 - [x] F5.1 `Product.UnitsSold` is a stored counter, raised by the pieces of a seller order when the retailer confirms delivery; the "popular" sort and the list no longer run a sum over order items for every product row. Cancelled, rejected and expired orders never raise it; a problem report does not lower it (delivered pieces stay counted). Migration `AddProductUnitsSold` backfills from delivered orders and adds an index for the sort. 3 tests. Behaviour change: popularity now follows delivery, not payment.
@@ -239,3 +239,8 @@ Owner decisions (17 Nov 2026): delete RFQ, delete product reviews, delete group 
 - [ ] F9.6 Structured logs with a correlation id and no secrets are done and tested; **the log sink and the error tracker are not chosen** (owner decision).
 - [ ] F9.7 **[PROVE]** k6 script `ops/load/catalogue-and-checkout.js` written, never run.
 - [x] F9.8 Root `README.md`.
+
+### Phase F3 - Real adapters
+Owner has only Razorpay test keys (17 Nov 2026); MSG91, R2, WhatsApp and Route are not started because each needs an account.
+- [ ] F3.4 Razorpay in test mode: the client now sends per-call credentials (the shared header was a race), cuts receipts to Razorpay's 40 characters, returns Razorpay's own reason on refusal (`PaymentGatewayException`, no key in it), turns a gateway failure at payment start into `payment_gateway_unavailable`, and the key id sent to the client now follows the documented `Payments:Razorpay:KeyId` name (it used to fall back to `dev_key`). 11 tests against a fake server. **One real test-mode order was created** (`RAZORPAY_LIVE_TEST=1`). Not yet tried against the real service: a refund, a webhook delivery (needs the webhook secret and a public URL), the checkout popup with the frontend.
+- [ ] F3.1 R2 storage, F3.2 MSG91, F3.3 WhatsApp, F3.5 Route payouts, F3.6 key encryption: waiting for accounts.

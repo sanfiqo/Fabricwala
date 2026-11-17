@@ -39,7 +39,9 @@ public sealed partial class EfPaymentService(MarketplaceDbContext db, IPaymentGa
         var payment = await db.Payments.Where(x => x.OrderId == order.Id && x.Status == PaymentStatus.Pending).OrderBy(x => x.Id).FirstOrDefaultAsync(cancellationToken);
         if (payment is null)
         {
-            var created = await gateway.CreateOrderAsync(order.GrandTotal, order.OrderNumber, cancellationToken);
+            PaymentOrder created;
+            try { created = await gateway.CreateOrderAsync(order.GrandTotal, order.OrderNumber, cancellationToken); }
+            catch (PaymentGatewayException) { throw new RuleViolationException("payment_gateway_unavailable", "The payment service is not available right now. Please try again in a moment."); }
             payment = new Payment { OrderId = order.Id, GatewayOrderId = created.GatewayOrderId, Amount = created.Amount, Status = PaymentStatus.Pending };
             db.Payments.Add(payment);
         }
@@ -108,7 +110,7 @@ public sealed partial class EfPaymentService(MarketplaceDbContext db, IPaymentGa
             sellerOrder.AcceptDeadlineUtc = now.AddHours(window);
             // Seller's share is held (Pending, no release date) until the order is shipped or delivered.
             db.Settlements.Add(new Settlement { PaymentId = payment.Id, SellerOrderId = sellerOrder.Id, ManufacturerBusinessId = sellerOrder.ManufacturerBusinessId,
-                Amount = sellerOrder.Total - sellerOrder.CommissionAmount, CommissionAmount = sellerOrder.CommissionAmount, Status = SettlementStatus.Pending, ReleaseAfter = Settlements.NoReleaseDate });
+                Amount = sellerOrder.Total - sellerOrder.CommissionAmount - sellerOrder.CommissionGst, CommissionAmount = sellerOrder.CommissionAmount, Status = SettlementStatus.Pending, ReleaseAfter = Settlements.NoReleaseDate });
             db.OrderStatusHistories.Add(new OrderStatusHistory { SellerOrderId = sellerOrder.Id, Status = SellerOrderStatus.Pending, Note = "Payment received; waiting for the seller to accept.", ChangedAtUtc = now });
         }
         await NotifyAsync(order.SellerOrders.Select(x => x.ManufacturerBusinessId), "New order", $"Order {order.OrderNumber} is paid and waiting for you to accept.", "/seller/orders", now, cancellationToken);

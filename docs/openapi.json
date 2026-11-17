@@ -328,6 +328,32 @@
         },
         "type": "object"
       },
+      "PlatformCompanyRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "address": {
+            "nullable": true,
+            "type": "string"
+          },
+          "feeGstRate": {
+            "format": "double",
+            "type": "number"
+          },
+          "gstin": {
+            "nullable": true,
+            "type": "string"
+          },
+          "legalName": {
+            "nullable": true,
+            "type": "string"
+          },
+          "pincode": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "ProductUnit": {
         "enum": [
           "Piece",
@@ -1374,6 +1400,38 @@
             }
           }
         ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "testhost"
+        ]
+      }
+    },
+    "/api/v1/admin/platform-company": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "testhost"
+        ]
+      },
+      "put": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlatformCompanyRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
