@@ -44,10 +44,10 @@ public sealed record BusinessAddressResponse(long Id, long BusinessId, AddressTy
     public static BusinessAddressResponse From(BusinessAddress x) => new(x.Id, x.BusinessId, x.AddressType, x.Line1, x.Line2, x.CityId, x.Pincode, x.IsDefault);
 }
 
-/// <summary>The business and the id of the address are never taken from the caller.</summary>
-public sealed record BusinessAddressRequest(AddressType AddressType, string? Line1, string? Line2, long CityId, string? Pincode, bool IsDefault = false)
+/// <summary>The business, the id and the city are never taken from the caller: the city is the one of the pincode in the postal directory.</summary>
+public sealed record BusinessAddressRequest(AddressType AddressType, string? Line1, string? Line2, string? Pincode, bool IsDefault = false)
 {
-    public BusinessAddress ToEntity() => new() { AddressType = AddressType, Line1 = Line1!.Trim(), Line2 = string.IsNullOrWhiteSpace(Line2) ? null : Line2.Trim(), CityId = CityId, Pincode = Pincode!, IsDefault = IsDefault };
+    public BusinessAddress ToEntity(long cityId) => new() { AddressType = AddressType, Line1 = Line1!.Trim(), Line2 = string.IsNullOrWhiteSpace(Line2) ? null : Line2.Trim(), CityId = cityId, Pincode = Pincode!, IsDefault = IsDefault };
 }
 
 public sealed record StaffMemberResponse(long BusinessId, string UserId, BusinessMemberRole Role, bool IsPrimary)

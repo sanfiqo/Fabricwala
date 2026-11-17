@@ -54,6 +54,16 @@ dotnet run --project src/TextileConnect.Api --launch-profile http
 
 On every start in the `Development` environment the API adds the demo data below if it is not there yet (it never runs in Production). Run it again any time; nothing is duplicated.
 
+### All-India pincodes
+
+Out of the box only two pincodes are known (452001 and 141001; Development adds a few more). To load the whole directory, download the India Post "All India Pincode Directory" CSV and run:
+
+```powershell
+dotnet run --project src/TextileConnect.Api -- import-pincodes C:\path	o\pincodes.csv
+```
+
+It prints how many pincodes and cities it added and can be run again safely. Details in [MASTER_DATA.md](MASTER_DATA.md).
+
 ## 5. Demo users and the development OTP
 
 In Development there is no SMS. The one-time code is always **123456**. All numbers are fake.

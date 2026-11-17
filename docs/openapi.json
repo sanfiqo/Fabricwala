@@ -117,10 +117,6 @@
           "addressType": {
             "$ref": "#/components/schemas/AddressType"
           },
-          "cityId": {
-            "format": "int64",
-            "type": "integer"
-          },
           "isDefault": {
             "type": "boolean"
           },

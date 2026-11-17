@@ -51,7 +51,7 @@ public sealed class BusinessProfileHttpTests
     [Theory]
     [InlineData("bad-gst", "452001", 400)]
     [InlineData(null, "123", 400)]
-    [InlineData(null, "999999", 404)]
+    [InlineData(null, "999999", 400)]
     public async Task Invalid_registration_does_not_create_business_or_membershipAsync(string? gstin, string pincode, int status)
     {
         await using var fixture = await MarketplaceHttpFixture.StartAsync();

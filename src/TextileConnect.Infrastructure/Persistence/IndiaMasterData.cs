@@ -42,6 +42,9 @@ public static class IndiaMasterData
         ("Puducherry", "PY", ["Puducherry"])
     ];
 
+    /// <summary>Cities where textile goods are made and bought in bulk. They are flagged as sourcing hubs; every other city is a delivery city.</summary>
+    public static readonly string[] SourcingHubs = ["Surat", "Delhi", "Ludhiana", "Panipat", "Jaipur", "Tiruppur", "Ahmedabad", "Mumbai"];
+
     public static readonly (string Name, string Prefix)[] Zones =
     [
         ("North", "1"), ("West", "2"), ("North Central", "3"), ("East", "4"),

@@ -23,7 +23,7 @@ public sealed class ProductSearchMySqlTests
             var extra = new[]
             {
                 ("Cotton kurti set", "cotton-kurti-set", "Soft cotton kurti for summer", "Cotton"),
-                ("Woollen shawl", "woollen-shawl", "Hand woven Kashmiri wool", "Wool"),
+                ("Woollen shawl", "woollen-shawl", "Hand woven pashmina wool", "Wool"),
                 ("XS tee", "xs-tee", "Tiny test shirt", "Cotton")
             };
             foreach (var (title, slug, description, material) in extra)
@@ -64,7 +64,7 @@ public sealed class ProductSearchMySqlTests
         Assert.Empty(await SlugsAsync(client, "jacket shawl"));
         Assert.Equal(new[] { "puffer" }, await SlugsAsync(client, "polyester"));                   // the material
         Assert.Equal(new[] { "cotton-kurti-set", "xs-tee" }, await SlugsAsync(client, "cotton"));  // title, description or material
-        Assert.Equal(new[] { "woollen-shawl" }, await SlugsAsync(client, "kashmiri"));              // the description
+        Assert.Equal(new[] { "woollen-shawl" }, await SlugsAsync(client, "pashmina"));              // the description
     });
 
     [MySqlFact]

@@ -20,7 +20,7 @@ public static class MarketplaceSeed
 
             foreach (var cityName in stateData.Cities)
                 if (!await db.Cities.AnyAsync(x => x.StateId == state.Id && x.Name == cityName, cancellationToken))
-                    db.Cities.Add(new City { StateId = state.Id, Name = cityName, IsDeliveryZone = true, IsSourcingHub = cityName is "Surat" or "Delhi" or "Ludhiana" or "Panipat" or "Jaipur" or "Tiruppur" or "Ahmedabad" or "Mumbai" });
+                    db.Cities.Add(new City { StateId = state.Id, Name = cityName, IsDeliveryZone = true, IsSourcingHub = IndiaMasterData.SourcingHubs.Contains(cityName) });
         }
 
         foreach (var zoneData in IndiaMasterData.Zones)

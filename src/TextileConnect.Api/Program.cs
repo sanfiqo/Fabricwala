@@ -82,6 +82,13 @@ builder.Services.AddAuthorization(options => options.AddPolicy("ApprovedBusiness
 
 var app = builder.Build();
 
+// "import-pincodes <file.csv>" loads the pincode directory and exits without starting the web server (see PincodeImportCommand).
+if (PincodeImportCommand.IsRequested(args))
+{
+    Environment.ExitCode = await PincodeImportCommand.RunAsync(app.Services, args, Console.Out);
+    return;
+}
+
 ProductionAdapterGuard.Validate(app.Services, app.Configuration, app.Environment.EnvironmentName);
 
 if (!app.Environment.IsEnvironment("Testing"))

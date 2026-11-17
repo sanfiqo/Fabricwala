@@ -29,10 +29,12 @@ public static class BusinessEndpoints
             directory.UpdateForUser(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "", b =>
             { b.DisplayName = request.DisplayName; b.Email = request.Email; }) is { } business
                 ? Results.Ok(Profile(business, db)) : Results.NotFound());
-        group.MapPost("/me/addresses", (BusinessAddressRequest request, ClaimsPrincipal principal, IBusinessDirectory directory) =>
-            string.IsNullOrWhiteSpace(request.Line1) || request.Line1.Length > 200 || request.Line2?.Length > 200 || request.CityId <= 0 || !BusinessInputRules.IsPincode(request.Pincode)
-                ? Results.BadRequest()
-                : Results.Ok(BusinessAddressResponse.From(directory.AddAddress(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "", request.ToEntity()))));
+        group.MapPost("/me/addresses", async (BusinessAddressRequest request, ClaimsPrincipal principal, IBusinessDirectory directory, MarketplaceDbContext db, CancellationToken ct) =>
+        {
+            if (string.IsNullOrWhiteSpace(request.Line1) || request.Line1.Length > 200 || request.Line2?.Length > 200) return Results.BadRequest();
+            var cityId = await PostalDirectory.RequireCityIdAsync(db, request.Pincode, ct);
+            return Results.Ok(BusinessAddressResponse.From(directory.AddAddress(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "", request.ToEntity(cityId))));
+        });
         group.MapGet("/me/addresses", (ClaimsPrincipal principal, IBusinessDirectory directory) =>
             Results.Ok(directory.ListAddresses(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "").Select(BusinessAddressResponse.From).ToList()));
         group.MapPut("/me/addresses/{id:long}/default", (long id, ClaimsPrincipal principal, IBusinessDirectory directory) =>
