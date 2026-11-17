@@ -73,6 +73,7 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
                 case Payment x: RequireKnown(x.Status, PaymentStatus.All, "payment"); break;
                 case Settlement x: RequireKnown(x.Status, SettlementStatus.All, "settlement"); break;
                 case Refund x: RequireKnown(x.Status, RefundStatus.All, "refund"); break;
+                case Shipment x: RequireKnown(x.Status, ShipmentProgress.All, "shipment"); break;
             }
         }
         Stamp();

@@ -91,9 +91,11 @@ public sealed class BusinessRulesExpandedTests
         var service = new EfOrderService(db);
         Assert.Equal("Accepted", (await service.UpdateSellerOrderAsync(2, order.SellerOrders.Single().Id, "Accepted", null, null))!.Status);
         Assert.Equal("Dispatched", (await service.UpdateSellerOrderAsync(2, order.SellerOrders.Single().Id, "Dispatched", null, "LR-1"))!.Status);
-        Assert.Equal("Delivered", (await service.UpdateShipmentAsync(2, order.SellerOrders.Single().Id, "Delivered"))!.Status);
+        Assert.Equal("ReachedCity", (await service.UpdateShipmentAsync(2, order.SellerOrders.Single().Id, "ReachedCity"))!.Status);
+        await Assert.ThrowsAsync<TextileConnect.Application.Common.RuleViolationException>(() => service.UpdateShipmentAsync(2, order.SellerOrders.Single().Id, "Delivered")); // only the retailer confirms delivery
         var delivered = await service.ConfirmDeliveryAsync(1, order.Id);
         Assert.NotNull(delivered);
         Assert.Equal("Delivered", (await db.SellerOrders.SingleAsync()).Status);
+        Assert.Equal("Delivered", (await db.Shipments.SingleAsync()).Status);
     }
 }

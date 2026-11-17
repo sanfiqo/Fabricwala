@@ -26,7 +26,7 @@ public sealed class EfOrderService(MarketplaceDbContext db, IPaymentGateway? gat
         var order = await GetForRetailerAsync(businessId, orderId, cancellationToken);
         if (order is null) return null;
         var sellerOrders = await db.SellerOrders.Where(x => x.OrderId == orderId).ToListAsync(cancellationToken);
-        var shipped = sellerOrders.Where(x => x.Status == SellerOrderStatus.Dispatched).ToList();
+        var shipped = sellerOrders.Where(x => SellerOrderTransitions.CanMove(x.Status, SellerOrderStatus.Delivered)).ToList();
         if (shipped.Count == 0)
         {
             if (sellerOrders.Count > 0 && sellerOrders.All(x => x.Status == SellerOrderStatus.Delivered)) return order; // already confirmed: nothing changes
@@ -43,7 +43,7 @@ public sealed class EfOrderService(MarketplaceDbContext db, IPaymentGateway? gat
         foreach (var settlement in await db.Settlements.Where(x => shippedIds.Contains(x.SellerOrderId) && x.Status == SettlementStatus.Pending).ToListAsync(cancellationToken))
             settlement.ReleaseAfter = now;
         foreach (var shipment in await db.Shipments.Where(x => shippedIds.Contains(x.SellerOrderId)).ToListAsync(cancellationToken))
-        { shipment.Status = "Delivered"; shipment.DeliveredAt = now; }
+        { shipment.Status = ShipmentProgress.Delivered; shipment.DeliveredAt = now; }
         await NotifyBusinessesAsync(shipped.Select(x => x.ManufacturerBusinessId), "Delivery confirmed", $"The retailer confirmed delivery of order {order.OrderNumber}.", "/seller/orders", now, cancellationToken);
         await db.SaveChangesAsync(cancellationToken);
         return order;
@@ -67,7 +67,7 @@ public sealed class EfOrderService(MarketplaceDbContext db, IPaymentGateway? gat
         switch (status)
         {
             case SellerOrderStatus.Accepted:
-                RequireState(order, parent, SellerOrderStatus.Pending);
+                RequireTransition(order, parent, SellerOrderStatus.Accepted);
                 if (order.AcceptDeadlineUtc is { } deadline && deadline <= now)
                     throw new RuleViolationException("accept_window_expired", "The time to accept this order has passed.");
                 order.Status = SellerOrderStatus.Accepted;
@@ -76,13 +76,13 @@ public sealed class EfOrderService(MarketplaceDbContext db, IPaymentGateway? gat
                 await NotifyBusinessesAsync([parent.RetailerBusinessId], "Order accepted", $"The seller accepted order {parent.OrderNumber}.", $"/orders/{parent.Id}", now, cancellationToken);
                 break;
             case SellerOrderStatus.Rejected:
-                RequireState(order, parent, SellerOrderStatus.Pending);
+                RequireTransition(order, parent, SellerOrderStatus.Rejected);
                 var rejection = reason?.Trim();
                 if (string.IsNullOrEmpty(rejection) || rejection.Length > 500) throw new ArgumentException("A reason of up to 500 characters is required.");
                 refund = await CancelAsync(order, parent, SellerOrderStatus.Rejected, rejection, "Order rejected", $"The seller could not accept order {parent.OrderNumber}. You will be refunded.", now, cancellationToken);
                 break;
             case SellerOrderStatus.Dispatched:
-                RequireState(order, parent, SellerOrderStatus.Accepted);
+                RequireTransition(order, parent, SellerOrderStatus.Dispatched);
                 var lr = lrNumber?.Trim();
                 var carrier = carrierName?.Trim();
                 if (string.IsNullOrEmpty(lr) || lr.Length > 60 || carrier?.Length > 80) throw new ArgumentException("An LR/tracking number of up to 60 characters is required.");
@@ -90,7 +90,7 @@ public sealed class EfOrderService(MarketplaceDbContext db, IPaymentGateway? gat
                 order.DispatchedAt = now;
                 var shipment = await db.Shipments.SingleOrDefaultAsync(x => x.SellerOrderId == order.Id, cancellationToken);
                 if (shipment is null) db.Shipments.Add(new Shipment { SellerOrderId = order.Id, LrNumber = lr, CarrierName = carrier, DispatchedAt = now });
-                else { shipment.LrNumber = lr; shipment.CarrierName = carrier; shipment.DispatchedAt = now; shipment.Status = "Dispatched"; }
+                else { shipment.LrNumber = lr; shipment.CarrierName = carrier; shipment.DispatchedAt = now; shipment.Status = ShipmentProgress.Dispatched; }
                 db.OrderStatusHistories.Add(new OrderStatusHistory { SellerOrderId = order.Id, Status = SellerOrderStatus.Dispatched, Note = $"LR {lr}", ChangedAtUtc = now });
                 var autoRelease = now.AddDays(await AutoReleaseDaysAsync(cancellationToken));
                 var held = await db.Settlements.SingleOrDefaultAsync(x => x.SellerOrderId == order.Id && x.Status == SettlementStatus.Pending, cancellationToken);
@@ -105,21 +105,31 @@ public sealed class EfOrderService(MarketplaceDbContext db, IPaymentGateway? gat
         return order;
     }
 
-    private static void RequireState(SellerOrder order, Order parent, string expected)
+    /// <summary>The order must be paid and the move must be one that SellerOrderTransitions allows.</summary>
+    private static void RequireTransition(SellerOrder order, Order parent, string to)
     {
         if (!string.Equals(parent.PaymentStatus, PaymentStatus.Paid, StringComparison.OrdinalIgnoreCase))
             throw new RuleViolationException("order_not_paid", "This order is not paid yet.");
-        if (order.Status != expected)
+        RequireMove(order, to);
+    }
+
+    private static void RequireMove(SellerOrder order, string to)
+    {
+        if (!SellerOrderTransitions.CanMove(order.Status, to))
             throw new RuleViolationException("invalid_order_transition", "This order cannot be changed in its current state.");
     }
 
     public async Task<Shipment?> UpdateShipmentAsync(long businessId, long sellerOrderId, string status, CancellationToken cancellationToken = default)
     {
-        if (!await db.SellerOrders.AnyAsync(x => x.Id == sellerOrderId && x.ManufacturerBusinessId == businessId, cancellationToken)) return null;
+        var sellerOrder = await db.SellerOrders.SingleOrDefaultAsync(x => x.Id == sellerOrderId && x.ManufacturerBusinessId == businessId, cancellationToken);
+        if (sellerOrder is null) return null;
         var shipment = await db.Shipments.SingleOrDefaultAsync(x => x.SellerOrderId == sellerOrderId, cancellationToken);
         if (shipment is null) return null;
+        if (!ShipmentProgress.SellerCanSet.Contains(status))
+            throw new RuleViolationException("invalid_shipment_status", "Use InTransit or ReachedCity. Delivery is confirmed by the retailer.", 400);
+        if (sellerOrder.Status != SellerOrderStatus.Dispatched)
+            throw new RuleViolationException("invalid_order_transition", "Only a shipped order can be updated.");
         shipment.Status = status;
-        if (status == "Delivered") shipment.DeliveredAt = Now;
         await db.SaveChangesAsync(cancellationToken);
         return shipment;
     }
@@ -161,6 +171,7 @@ public sealed class EfOrderService(MarketplaceDbContext db, IPaymentGateway? gat
     /// <summary>Cancels a seller order: status, stock back on the shelf, full refund when paid, history and notifications. Caller saves.</summary>
     private async Task<Refund?> CancelAsync(SellerOrder sellerOrder, Order parent, string finalStatus, string reason, string title, string message, DateTime now, CancellationToken cancellationToken)
     {
+        RequireMove(sellerOrder, finalStatus);
         sellerOrder.Status = finalStatus;
         sellerOrder.RejectReason = reason;
         var variantIds = sellerOrder.Items.Where(x => x.VariantId.HasValue).Select(x => x.VariantId!.Value).ToArray();

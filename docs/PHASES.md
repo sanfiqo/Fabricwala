@@ -212,3 +212,6 @@ One agent per folder at a time. A [WEB] task starts only after its [BE] task is 
 - [x] F2.2 Two checkouts for the last stock: exactly one wins, the other gets 409, stock ends at 0 (in-memory today, also in the MySQL suite where the order count is checked too).
 - [x] F2.3 `.github/workflows/ci.yml`: build, fast suite, MySQL suite (`mysql:8.0` service), vulnerable-package check that fails the build, and for `client/` `npm ci`, `npm run lint`, `npm run build`. **Not run on GitHub yet.** Also fixed the open NU1903 warning: `System.Security.Cryptography.Xml` and `.Pkcs` are pinned to 10.0.15 (the 10.0.9 versions pulled in by DataProtection had high severity advisories).
 - [x] F2.4 `docs/TESTING.md`.
+
+### Phase F4 - Business correctness
+- [x] F4.5 `SellerOrderTransitions` is the one rule table for seller order moves; the order service applies it for accept, reject, dispatch, cancel and delivery. A table test covers every from-to pair (36) and every seller action in the service. Closed a loophole: the seller could set the shipment status to "Delivered" without moving the order or the payout; the shipment route now accepts only InTransit and ReachedCity for a shipped order. Unknown shipment statuses are refused on save like the other statuses.
