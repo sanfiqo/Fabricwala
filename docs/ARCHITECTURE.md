@@ -1,7 +1,7 @@
 # ARCHITECTURE.md — TextileConnect
 
 How the system is built, as it is in the code on 17 Nov 2026. Where a part is planned but not built, it says so.
-Generated and detailed documents: [DATA_MODEL.md](DATA_MODEL.md) (every table), [API_REFERENCE.md](API_REFERENCE.md) (every route), [openapi.json](openapi.json) (the contract for the frontend), [SETTLEMENT.md](SETTLEMENT.md) (money rules), [AUDIT.md](AUDIT.md), [SEARCH.md](SEARCH.md), [MEDIA.md](MEDIA.md), [MASTER_DATA.md](MASTER_DATA.md), [SECURITY_REVIEW.md](SECURITY_REVIEW.md), [DEPLOY.md](DEPLOY.md), [TESTING.md](TESTING.md).
+Generated and detailed documents: [DATA_MODEL.md](DATA_MODEL.md) (every table), [API_REFERENCE.md](API_REFERENCE.md) (every route), [openapi.json](openapi.json) (the contract for the frontend), [SETTLEMENT.md](SETTLEMENT.md) (money rules), [AUDIT.md](AUDIT.md), [SEARCH.md](SEARCH.md), [MEDIA.md](MEDIA.md), [MASTER_DATA.md](MASTER_DATA.md), [SECURITY_REVIEW.md](SECURITY_REVIEW.md), [DEPLOY.md](DEPLOY.md), [TESTING.md](TESTING.md), [INVOICING.md](INVOICING.md).
 Rules for working are in `AGENTS.md`; the task list and its honest status are in `docs/PHASES.md`.
 
 ---
@@ -14,7 +14,7 @@ A multi-vendor B2B marketplace for textiles in India. Verified manufacturers lis
 
 **What works end to end** (shown by `FullJourneyHttpTests`, over HTTP, with data made only through the API): mobile OTP sign-in, business sign-up and admin approval, products with sizes, colours and price tiers, search and filters, landed cost with freight and GST, cart, checkout split per seller, payment (fake gateway), seller accept, reject or dispatch, retailer delivery confirmation, payout hold and release (status only), problem reports with photos and refunds, notifications, seller dashboard, admin lists and reports.
 
-**Not built:** real SMS (MSG91), WhatsApp, real file storage (R2), real money transfer to sellers (Razorpay Route), a GST-compliant invoice, RFQ, product reviews, group buying, a logistics role. See `PHASES.md`.
+**Not built:** real SMS (MSG91), WhatsApp, real file storage (R2), real money transfer to sellers (Razorpay Route), RFQ, product reviews, group buying, a logistics role. See `PHASES.md`.
 
 ---
 

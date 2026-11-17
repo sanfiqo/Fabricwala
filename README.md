@@ -21,7 +21,7 @@ In Development the sign-in code is always `123456` and payments use a fake gatew
 
 ## Check it
 ```
-dotnet test TextileConnect.slnx        # 457 pass, 25 skip (need MySQL: set TEXTILECONNECT_TEST_MYSQL)
+dotnet test TextileConnect.slnx        # 499 pass, 25 skip (need MySQL: set TEXTILECONNECT_TEST_MYSQL)
 ```
 
 ## Where things are
@@ -37,4 +37,4 @@ dotnet test TextileConnect.slnx        # 457 pass, 25 skip (need MySQL: set TEXT
 | [docs/TESTING.md](docs/TESTING.md), [docs/RUN_LOCAL.md](docs/RUN_LOCAL.md), [docs/SECRETS.md](docs/SECRETS.md) | tests, local setup, secrets |
 
 ## Status in one line
-Order journey works end to end in Development. **Not ready for real customers:** no real SMS, file storage or seller payouts, no GST invoice, no admin MFA, and the MySQL tests, Docker, backups and load test have not been run. Details in `docs/PHASES.md`.
+Order journey works end to end in Development. **Not ready for real customers:** no real SMS, file storage or seller payouts, GST on delivery and on the platform fee undecided, no admin MFA, and the MySQL tests, Docker, backups and load test have not been run. Details in `docs/PHASES.md`.

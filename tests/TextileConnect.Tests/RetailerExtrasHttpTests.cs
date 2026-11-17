@@ -150,6 +150,22 @@ public sealed class RetailerExtrasHttpTests
         Assert.Equal(HttpStatusCode.NotFound, (await retailer.PostAsync("/api/v1/orders/99999/reorder", null)).StatusCode);
     }
 
+    /// <summary>Gives the seller of an order what a tax invoice needs (a valid GSTIN and a street address) and marks the order dispatched.</summary>
+    internal static async Task MakeInvoiceableAsync(MarketplaceHttpFixture fixture, long sellerOrderId)
+    {
+        using var scope = fixture.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<TextileConnect.Infrastructure.Persistence.MarketplaceDbContext>();
+        var sellerOrder = await db.SellerOrders.SingleAsync(x => x.Id == sellerOrderId);
+        var seller = await db.Businesses.SingleAsync(x => x.Id == sellerOrder.ManufacturerBusinessId);
+        var body = "08AAAAA0000A1Z";
+        seller.Gstin = body + TextileConnect.Application.Businesses.GstinRules.CheckCharacter(body + "0");
+        var cityId = await db.Cities.Select(x => x.Id).FirstAsync();
+        db.BusinessAddresses.RemoveRange(db.BusinessAddresses.Where(x => x.BusinessId == seller.Id && x.AddressType == TextileConnect.Domain.Businesses.AddressType.Registered));
+        db.BusinessAddresses.Add(new TextileConnect.Domain.Businesses.BusinessAddress { BusinessId = seller.Id, AddressType = TextileConnect.Domain.Businesses.AddressType.Registered, Line1 = "1 Mill Road", CityId = cityId, Pincode = "302001", IsDefault = true });
+        sellerOrder.Status = TextileConnect.Domain.SellerOrderStatus.Dispatched;
+        await db.SaveChangesAsync();
+    }
+
     [Fact]
     public async Task Invoice_list_shows_paid_orders_and_the_commission_invoice_stays_with_the_sellerAsync()
     {
@@ -170,10 +186,12 @@ public sealed class RetailerExtrasHttpTests
         Assert.Equal("Retailer", (await GetAsync(seller, "/api/v1/invoices")).GetProperty("items")[0].GetProperty("counterpartyName").GetString());
 
         var url = row.GetProperty("downloadUrl").GetString()!;
+        Assert.Equal(HttpStatusCode.Conflict, (await retailer.GetAsync(url)).StatusCode); // nothing to invoice before the goods are dispatched
+        await MakeInvoiceableAsync(fixture, paid.SellerOrderId);
         var pdf = await retailer.GetAsync(url);
         Assert.Equal(HttpStatusCode.OK, pdf.StatusCode);
         Assert.Equal("application/pdf", pdf.Content.Headers.ContentType!.MediaType);
-        Assert.StartsWith("TC-", (await GetAsync(retailer, "/api/v1/invoices")).GetProperty("items")[0].GetProperty("invoiceNumber").GetString());
+        Assert.EndsWith("/2627/00001", (await GetAsync(retailer, "/api/v1/invoices")).GetProperty("items")[0].GetProperty("invoiceNumber").GetString());
         Assert.Equal(HttpStatusCode.NotFound, (await retailer.GetAsync(url + "?type=PlatformCommission")).StatusCode); // platform to seller only
         Assert.Equal(HttpStatusCode.OK, (await seller.GetAsync(url + "?type=PlatformCommission")).StatusCode);
         using var other = await fixture.ClientAsync("Retailer", "other", 31);

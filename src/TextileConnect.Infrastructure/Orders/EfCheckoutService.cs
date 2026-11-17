@@ -66,6 +66,8 @@ public sealed partial class EfCheckoutService(MarketplaceDbContext db, ICartServ
             OrderNumber = NewOrderNumber(now), RetailerBusinessId = retailerBusinessId, PlacedByUserId = userId, PlacedAtUtc = now,
             DeliveryLine1 = address.Line1, DeliveryLine2 = address.Line2, DeliveryCity = city, DeliveryPincode = address.Pincode,
         };
+        var productIds = view.Sellers.SelectMany(g => g.Items).Select(i => i.ProductId).Distinct().ToList();
+        var hsnCodes = await db.Products.AsNoTracking().Where(x => productIds.Contains(x.Id)).ToDictionaryAsync(x => x.Id, x => x.HsnCode, cancellationToken);
         foreach (var group in view.Sellers)
         {
             var rate = sellers[group.SellerBusinessId].CommissionRateOverride ?? defaultRate;
@@ -75,7 +77,7 @@ public sealed partial class EfCheckoutService(MarketplaceDbContext db, ICartServ
                 sellerOrder.Items.Add(new OrderItem
                 {
                     SellerOrder = sellerOrder, ProductId = line.ProductId, VariantId = line.VariantId, Title = line.Title, Size = line.Size, Colour = line.Colour,
-                    Quantity = line.Quantity, UnitPrice = line.SlabPrice, GstRate = line.GstRate, GstAmount = line.LineGst,
+                    Quantity = line.Quantity, UnitPrice = line.SlabPrice, GstRate = line.GstRate, GstAmount = line.LineGst, HsnCode = hsnCodes.GetValueOrDefault(line.ProductId),
                 });
                 variants[line.VariantId].StockQty -= line.Quantity;
             }

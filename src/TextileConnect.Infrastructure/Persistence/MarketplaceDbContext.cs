@@ -41,6 +41,7 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
     public DbSet<PaymentWebhookEvent> PaymentWebhookEvents => Set<PaymentWebhookEvent>();
     public DbSet<Refund> Refunds => Set<Refund>();
     public DbSet<Invoice> Invoices => Set<Invoice>();
+    public DbSet<InvoiceSequence> InvoiceSequences => Set<InvoiceSequence>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<ReturnClaim> ReturnClaims => Set<ReturnClaim>();
     public DbSet<ReturnClaimPhoto> ReturnClaimPhotos => Set<ReturnClaimPhoto>();
@@ -239,6 +240,17 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
         builder.Entity<Refund>().Property(x => x.Amount).HasPrecision(18, 2);
         builder.Entity<Invoice>().HasKey(x => x.Id);
         builder.Entity<Invoice>().HasIndex(x => x.InvoiceNumber).IsUnique();
+        builder.Entity<Invoice>().Property(x => x.InvoiceNumber).HasMaxLength(32);
+        builder.Entity<Invoice>().Property(x => x.InvoiceType).HasMaxLength(32);
+        builder.Entity<Invoice>().HasIndex(x => new { x.SellerOrderId, x.InvoiceType }).IsUnique();
+        builder.Entity<InvoiceSequence>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.FinancialYear).HasMaxLength(4).IsRequired();
+            entity.Property(x => x.LastNumber).IsConcurrencyToken();
+            entity.HasIndex(x => new { x.SellerBusinessId, x.FinancialYear }).IsUnique();
+        });
+        builder.Entity<OrderItem>().Property(x => x.HsnCode).HasMaxLength(8);
         builder.Entity<AuditLog>().HasKey(x => x.Id);
         builder.Entity<AuditLog>().Property(x => x.Action).HasMaxLength(64).IsRequired();
         builder.Entity<AuditLog>().Property(x => x.EntityId).HasMaxLength(64);
@@ -301,6 +313,7 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
         Link<Refund, Payment>(x => x.PaymentId);
         Link<Refund, SellerOrder>(x => x.SellerOrderId);
         Link<Invoice, SellerOrder>(x => x.SellerOrderId);
+        Link<InvoiceSequence, Business>(x => x.SellerBusinessId);
         // Saved products
         Link<Favourite, Business>(x => x.RetailerBusinessId);
         Link<Favourite, Product>(x => x.ProductId);
