@@ -86,7 +86,11 @@ public sealed class MarketplaceHttpFixture(WebApplication app) : IAsyncDisposabl
             // both in one transaction on one connection, which only works when both are relational. (The tests still sign in with test headers.)
             builder.Services.RemoveAll<DbContextOptions<MarketplaceDbContext>>();
             builder.Services.RemoveAll<Microsoft.EntityFrameworkCore.Infrastructure.IDbContextOptionsConfiguration<MarketplaceDbContext>>();
-            builder.Services.AddDbContext<MarketplaceDbContext>(options => options.UseMySQL(mysql));
+            builder.Services.AddDbContext<MarketplaceDbContext>(options =>
+            {
+                options.UseMySQL(mysql);
+                if (PerfSql.Enabled) options.LogTo(PerfSql.Lines.Enqueue, [Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.CommandExecuted], Microsoft.Extensions.Logging.LogLevel.Information);
+            });
             builder.Services.RemoveAll<DbContextOptions<ApplicationIdentityDbContext>>();
             builder.Services.RemoveAll<Microsoft.EntityFrameworkCore.Infrastructure.IDbContextOptionsConfiguration<ApplicationIdentityDbContext>>();
             builder.Services.AddDbContext<ApplicationIdentityDbContext>(options => options.UseMySQL(mysql));

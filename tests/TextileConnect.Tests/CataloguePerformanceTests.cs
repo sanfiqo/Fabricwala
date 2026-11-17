@@ -59,6 +59,21 @@ public sealed class CataloguePerformanceTests
         return new Measurement(name, At(0.5), At(0.95), times[^1], times.Count, failures);
     }
 
+    private static readonly (string Name, string Path, int Parallel)[] Cases = {
+        ("List, newest first", "/api/v1/products?pageSize=20", 1),
+        ("List, page 50", "/api/v1/products?pageSize=20&page=50", 1),
+        ("List, most popular", "/api/v1/products?sort=popular&pageSize=20", 1),
+        ("List, price low to high", "/api/v1/products?sort=price-asc&pageSize=20", 1),
+        ("Search, one word (full-text)", "/api/v1/products?q=jacket", 1),
+        ("Search, two words (full-text)", "/api/v1/products?q=quilted+wool", 1),
+        ("Search, short word (contains)", "/api/v1/products?q=xl", 1),
+        ("Filtered search", "/api/v1/products?q=wool&material=Wool&minPrice=200&maxPrice=900&size=M&sort=price-asc", 1),
+        ("Filter counts, no filter", "/api/v1/products/filters", 1),
+        ("Filter counts, with search and filters", "/api/v1/products/filters?q=wool&size=M&minPrice=200", 1),
+        ("Search, 8 requests at a time", "/api/v1/products?q=jacket", 8),
+        ("List, 8 requests at a time", "/api/v1/products?pageSize=20", 8)
+    };
+
     /// <summary>20,000 products, 40 sellers. Writes a table and fails when a p95 is 300 ms or more.</summary>
     [PerfFact]
     public Task Catalogue_list_search_and_filters_stay_under_300_ms_at_p95_with_20000_products() => MySqlStore.RunAsync(async () =>
@@ -72,21 +87,7 @@ public sealed class CataloguePerformanceTests
         seeding.Stop();
         using var client = await fixture.ClientAsync(null);
 
-        var cases = new (string Name, string Path, int Parallel)[]
-        {
-            ("List, newest first", "/api/v1/products?pageSize=20", 1),
-            ("List, page 50", "/api/v1/products?pageSize=20&page=50", 1),
-            ("List, most popular", "/api/v1/products?sort=popular&pageSize=20", 1),
-            ("List, price low to high", "/api/v1/products?sort=price-asc&pageSize=20", 1),
-            ("Search, one word (full-text)", "/api/v1/products?q=jacket", 1),
-            ("Search, two words (full-text)", "/api/v1/products?q=quilted+wool", 1),
-            ("Search, short word (contains)", "/api/v1/products?q=xl", 1),
-            ("Filtered search", "/api/v1/products?q=wool&material=Wool&minPrice=200&maxPrice=900&size=M&sort=price-asc", 1),
-            ("Filter counts, no filter", "/api/v1/products/filters", 1),
-            ("Filter counts, with search and filters", "/api/v1/products/filters?q=wool&size=M&minPrice=200", 1),
-            ("Search, 8 requests at a time", "/api/v1/products?q=jacket", 8),
-            ("List, 8 requests at a time", "/api/v1/products?pageSize=20", 8)
-        };
+        var cases = Cases;
         var results = new List<Measurement>();
         foreach (var (name, path, parallel) in cases) results.Add(await MeasureAsync(client, name, path, requests: parallel == 1 ? 100 : 160, parallel));
 
@@ -101,6 +102,39 @@ public sealed class CataloguePerformanceTests
 
         Assert.True(results.All(r => r.Failures == 0), "Some requests failed.\n" + report);
         Assert.True(results.All(r => r.P95 < 300), "A p95 is 300 ms or more.\n" + report);
+    });
+
+    /// <summary>
+    /// Finds out where the time goes: for each request of the benchmark it sends it once (after a warm-up) and writes every SQL command with its time to the file in
+    /// TEXTILECONNECT_PERF_PROFILE. Not a pass or fail test.
+    /// </summary>
+    [PerfFact]
+    public Task Profile_the_sql_of_the_benchmark_requests() => MySqlStore.RunAsync(async () =>
+    {
+        var target = Environment.GetEnvironmentVariable("TEXTILECONNECT_PERF_PROFILE");
+        if (string.IsNullOrWhiteSpace(target)) return;
+        var products = int.TryParse(Environment.GetEnvironmentVariable("TEXTILECONNECT_PERF_PRODUCTS"), out var n) ? n : 20_000;
+        MarketplaceHttpFixture.SearchLimitOverride.Value = 1_000_000;
+        PerfSql.Enabled = true;
+        await using var fixture = await MarketplaceHttpFixture.StartAsync(app => app.MapProductEndpoints());
+        using (var scope = fixture.Services.CreateScope())
+            await CatalogueSeeder.SeedAsync(scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>(), products);
+        using var client = await fixture.ClientAsync(null);
+
+        var text = new StringBuilder();
+        text.AppendLine($"SQL profile, {products} products, {DateTime.UtcNow:yyyy-MM-dd HH:mm} UTC");
+        foreach (var (name, path, parallel) in Cases.Where(c => c.Parallel == 1))
+        {
+            await client.GetAsync(path);                                   // warm-up: connection, plan, JIT
+            PerfSql.Lines.Clear();
+            var watch = Stopwatch.StartNew();
+            using var response = await client.GetAsync(path);
+            watch.Stop();
+            text.AppendLine().AppendLine($"## {name}  [{path}]  status {(int)response.StatusCode}, {watch.ElapsedMilliseconds} ms in total");
+            foreach (var line in PerfSql.Lines.ToArray())
+                text.AppendLine(line.Length > 2500 ? line[..2500] + " ..." : line).AppendLine();
+        }
+        await File.WriteAllTextAsync(target, text.ToString());
     });
 }
 

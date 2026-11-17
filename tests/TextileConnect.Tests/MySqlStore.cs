@@ -17,7 +17,7 @@ public sealed class MySqlFactAttribute : FactAttribute
 /// Gives a test its own empty MySQL database, built from the real migrations and dropped afterwards.
 /// TEXTILECONNECT_TEST_MYSQL is a connection string to a server whose user may create and drop databases; the database name in it is ignored.
 /// Inside <see cref="RunAsync"/>, every MarketplaceHttpFixture uses that database instead of the in-memory one.
-/// Set TEXTILECONNECT_TEST_MYSQL_KEEP=1 to keep the database of a failing run for a look.
+/// Set TEXTILECONNECT_TEST_MYSQL_KEEP=1 to keep the database of a failing run for a look, or "always" to keep every one (with TEXTILECONNECT_TEST_MYSQL_KEEP_FILE the name is written to that file).
 /// </summary>
 public static class MySqlStore
 {
@@ -58,7 +58,9 @@ public static class MySqlStore
         finally
         {
             Current.Value = null;
-            if (!(failed && Environment.GetEnvironmentVariable(Variable + "_KEEP") == "1"))
+            var keep = Environment.GetEnvironmentVariable(Variable + "_KEEP");
+            if (keep == "always" && Environment.GetEnvironmentVariable(Variable + "_KEEP_FILE") is { Length: > 0 } nameFile) File.WriteAllText(nameFile, name);
+            if (!(keep == "always" || failed && keep == "1"))
             {
                 MySqlConnection.ClearAllPools();
                 await using var connection = new MySqlConnection(server.ConnectionString);
