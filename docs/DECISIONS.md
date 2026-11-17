@@ -9,3 +9,6 @@
 
 ## 17 Nov 2026 - Commission bearer
 Decided by the owner: the **seller bears the commission**. The retailer pays goods + GST + freight; the commission is taken from the seller payout. This is what the code already does (see SETTLEMENT.md), so no code change.
+
+## 17 Nov 2026 - Payout delay
+Decided by the owner: keep the current rule. Payout is released when the retailer confirms delivery, or 7 days after dispatch, and is held while a problem report is open.
