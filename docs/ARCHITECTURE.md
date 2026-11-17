@@ -27,42 +27,47 @@ credit, inspections, analytics.
 
 ## 2. System architecture
 
+Status legend: **built** = code and tests exist; **planned** = described in the plan, not in the code yet (see the completion plan, `FABRICWALA_COMPLETION_PROMPT.md`, task ids F0 to F9).
+
 ```
 React + Vite PWA (client/)        retailer, manufacturer, admin areas
         |  HTTPS, auth cookie + X-CSRF-TOKEN header
         v
-TextileConnect.Api                controllers, middleware, rate limiting, Swagger, /api/v1
+TextileConnect.Api                minimal API endpoint files (no controllers), middleware, rate limiting, Swagger, /api/v1
         |
         +--> Sanfiqo.Identity      users, roles, OTP, contact ownership, cookie security
         +--> TextileConnect.Application   services, DTOs, validators, interfaces
                  |
                  v
-        TextileConnect.Infrastructure     EF Core DbContext (MySQL), file storage, MSG91, WhatsApp, Razorpay, Hangfire
+        TextileConnect.Infrastructure     EF Core DbContext (MySQL), services, Razorpay client, development file storage
                  |
                  v
               MySQL 8
 
-External: MSG91 (OTP SMS), WhatsApp Cloud API (alerts), Razorpay Route (payments + split payouts)
-Razorpay -> POST /api/v1/webhooks/razorpay (signature verified, idempotent)
+External, built:   Razorpay (order, refund, webhook). Needs real keys in Production.
+External, planned: MSG91 (OTP SMS), WhatsApp Cloud API (alerts), Razorpay Route (split payouts), Cloudflare R2 (files).
+Razorpay -> POST /api/v1/payments/webhook (signature verified; one event id is not yet stored for idempotency, see task F1.6)
 ```
 
 Frontend never calls external services directly. All money/SMS/WhatsApp traffic goes through the API.
+In any environment except Development and Testing the app refuses to start while a development or unconfigured adapter
+(file storage, payment gateway, OTP sender) is still registered; the error names the config keys to set (`ProductionAdapterGuard`).
 
 ### Tech stack
-| Layer | Choice |
-| --- | --- |
-| Runtime | .NET 10, ASP.NET Core Web API (controllers) |
-| ORM / DB | EF Core + `MySql.EntityFrameworkCore`, MySQL 8 |
-| Auth | ASP.NET Core Identity + mobile OTP + HttpOnly secure cookie (SameSite=Lax) + antiforgery |
-| Validation | FluentValidation |
-| Jobs | Hangfire (MySQL storage) |
-| Logging | Serilog |
-| SMS | MSG91 (DLT) behind `IOtpSender` |
-| WhatsApp | Meta WhatsApp Cloud API behind `INotificationSender` |
-| Payments | Razorpay Route behind `IPaymentGateway` |
-| Files | Cloudflare R2 behind `IFileStorage` (local disk in Development) |
-| Frontend | React + Vite + TypeScript PWA, Tailwind, shadcn/ui, TanStack Query |
-| Hosting | DigitalOcean or Azure, India region |
+| Layer | Choice | Status |
+| --- | --- | --- |
+| Runtime | .NET 10, ASP.NET Core minimal APIs (endpoint files per area, no controllers) | built |
+| ORM / DB | EF Core + `MySql.EntityFrameworkCore`, MySQL 8 | built |
+| Auth | ASP.NET Core Identity + mobile OTP + HttpOnly secure cookie (SameSite=Lax) + antiforgery | built |
+| Validation | FluentValidation | built |
+| Background jobs | `BackgroundService` (`OrderMaintenanceWorker`, once a minute). Hangfire is not used | built |
+| Logging | Serilog (console sink when nothing else is configured) | built |
+| SMS | MSG91 (DLT) behind `IOtpDelivery`. Only a fake sender (Development) and an "unconfigured" sender exist | planned |
+| WhatsApp | Meta WhatsApp Cloud API behind `INotificationSender`. The interface exists but nothing calls it | planned |
+| Payments | Razorpay behind `IPaymentGateway` (orders, refunds, webhook). Route transfers are not built; settlement only changes a status | partly built |
+| Files | Cloudflare R2 behind `IFileStorage`. Only the local-disk Development implementation exists | planned |
+| Frontend | React + Vite + TypeScript PWA, Tailwind, shadcn/ui, TanStack Query | built |
+| Hosting | DigitalOcean or Azure, India region | planned |
 
 Cookie note: frontend and API must be same-site (e.g. `app.example.in` + `api.example.in`) so the cookie works.
 JWT is added only if a native mobile app is built later.
@@ -74,6 +79,7 @@ JWT is added only if a native mobile app is built later.
 ### Conventions
 - Business tables: `BIGINT` auto-increment `Id`. Identity users: string Id (as in Sanfiqo.Identity).
 - Money `decimal(18,2)`. Times UTC. `CreatedAt`, `UpdatedAt` on every table.
+- **Reality check (17 Nov 2026):** the tables below say "FK" for the logical relation. The database enforces only 6 foreign keys today (order lines, status history, shipments and settlements to `SellerOrders`, claim photos to `ReturnClaims`, `SellerOrders` to `Orders`, plus one to `Cities`); the other relations are plain `bigint` columns. Task F1 adds the rest. `CreatedAt`/`UpdatedAt` are also missing on several tables (task F1.4).
 - Enums stored as int. Soft delete `IsDeleted` on Businesses and Products.
 - Table names plural, PascalCase.
 
@@ -159,7 +165,7 @@ erDiagram
 | ShippingRates | Id, FromCityId (FK), ToCityId (FK), RateType (PerKg/PerPiece), Rate, MinCharge, TransitDays, IsActive | Landed cost input |
 | Shipments | Id, SellerOrderId (FK, unique), LogisticsBusinessId (nullable), CarrierName, LrNumber, DispatchedAt, DeliveredAt, ProofOfDeliveryKey | |
 | Payments | Id, OrderId (FK), Gateway, GatewayOrderId (unique), GatewayPaymentId, Amount, Method, Status, PaidAt | Retries allowed |
-| PaymentWebhookEvents | Id, Gateway, EventId (unique), EventType, ReceivedAt, ProcessedAt | Idempotency |
+| PaymentWebhookEvents | Id, Gateway, EventId (unique), EventType, ReceivedAt, ProcessedAt | Idempotency. **Not built yet** (task F1.6) |
 | Settlements | Id, PaymentId (FK), SellerOrderId (FK, unique), ManufacturerBusinessId (FK), Amount, CommissionAmount, GatewayTransferId, Status, ReleaseAfter, SettledAt | |
 | Refunds | Id, PaymentId (FK), SellerOrderId (FK), Amount, Reason, GatewayRefundId, Status | |
 | Invoices | Id, SellerOrderId (FK), InvoiceNumber (unique), InvoiceType (SellerToRetailer/PlatformCommission), FileKey, IssuedAt | |

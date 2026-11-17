@@ -78,3 +78,4 @@ Handover: Phase 1 complete. Phase 2 complete except P2.3 migration tooling block
 2026-11-16 | FE-REQ 5 | done | Order list rows (retailer, seller and admin orders) now include items (OrderItemResponse, same shape as the detail); 207 tests passed
 2026-11-16 | FE-REQ 6 | done | Product photo upload: POST/DELETE /seller/products/{id}/media, media list in the seller product detail, owner can open draft photos; 210 tests passed
 2026-11-16 | FE-REQ 7 | done | Cart groups get sellerCity and arrivesBy, seller dashboard gets rating and ratingCount, product search gets a season filter; 211 tests passed
+2026-11-17 | F0.1-F0.4 | done | Real test count 211 (218 with the new guard tests), all green; startup guard for development adapters outside Development; controllers removed; Razorpay gateway reads the documented Payments:Razorpay:* keys (old Razorpay:* still accepted); ARCHITECTURE.md and AGENTS.md corrected

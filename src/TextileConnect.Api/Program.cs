@@ -42,10 +42,6 @@ builder.Host.UseSerilog((context, configuration) =>
 
 // Add services to the container.
 
-builder.Services.AddControllers().AddJsonOptions(options =>
-{
-    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-});
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
@@ -85,6 +81,8 @@ builder.Services.AddAuthorization(options => options.AddPolicy("ApprovedBusiness
     policy => policy.RequireAuthenticatedUser().AddRequirements(new ApprovedBusinessRequirement())));
 
 var app = builder.Build();
+
+ProductionAdapterGuard.Validate(app.Services, app.Configuration, app.Environment.EnvironmentName);
 
 if (!app.Environment.IsEnvironment("Testing"))
 {
@@ -126,7 +124,6 @@ app.UseAuthorization();
 app.UseMiddleware<ApiCsrfMiddleware>();
 app.UseAntiforgery();
 
-app.MapControllers();
 app.MapSanfiqoAuthEndpoints();
 app.MapBusinessEndpoints();
 app.MapPincodeEndpoints();

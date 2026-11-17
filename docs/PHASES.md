@@ -187,3 +187,13 @@ One agent per folder at a time. A [WEB] task starts only after its [BE] task is 
 - [ ] P13.4 Payouts to franchise via Razorpay Route linked account
 - [ ] P13.5 Franchise dashboard: onboarded sellers, their sales, earnings, payouts
 - Rules: single level only (no franchise under franchise); written agreement; TDS on commission — confirm with CA
+
+---
+
+## Completion plan (FABRICWALA_COMPLETION_PROMPT.md)
+
+### Phase F0 - Establish the truth
+- [x] F0.1 Build and tests run: 211 passed, 0 failed, 0 skipped (before F0 changes). Build warning NU1903 (`System.Security.Cryptography.Xml` 10.0.9 has known high severity advisories, pulled in by the test project) is open, see F2.3.
+- [x] F0.2 `ProductionAdapterGuard`: outside Development and Testing the app stops at startup while file storage, payment gateway or OTP sender is a development or unconfigured adapter. 7 tests; shown with a real `Production` start.
+- [x] F0.3 `AddControllers` and `MapControllers` removed (no controller class exists); JSON enum options stay on `ConfigureHttpJsonOptions`. OpenAPI drift test unchanged and green.
+- [x] F0.4 `docs/ARCHITECTURE.md` section 2 and tech stack, and the stack lines in `docs/AGENTS.md`, now say what is built and what is planned.
