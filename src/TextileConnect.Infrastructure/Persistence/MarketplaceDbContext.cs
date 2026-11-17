@@ -38,6 +38,7 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
     public DbSet<PayoutAccount> PayoutAccounts => Set<PayoutAccount>();
     public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<Settlement> Settlements => Set<Settlement>();
+    public DbSet<PaymentWebhookEvent> PaymentWebhookEvents => Set<PaymentWebhookEvent>();
     public DbSet<Refund> Refunds => Set<Refund>();
     public DbSet<Invoice> Invoices => Set<Invoice>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
@@ -216,6 +217,14 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
         builder.Entity<Payment>().HasIndex(x => x.GatewayOrderId).IsUnique();
         builder.Entity<Payment>().Property(x => x.Amount).HasPrecision(18, 2);
         builder.Entity<Settlement>().HasKey(x => x.Id);
+        builder.Entity<PaymentWebhookEvent>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Gateway).HasMaxLength(32).IsRequired();
+            entity.Property(x => x.EventId).HasMaxLength(100).IsRequired();
+            entity.Property(x => x.EventType).HasMaxLength(64).IsRequired();
+            entity.HasIndex(x => new { x.Gateway, x.EventId }).IsUnique();
+        });
         builder.Entity<Settlement>().Property(x => x.Amount).HasPrecision(18, 2);
         builder.Entity<Settlement>().Property(x => x.CommissionAmount).HasPrecision(18, 2);
         builder.Entity<Refund>().HasKey(x => x.Id);

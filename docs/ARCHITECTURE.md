@@ -46,7 +46,7 @@ TextileConnect.Api                minimal API endpoint files (no controllers), m
 
 External, built:   Razorpay (order, refund, webhook). Needs real keys in Production.
 External, planned: MSG91 (OTP SMS), WhatsApp Cloud API (alerts), Razorpay Route (split payouts), Cloudflare R2 (files).
-Razorpay -> POST /api/v1/payments/webhook (signature verified; one event id is not yet stored for idempotency, see task F1.6)
+Razorpay -> POST /api/v1/payments/webhook (signature verified; each event id is stored in PaymentWebhookEvents and applied once)
 ```
 
 Frontend never calls external services directly. All money/SMS/WhatsApp traffic goes through the API.
@@ -165,7 +165,7 @@ erDiagram
 | ShippingRates | Id, FromCityId (FK), ToCityId (FK), RateType (PerKg/PerPiece), Rate, MinCharge, TransitDays, IsActive | Landed cost input |
 | Shipments | Id, SellerOrderId (FK, unique), LogisticsBusinessId (nullable), CarrierName, LrNumber, DispatchedAt, DeliveredAt, ProofOfDeliveryKey | |
 | Payments | Id, OrderId (FK), Gateway, GatewayOrderId (unique), GatewayPaymentId, Amount, Method, Status, PaidAt | Retries allowed |
-| PaymentWebhookEvents | Id, Gateway, EventId (unique), EventType, ReceivedAt, ProcessedAt | Idempotency. **Not built yet** (task F1.6) |
+| PaymentWebhookEvents | Id, Gateway, EventId (unique with Gateway), EventType, ReceivedAtUtc, ProcessedAtUtc | Idempotency: a delivery is applied once. EventId is the `X-Razorpay-Event-Id` header, or a hash of the body when it is missing |
 | Settlements | Id, PaymentId (FK), SellerOrderId (FK, unique), ManufacturerBusinessId (FK), Amount, CommissionAmount, GatewayTransferId, Status, ReleaseAfter, SettledAt | |
 | Refunds | Id, PaymentId (FK), SellerOrderId (FK), Amount, Reason, GatewayRefundId, Status | |
 | Invoices | Id, SellerOrderId (FK), InvoiceNumber (unique), InvoiceType (SellerToRetailer/PlatformCommission), FileKey, IssuedAt | |

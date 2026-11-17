@@ -54,6 +54,29 @@ public sealed partial class EfPaymentService(MarketplaceDbContext db, IPaymentGa
                   where payment.GatewayOrderId == gatewayOrderId && order.RetailerBusinessId == retailerBusinessId
                   select new PaymentSession(order.Id, order.OrderNumber, payment.GatewayOrderId, payment.Amount, payment.Status)).SingleOrDefaultAsync(cancellationToken);
 
+    public async Task<bool> BeginWebhookEventAsync(string gateway, string eventId, string eventType, CancellationToken cancellationToken = default)
+    {
+        var existing = await db.PaymentWebhookEvents.SingleOrDefaultAsync(x => x.Gateway == gateway && x.EventId == eventId, cancellationToken);
+        if (existing is not null) return existing.ProcessedAtUtc is null;
+        var row = new PaymentWebhookEvent { Gateway = gateway, EventId = eventId, EventType = eventType, ReceivedAtUtc = (clock ?? TimeProvider.System).GetUtcNow().UtcDateTime };
+        db.PaymentWebhookEvents.Add(row);
+        try { await db.SaveChangesAsync(cancellationToken); return true; }
+        catch (DbUpdateException)
+        {
+            // The same event arrived twice at the same moment and the other delivery stored it first: that one handles it.
+            db.Entry(row).State = EntityState.Detached;
+            return false;
+        }
+    }
+
+    public async Task CompleteWebhookEventAsync(string gateway, string eventId, CancellationToken cancellationToken = default)
+    {
+        var row = await db.PaymentWebhookEvents.SingleOrDefaultAsync(x => x.Gateway == gateway && x.EventId == eventId, cancellationToken);
+        if (row is null || row.ProcessedAtUtc is not null) return;
+        row.ProcessedAtUtc = (clock ?? TimeProvider.System).GetUtcNow().UtcDateTime;
+        await db.SaveChangesAsync(cancellationToken);
+    }
+
     public async Task<bool> ConfirmAsync(string gatewayOrderId, string gatewayPaymentId, decimal? amountPaid, CancellationToken cancellationToken = default)
     {
         var payment = await db.Payments.SingleOrDefaultAsync(x => x.GatewayOrderId == gatewayOrderId, cancellationToken);

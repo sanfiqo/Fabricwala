@@ -1428,6 +1428,41 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                     b.ToTable("Payments");
                 });
 
+            modelBuilder.Entity("TextileConnect.Domain.Payments.PaymentWebhookEvent", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("EventId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("varchar(64)");
+
+                    b.Property<string>("Gateway")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("varchar(32)");
+
+                    b.Property<DateTime?>("ProcessedAtUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("ReceivedAtUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Gateway", "EventId")
+                        .IsUnique();
+
+                    b.ToTable("PaymentWebhookEvents");
+                });
+
             modelBuilder.Entity("TextileConnect.Domain.Payments.PayoutAccount", b =>
                 {
                     b.Property<long>("Id")
