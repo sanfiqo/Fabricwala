@@ -328,6 +328,77 @@ public sealed class InvoiceTests
         Assert.True(other.InterState); Assert.Equal(3.60m, other.Igst);
     }
 
+    // ---- credit notes ---------------------------------------------------------------------------------------------------------------
+
+    [Theory]
+    [InlineData(1080, 50, 1080, 50, 1030)]       // refund of the whole order: all the GST comes back
+    [InlineData(540, 50, 1080, 25, 515)]         // half the order: half the GST
+    [InlineData(100, 50, 1080, 4.63, 95.37)]     // an odd share is rounded to the paisa and the two parts still add up
+    [InlineData(100, 0, 1000, 0, 100)]           // an invoice without GST gives a credit note without GST
+    [InlineData(100, 0, 0, 0, 100)]
+    public void A_refund_takes_the_gst_share_of_the_invoice_out_of_the_credit_note(double refund, double tax, double total, double expectedTax, double expectedTaxable)
+    {
+        var (taxable, creditTax) = CreditNoteSplit.Split((decimal)refund, (decimal)tax, (decimal)total);
+        Assert.Equal((decimal)expectedTax, creditTax);
+        Assert.Equal((decimal)expectedTaxable, taxable);
+        Assert.Equal((decimal)refund, taxable + creditTax);
+    }
+
+    private static async Task<TextileConnect.Domain.Payments.Refund> RefundAsync(World world, SellerOrder order, decimal amount, string status = RefundStatus.Processed)
+    {
+        var refund = new TextileConnect.Domain.Payments.Refund { PaymentId = 1, SellerOrderId = order.Id, Amount = amount, Reason = "Damaged pieces", Status = status };
+        world.Db.Refunds.Add(refund);
+        await world.Db.SaveChangesAsync();
+        return refund;
+    }
+
+    [Fact]
+    public async Task A_processed_refund_gets_a_credit_note_in_its_own_series_once()
+    {
+        var world = await WorldAsync();
+        var order = await world.OrderAsync();
+        var invoice = await world.Service().CreateInvoiceAsync(order.Id, "SellerToRetailer");
+        var first = await RefundAsync(world, order, 540m);
+        var second = await RefundAsync(world, order, 100m);
+
+        var note = await world.Service().CreateCreditNoteAsync(first.Id);
+        var again = await world.Service().CreateCreditNoteAsync(first.Id);
+        var other = await world.Service().CreateCreditNoteAsync(second.Id);
+
+        Assert.Equal($"C{world.Seller.Id}/2627/00001", note.InvoiceNumber);
+        Assert.Equal(note.Id, again.Id);
+        Assert.Equal($"C{world.Seller.Id}/2627/00002", other.InvoiceNumber);          // one note per refund, two refunds on one order are allowed
+        Assert.Equal("CreditNote", note.InvoiceType);
+        Assert.Equal(first.Id, note.RefundId);
+        Assert.EndsWith("/2627/00001", invoice.InvoiceNumber);                          // the invoice series is not touched
+        Assert.StartsWith("%PDF-", System.Text.Encoding.ASCII.GetString(world.Storage.Files[note.FileKey!], 0, 5));
+    }
+
+    [Fact]
+    public async Task A_credit_note_is_refused_until_the_refund_has_gone_through()
+    {
+        var world = await WorldAsync();
+        var order = await world.OrderAsync();
+        await world.Service().CreateInvoiceAsync(order.Id, "SellerToRetailer");
+        var refund = await RefundAsync(world, order, 100m, RefundStatus.Requested);
+
+        var error = await Assert.ThrowsAsync<RuleViolationException>(async () => await world.Service().CreateCreditNoteAsync(refund.Id));
+        Assert.Equal("refund_not_processed", error.Code);
+        Assert.Equal(1, await world.Db.InvoiceSequences.CountAsync());              // only the series of the invoice exists, no number was used for the note
+    }
+
+    [Fact]
+    public async Task A_refund_of_an_order_that_never_had_a_tax_invoice_has_nothing_to_correct()
+    {
+        var world = await WorldAsync();
+        var order = await world.OrderAsync(SellerOrderStatus.Rejected);
+        var refund = await RefundAsync(world, order, 1080m);
+
+        var error = await Assert.ThrowsAsync<RuleViolationException>(async () => await world.Service().CreateCreditNoteAsync(refund.Id));
+        Assert.Equal("credit_note_not_applicable", error.Code);
+        await Assert.ThrowsAsync<KeyNotFoundException>(async () => await world.Service().CreateCreditNoteAsync(99999));
+    }
+
     [Fact]
     public void The_invoice_numbers_and_types_are_pinned_in_the_model()
     {

@@ -2413,6 +2413,29 @@
         ]
       }
     },
+    "/api/v1/invoices/refunds/{refundId}/credit-note": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "refundId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "testhost"
+        ]
+      }
+    },
     "/api/v1/invoices/seller-orders/{sellerOrderId}/download": {
       "get": {
         "parameters": [

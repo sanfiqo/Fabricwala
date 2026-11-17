@@ -135,6 +135,7 @@ Errors are always `{ "code": "...", "message": "...", "fields": { ... } }`. Requ
 | Method | Path | Who may call | Limit | Body | Returns |
 | --- | --- | --- | --- | --- | --- |
 | GET | `/api/v1/invoices` | Retailer or Manufacturer, approved business |  |  |  |
+| GET | `/api/v1/invoices/refunds/{refundId}/credit-note` | any signed-in user, approved business |  |  |  |
 | GET | `/api/v1/invoices/seller-orders/{sellerOrderId}/download` | any signed-in user, approved business |  |  |  |
 
 ## landed-cost

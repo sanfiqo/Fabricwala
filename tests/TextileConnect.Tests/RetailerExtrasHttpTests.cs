@@ -220,6 +220,38 @@ public sealed class RetailerExtrasHttpTests
         Assert.Contains(sellerView.GetProperty("items").EnumerateArray(), row => row.GetProperty("id").GetInt64() == second.SellerOrderId);
     }
 
+    [Fact]
+    public async Task A_credit_note_can_be_downloaded_by_the_two_businesses_of_the_order_and_by_nobody_elseAsync()
+    {
+        var (fixture, retailer, seller) = await StartAsync();
+        await using var _ = fixture; using var __ = retailer; using var ___ = seller;
+        var paid = await SellerOrderHttpTests.PlaceAsync(retailer);
+        await MakeInvoiceableAsync(fixture, paid.SellerOrderId);
+        Assert.Equal(HttpStatusCode.OK, (await retailer.GetAsync($"/api/v1/invoices/seller-orders/{paid.SellerOrderId}/download")).StatusCode);   // the tax invoice exists
+        long processed, requested;
+        using (var scope = fixture.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
+            var one = new TextileConnect.Domain.Payments.Refund { PaymentId = 1, SellerOrderId = paid.SellerOrderId, Amount = 100m, Reason = "Damaged", Status = TextileConnect.Domain.RefundStatus.Processed };
+            var two = new TextileConnect.Domain.Payments.Refund { PaymentId = 1, SellerOrderId = paid.SellerOrderId, Amount = 50m, Reason = "Late", Status = TextileConnect.Domain.RefundStatus.Requested };
+            db.Refunds.AddRange(one, two);
+            await db.SaveChangesAsync();
+            processed = one.Id; requested = two.Id;
+        }
+
+        var forRetailer = await retailer.GetAsync($"/api/v1/invoices/refunds/{processed}/credit-note");
+        Assert.Equal(HttpStatusCode.OK, forRetailer.StatusCode);
+        Assert.Equal("application/pdf", forRetailer.Content.Headers.ContentType!.MediaType);
+        Assert.Matches(@"^C\d+-\d{4}-00001\.pdf$", forRetailer.Content.Headers.ContentDisposition!.FileName!.Trim('"'));
+        Assert.Equal(HttpStatusCode.OK, (await seller.GetAsync($"/api/v1/invoices/refunds/{processed}/credit-note")).StatusCode);
+        Assert.Equal(HttpStatusCode.Conflict, (await retailer.GetAsync($"/api/v1/invoices/refunds/{requested}/credit-note")).StatusCode);    // not refunded yet
+        using var other = await fixture.ClientAsync("Retailer", "other", 31);
+        Assert.Equal(HttpStatusCode.NotFound, (await other.GetAsync($"/api/v1/invoices/refunds/{processed}/credit-note")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await retailer.GetAsync("/api/v1/invoices/refunds/99999/credit-note")).StatusCode);
+        using var anonymous = await fixture.ClientAsync(null);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await anonymous.GetAsync($"/api/v1/invoices/refunds/{processed}/credit-note")).StatusCode);
+    }
+
     /// <summary>Gives the seller of an order what a tax invoice needs (a valid GSTIN and a street address) and marks the order dispatched.</summary>
     internal static async Task MakeInvoiceableAsync(MarketplaceHttpFixture fixture, long sellerOrderId)
     {

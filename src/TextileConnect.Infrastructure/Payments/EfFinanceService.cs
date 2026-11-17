@@ -16,6 +16,7 @@ public sealed class EfFinanceService(MarketplaceDbContext db, IFileStorage stora
     private const int NumberingAttempts = 5;
     private const string SellerInvoice = "SellerToRetailer";
     private const string FeeInvoice = "PlatformCommission";
+    private const string CreditNote = "CreditNote";
     /// <summary>Series of the platform fee invoices. A seller series is the seller id, which is never letters.</summary>
     private const string PlatformSeries = "PF";
     /// <summary>Accounting code for the platform fee (other support services). To be confirmed with the owner's accountant.</summary>
@@ -40,6 +41,34 @@ public sealed class EfFinanceService(MarketplaceDbContext db, IFileStorage stora
             : await CreateFeeStatementAsync(sellerOrder, cancellationToken);
     }
 
+    /// <summary>
+    /// A credit note for a refund that went through. It names the tax invoice it corrects, takes the GST share out of the refund in the same proportion as that invoice carried it
+    /// and follows the same CGST/SGST or IGST. Its number comes from the seller series "C&lt;seller id&gt;". Refused while the refund is not processed, and when no tax invoice was ever
+    /// issued for the order (nothing to correct: for example an order rejected before dispatch).
+    /// </summary>
+    public async Task<Invoice> CreateCreditNoteAsync(long refundId, CancellationToken cancellationToken = default)
+    {
+        var refund = await db.Refunds.AsNoTracking().SingleOrDefaultAsync(x => x.Id == refundId, cancellationToken) ?? throw new KeyNotFoundException("Refund not found.");
+        var sellerOrder = await LoadAsync(refund.SellerOrderId, cancellationToken);
+        var existing = await db.Invoices.AsNoTracking().SingleOrDefaultAsync(x => x.SellerOrderId == sellerOrder.Id && x.InvoiceType == CreditNote && x.RefundId == refundId, cancellationToken);
+        if (existing is not null) return existing;
+        if (refund.Status != RefundStatus.Processed)
+            throw new RuleViolationException("refund_not_processed", "The credit note is made when the refund has gone through.");
+        var original = await db.Invoices.AsNoTracking().SingleOrDefaultAsync(x => x.SellerOrderId == sellerOrder.Id && x.InvoiceType == SellerInvoice && x.RefundId == 0, cancellationToken)
+            ?? throw new RuleViolationException("credit_note_not_applicable", "No tax invoice was issued for this order, so there is nothing to correct.");
+
+        return await IssueAsync(sellerOrder, CreditNote, "C" + sellerOrder.ManufacturerBusinessId.ToString(System.Globalization.CultureInfo.InvariantCulture), async (order, number, now, ct) =>
+        {
+            var basis = await BuildSellerInvoiceAsync(order, original.InvoiceNumber, original.IssuedAt, ct);
+            var (taxable, tax) = CreditNoteSplit.Split(refund.Amount, basis.Tax, basis.Total);
+            var percent = taxable == 0 ? 0m : decimal.Round(tax * 100m / taxable, 2, MidpointRounding.AwayFromZero);
+            return GstInvoiceBuilder.Build(new GstInvoiceInput(number, now, basis.Seller, basis.Buyer, string.Empty, basis.PlaceOfSupplyName, basis.PlaceOfSupplyCode, basis.OrderNumber,
+                [new GstItemInput($"Refund for order {basis.OrderNumber}: {refund.Reason}", null, null, null, 1, taxable, percent, tax)], 0m, refund.Amount,
+                $"Credit note against tax invoice {original.InvoiceNumber} dated {FinancialYear.IndiaDate(original.IssuedAt):dd MMM yyyy}. The amount is refunded to the retailer. This is a computer generated document and needs no signature.",
+                "CREDIT NOTE"));
+        }, cancellationToken, refundId);
+    }
+
     private Task<Domain.Orders.SellerOrder> LoadAsync(long sellerOrderId, CancellationToken cancellationToken)
         => db.SellerOrders.Include(x => x.Order).Include(x => x.Items).SingleAsync(x => x.Id == sellerOrderId, cancellationToken);
 
@@ -47,14 +76,15 @@ public sealed class EfFinanceService(MarketplaceDbContext db, IFileStorage stora
     /// Issues one tax invoice per seller order and type. Asking again returns the same document, because a tax invoice must not change after it is issued.
     /// It is refused until the goods are dispatched (the invoice is raised for a supply). The number is the next value of the series, taken in the same save as the invoice.
     /// </summary>
-    private async Task<Invoice> IssueAsync(Domain.Orders.SellerOrder sellerOrder, string type, string series, Func<Domain.Orders.SellerOrder, string, DateTime, CancellationToken, Task<GstInvoice>> build, CancellationToken cancellationToken)
+    private async Task<Invoice> IssueAsync(Domain.Orders.SellerOrder sellerOrder, string type, string series, Func<Domain.Orders.SellerOrder, string, DateTime, CancellationToken, Task<GstInvoice>> build, CancellationToken cancellationToken, long refundId = 0)
     {
-        if (sellerOrder.Status is not (SellerOrderStatus.Dispatched or SellerOrderStatus.Delivered))
+        // A credit note follows a tax invoice that exists, which is checked when it is built; the others need a dispatched order.
+        if (refundId == 0 && sellerOrder.Status is not (SellerOrderStatus.Dispatched or SellerOrderStatus.Delivered))
             throw new RuleViolationException("invoice_not_ready", "The invoice is made when the seller dispatches the order.");
 
         for (var attempt = 1; ; attempt++)
         {
-            var existing = await db.Invoices.SingleOrDefaultAsync(x => x.SellerOrderId == sellerOrder.Id && x.InvoiceType == type, cancellationToken);
+            var existing = await db.Invoices.SingleOrDefaultAsync(x => x.SellerOrderId == sellerOrder.Id && x.InvoiceType == type && x.RefundId == refundId, cancellationToken);
             if (existing is not null) return existing;
 
             var now = (clock ?? TimeProvider.System).GetUtcNow().UtcDateTime;
@@ -69,7 +99,7 @@ public sealed class EfFinanceService(MarketplaceDbContext db, IFileStorage stora
             {
                 var model = await build(sellerOrder, number, now, cancellationToken);
                 await using var content = new MemoryStream(GstInvoicePdf.Render(model));
-                invoice = new Invoice { SellerOrderId = sellerOrder.Id, InvoiceNumber = number, InvoiceType = type, IssuedAt = now };
+                invoice = new Invoice { SellerOrderId = sellerOrder.Id, InvoiceNumber = number, InvoiceType = type, RefundId = refundId, IssuedAt = now };
                 invoice.FileKey = await storage.SavePrivateAsync(content, $"{number.Replace('/', '-')}.pdf", cancellationToken);
             }
             catch

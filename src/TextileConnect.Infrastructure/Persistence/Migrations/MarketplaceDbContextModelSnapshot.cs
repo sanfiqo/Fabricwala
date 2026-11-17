@@ -1216,6 +1216,9 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                     b.Property<DateTime>("IssuedAt")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<long>("RefundId")
+                        .HasColumnType("bigint");
+
                     b.Property<long>("SellerOrderId")
                         .HasColumnType("bigint");
 
@@ -1224,7 +1227,7 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                     b.HasIndex("InvoiceNumber")
                         .IsUnique();
 
-                    b.HasIndex("SellerOrderId", "InvoiceType")
+                    b.HasIndex("SellerOrderId", "InvoiceType", "RefundId")
                         .IsUnique();
 
                     b.ToTable("Invoices");

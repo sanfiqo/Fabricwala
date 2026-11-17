@@ -206,9 +206,10 @@ Indexes: unique (Series, FinancialYear)
 | InvoiceNumber | varchar(32) | no |  |
 | InvoiceType | varchar(32) | no |  |
 | IssuedAt | datetime(6) | no |  |
+| RefundId | bigint | no |  |
 | SellerOrderId | bigint | no | -> SellerOrders.Id |
 
-Indexes: unique (InvoiceNumber); unique (SellerOrderId, InvoiceType)
+Indexes: unique (InvoiceNumber); unique (SellerOrderId, InvoiceType, RefundId)
 
 ## Notifications
 

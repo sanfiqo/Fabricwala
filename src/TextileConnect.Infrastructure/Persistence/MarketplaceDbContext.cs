@@ -243,7 +243,7 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
         builder.Entity<Invoice>().HasIndex(x => x.InvoiceNumber).IsUnique();
         builder.Entity<Invoice>().Property(x => x.InvoiceNumber).HasMaxLength(32);
         builder.Entity<Invoice>().Property(x => x.InvoiceType).HasMaxLength(32);
-        builder.Entity<Invoice>().HasIndex(x => new { x.SellerOrderId, x.InvoiceType }).IsUnique();
+        builder.Entity<Invoice>().HasIndex(x => new { x.SellerOrderId, x.InvoiceType, x.RefundId }).IsUnique();
         builder.Entity<InvoiceSequence>(entity =>
         {
             entity.HasKey(x => x.Id);
