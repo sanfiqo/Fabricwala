@@ -1,3 +1,4 @@
+using TextileConnect.Domain;
 using System.Security.Claims;
 using TextileConnect.Application.Businesses;
 using TextileConnect.Application.Orders;
@@ -40,11 +41,11 @@ public static class OrderEndpoints
         seller.MapGet("/{id:long}", async (long id, ICurrentBusiness current, MarketplaceDbContext db, CancellationToken ct) =>
             await new SellerOrderReader(db).DetailAsync(current.RequireBusinessId(), id, ct) is { } order ? Results.Ok(order) : Results.NotFound());
         seller.MapPost("/{id:long}/accept", (long id, ICurrentBusiness current, IOrderService orders, MarketplaceDbContext db, CancellationToken ct)
-            => ActAsync(id, current, orders, db, "Accepted", null, null, null, ct));
+            => ActAsync(id, current, orders, db, SellerOrderStatus.Accepted, null, null, null, ct));
         seller.MapPost("/{id:long}/reject", (long id, SellerReject request, ICurrentBusiness current, IOrderService orders, MarketplaceDbContext db, CancellationToken ct)
-            => ActAsync(id, current, orders, db, "Rejected", request.Reason, null, null, ct));
+            => ActAsync(id, current, orders, db, SellerOrderStatus.Rejected, request.Reason, null, null, ct));
         seller.MapPost("/{id:long}/dispatch", (long id, SellerDispatch request, ICurrentBusiness current, IOrderService orders, MarketplaceDbContext db, CancellationToken ct)
-            => ActAsync(id, current, orders, db, "Dispatched", null, request.LrNumber, request.CarrierName, ct));
+            => ActAsync(id, current, orders, db, SellerOrderStatus.Dispatched, null, request.LrNumber, request.CarrierName, ct));
         seller.MapPost("/{id:long}/status", (long id, SellerStatus request, ICurrentBusiness current, IOrderService orders, MarketplaceDbContext db, CancellationToken ct)
             => ActAsync(id, current, orders, db, request.Status, request.Reason, request.LrNumber, null, ct));
         seller.MapPost("/{id:long}/shipment", async (long id, ShipmentStatus request, ICurrentBusiness current, IOrderService orders, CancellationToken ct) =>

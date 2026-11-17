@@ -1,3 +1,4 @@
+using TextileConnect.Domain;
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
@@ -68,7 +69,7 @@ public sealed partial class EfCheckoutService(MarketplaceDbContext db, ICartServ
         foreach (var group in view.Sellers)
         {
             var rate = sellers[group.SellerBusinessId].CommissionRateOverride ?? defaultRate;
-            var sellerOrder = new SellerOrder { Order = order, ManufacturerBusinessId = group.SellerBusinessId, CommissionRate = rate, PlacedAtUtc = now, Status = "Pending" };
+            var sellerOrder = new SellerOrder { Order = order, ManufacturerBusinessId = group.SellerBusinessId, CommissionRate = rate, PlacedAtUtc = now, Status = SellerOrderStatus.Pending };
             foreach (var line in group.Items)
             {
                 sellerOrder.Items.Add(new OrderItem
@@ -83,7 +84,7 @@ public sealed partial class EfCheckoutService(MarketplaceDbContext db, ICartServ
             sellerOrder.ShippingAmount = group.Items.Select(x => x.ProductId).Distinct().Sum(id => quotes[id].ShippingTotal!.Value);
             sellerOrder.Total = sellerOrder.SubTotal + sellerOrder.TaxAmount + sellerOrder.ShippingAmount;
             sellerOrder.CommissionAmount = ProductQuote.Money(sellerOrder.SubTotal * rate);
-            sellerOrder.History.Add(new OrderStatusHistory { Status = "Pending", Note = "Order placed; waiting for payment.", ChangedAtUtc = now });
+            sellerOrder.History.Add(new OrderStatusHistory { Status = SellerOrderStatus.Pending, Note = "Order placed; waiting for payment.", ChangedAtUtc = now });
             order.SellerOrders.Add(sellerOrder);
             order.SubTotal += sellerOrder.SubTotal;
             order.TaxTotal += sellerOrder.TaxAmount;

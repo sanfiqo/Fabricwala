@@ -1,3 +1,4 @@
+using TextileConnect.Domain;
 using Microsoft.EntityFrameworkCore;
 using TextileConnect.Application.Common;
 using TextileConnect.Domain.Orders;
@@ -16,22 +17,22 @@ public sealed class SellerOrderReader(MarketplaceDbContext db)
 
     public static string TabOf(string status) => status switch
     {
-        "Pending" => "new", "Accepted" => "to_pack", "Dispatched" => "shipped", _ => "done"
+        SellerOrderStatus.Pending => "new", SellerOrderStatus.Accepted => "to_pack", SellerOrderStatus.Dispatched => "shipped", _ => "done"
     };
 
     private IQueryable<SellerOrder> Visible(long sellerId)
         => db.SellerOrders.AsNoTracking().Where(x => x.ManufacturerBusinessId == sellerId
-            && (x.Order!.PaymentStatus == "Paid" || x.Order.PaymentStatus == "Refunded" || x.Order.PaymentStatus == "PartiallyRefunded"));
+            && (x.Order!.PaymentStatus == PaymentStatus.Paid || x.Order.PaymentStatus == PaymentStatus.Refunded || x.Order.PaymentStatus == PaymentStatus.PartiallyRefunded));
 
     public async Task<PagedResponse<SellerOrderSummaryResponse>> ListAsync(long sellerId, string? tab, int page, int pageSize, CancellationToken ct)
     {
         var query = Visible(sellerId);
         query = tab switch
         {
-            "new" => query.Where(x => x.Status == "Pending"),
-            "to_pack" => query.Where(x => x.Status == "Accepted"),
-            "shipped" => query.Where(x => x.Status == "Dispatched"),
-            "done" => query.Where(x => x.Status != "Pending" && x.Status != "Accepted" && x.Status != "Dispatched"),
+            "new" => query.Where(x => x.Status == SellerOrderStatus.Pending),
+            "to_pack" => query.Where(x => x.Status == SellerOrderStatus.Accepted),
+            "shipped" => query.Where(x => x.Status == SellerOrderStatus.Dispatched),
+            "done" => query.Where(x => x.Status != SellerOrderStatus.Pending && x.Status != SellerOrderStatus.Accepted && x.Status != SellerOrderStatus.Dispatched),
             _ => query
         };
         var total = await query.CountAsync(ct);
@@ -47,7 +48,7 @@ public sealed class SellerOrderReader(MarketplaceDbContext db)
             var lines = x.Items.OrderBy(i => i.Id).ToList();
             return new SellerOrderSummaryResponse(x.Id, x.Order!.OrderNumber, x.PlacedAtUtc, Display(x.Status), TabOf(x.Status), names.GetValueOrDefault(x.Order.RetailerBusinessId) ?? string.Empty,
                 x.Order.DeliveryCity, lines.Count, lines.Sum(i => i.Quantity), lines.FirstOrDefault()?.Title ?? string.Empty, x.Total, x.CommissionAmount, x.Total - x.CommissionAmount,
-                x.Status == "Pending" ? x.AcceptDeadlineUtc : null, lines.Select(ApiResponseMappings.OrderLine).ToList());
+                x.Status == SellerOrderStatus.Pending ? x.AcceptDeadlineUtc : null, lines.Select(ApiResponseMappings.OrderLine).ToList());
         }).ToList();
         return new PagedResponse<SellerOrderSummaryResponse>(items, total, page, pageSize);
     }
@@ -67,5 +68,5 @@ public sealed class SellerOrderReader(MarketplaceDbContext db)
         };
     }
 
-    public static string Display(string status) => status == "Pending" ? "PendingAcceptance" : status;
+    public static string Display(string status) => status == SellerOrderStatus.Pending ? "PendingAcceptance" : status;
 }

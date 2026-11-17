@@ -1,3 +1,4 @@
+using TextileConnect.Domain;
 using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using TextileConnect.Application.Common;
@@ -25,21 +26,21 @@ public sealed class EfOrderService(MarketplaceDbContext db, IPaymentGateway? gat
         var order = await GetForRetailerAsync(businessId, orderId, cancellationToken);
         if (order is null) return null;
         var sellerOrders = await db.SellerOrders.Where(x => x.OrderId == orderId).ToListAsync(cancellationToken);
-        var shipped = sellerOrders.Where(x => x.Status == "Dispatched").ToList();
+        var shipped = sellerOrders.Where(x => x.Status == SellerOrderStatus.Dispatched).ToList();
         if (shipped.Count == 0)
         {
-            if (sellerOrders.Count > 0 && sellerOrders.All(x => x.Status == "Delivered")) return order; // already confirmed: nothing changes
+            if (sellerOrders.Count > 0 && sellerOrders.All(x => x.Status == SellerOrderStatus.Delivered)) return order; // already confirmed: nothing changes
             throw new RuleViolationException("order_not_shipped", "This order has not been shipped yet.");
         }
         var now = Now;
         var shippedIds = shipped.Select(x => x.Id).ToArray();
         foreach (var sellerOrder in shipped)
         {
-            sellerOrder.Status = "Delivered";
+            sellerOrder.Status = SellerOrderStatus.Delivered;
             sellerOrder.DeliveredAt = now;
-            db.OrderStatusHistories.Add(new OrderStatusHistory { SellerOrderId = sellerOrder.Id, Status = "Delivered", Note = "Delivery confirmed by the retailer.", ChangedAtUtc = now });
+            db.OrderStatusHistories.Add(new OrderStatusHistory { SellerOrderId = sellerOrder.Id, Status = SellerOrderStatus.Delivered, Note = "Delivery confirmed by the retailer.", ChangedAtUtc = now });
         }
-        foreach (var settlement in await db.Settlements.Where(x => shippedIds.Contains(x.SellerOrderId) && x.Status == "Pending").ToListAsync(cancellationToken))
+        foreach (var settlement in await db.Settlements.Where(x => shippedIds.Contains(x.SellerOrderId) && x.Status == SettlementStatus.Pending).ToListAsync(cancellationToken))
             settlement.ReleaseAfter = now;
         foreach (var shipment in await db.Shipments.Where(x => shippedIds.Contains(x.SellerOrderId)).ToListAsync(cancellationToken))
         { shipment.Status = "Delivered"; shipment.DeliveredAt = now; }
@@ -65,34 +66,34 @@ public sealed class EfOrderService(MarketplaceDbContext db, IPaymentGateway? gat
         Refund? refund = null;
         switch (status)
         {
-            case "Accepted":
-                RequireState(order, parent, "Pending");
+            case SellerOrderStatus.Accepted:
+                RequireState(order, parent, SellerOrderStatus.Pending);
                 if (order.AcceptDeadlineUtc is { } deadline && deadline <= now)
                     throw new RuleViolationException("accept_window_expired", "The time to accept this order has passed.");
-                order.Status = "Accepted";
+                order.Status = SellerOrderStatus.Accepted;
                 order.AcceptedAt = now;
-                db.OrderStatusHistories.Add(new OrderStatusHistory { SellerOrderId = order.Id, Status = "Accepted", ChangedAtUtc = now });
+                db.OrderStatusHistories.Add(new OrderStatusHistory { SellerOrderId = order.Id, Status = SellerOrderStatus.Accepted, ChangedAtUtc = now });
                 await NotifyBusinessesAsync([parent.RetailerBusinessId], "Order accepted", $"The seller accepted order {parent.OrderNumber}.", $"/orders/{parent.Id}", now, cancellationToken);
                 break;
-            case "Rejected":
-                RequireState(order, parent, "Pending");
+            case SellerOrderStatus.Rejected:
+                RequireState(order, parent, SellerOrderStatus.Pending);
                 var rejection = reason?.Trim();
                 if (string.IsNullOrEmpty(rejection) || rejection.Length > 500) throw new ArgumentException("A reason of up to 500 characters is required.");
-                refund = await CancelAsync(order, parent, "Rejected", rejection, "Order rejected", $"The seller could not accept order {parent.OrderNumber}. You will be refunded.", now, cancellationToken);
+                refund = await CancelAsync(order, parent, SellerOrderStatus.Rejected, rejection, "Order rejected", $"The seller could not accept order {parent.OrderNumber}. You will be refunded.", now, cancellationToken);
                 break;
-            case "Dispatched":
-                RequireState(order, parent, "Accepted");
+            case SellerOrderStatus.Dispatched:
+                RequireState(order, parent, SellerOrderStatus.Accepted);
                 var lr = lrNumber?.Trim();
                 var carrier = carrierName?.Trim();
                 if (string.IsNullOrEmpty(lr) || lr.Length > 60 || carrier?.Length > 80) throw new ArgumentException("An LR/tracking number of up to 60 characters is required.");
-                order.Status = "Dispatched";
+                order.Status = SellerOrderStatus.Dispatched;
                 order.DispatchedAt = now;
                 var shipment = await db.Shipments.SingleOrDefaultAsync(x => x.SellerOrderId == order.Id, cancellationToken);
                 if (shipment is null) db.Shipments.Add(new Shipment { SellerOrderId = order.Id, LrNumber = lr, CarrierName = carrier, DispatchedAt = now });
                 else { shipment.LrNumber = lr; shipment.CarrierName = carrier; shipment.DispatchedAt = now; shipment.Status = "Dispatched"; }
-                db.OrderStatusHistories.Add(new OrderStatusHistory { SellerOrderId = order.Id, Status = "Dispatched", Note = $"LR {lr}", ChangedAtUtc = now });
+                db.OrderStatusHistories.Add(new OrderStatusHistory { SellerOrderId = order.Id, Status = SellerOrderStatus.Dispatched, Note = $"LR {lr}", ChangedAtUtc = now });
                 var autoRelease = now.AddDays(await AutoReleaseDaysAsync(cancellationToken));
-                var held = await db.Settlements.SingleOrDefaultAsync(x => x.SellerOrderId == order.Id && x.Status == "Pending", cancellationToken);
+                var held = await db.Settlements.SingleOrDefaultAsync(x => x.SellerOrderId == order.Id && x.Status == SettlementStatus.Pending, cancellationToken);
                 if (held is not null && held.ReleaseAfter > autoRelease) held.ReleaseAfter = autoRelease;
                 await NotifyBusinessesAsync([parent.RetailerBusinessId], "Order shipped", $"Order {parent.OrderNumber} was shipped. LR number {lr}.", $"/orders/{parent.Id}", now, cancellationToken);
                 break;
@@ -106,7 +107,7 @@ public sealed class EfOrderService(MarketplaceDbContext db, IPaymentGateway? gat
 
     private static void RequireState(SellerOrder order, Order parent, string expected)
     {
-        if (!string.Equals(parent.PaymentStatus, "Paid", StringComparison.OrdinalIgnoreCase))
+        if (!string.Equals(parent.PaymentStatus, PaymentStatus.Paid, StringComparison.OrdinalIgnoreCase))
             throw new RuleViolationException("order_not_paid", "This order is not paid yet.");
         if (order.Status != expected)
             throw new RuleViolationException("invalid_order_transition", "This order cannot be changed in its current state.");
@@ -130,11 +131,11 @@ public sealed class EfOrderService(MarketplaceDbContext db, IPaymentGateway? gat
         var refunds = new List<Refund>();
 
         var late = await db.SellerOrders.Include(x => x.Order).Include(x => x.Items)
-            .Where(x => x.Status == "Pending" && x.Order!.PaymentStatus == "Paid" && x.AcceptDeadlineUtc != null && x.AcceptDeadlineUtc <= now)
+            .Where(x => x.Status == SellerOrderStatus.Pending && x.Order!.PaymentStatus == PaymentStatus.Paid && x.AcceptDeadlineUtc != null && x.AcceptDeadlineUtc <= now)
             .OrderBy(x => x.Id).Take(200).ToListAsync(cancellationToken);
         foreach (var sellerOrder in late)
         {
-            var refund = await CancelAsync(sellerOrder, sellerOrder.Order!, "Cancelled", "The seller did not accept in time.", "Order cancelled",
+            var refund = await CancelAsync(sellerOrder, sellerOrder.Order!, SellerOrderStatus.Cancelled, "The seller did not accept in time.", "Order cancelled",
                 $"Order {sellerOrder.Order!.OrderNumber} was cancelled because it was not accepted in time. You will be refunded.", now, cancellationToken);
             if (refund is not null) refunds.Add(refund);
             cancelled++;
@@ -142,11 +143,11 @@ public sealed class EfOrderService(MarketplaceDbContext db, IPaymentGateway? gat
 
         var cutoff = now.AddMinutes(-await UnpaidExpiryMinutesAsync(cancellationToken));
         var unpaid = await db.SellerOrders.Include(x => x.Order).Include(x => x.Items)
-            .Where(x => x.Status == "Pending" && x.Order!.PaymentStatus == "Pending" && x.Order.PlacedAtUtc <= cutoff)
+            .Where(x => x.Status == SellerOrderStatus.Pending && x.Order!.PaymentStatus == PaymentStatus.Pending && x.Order.PlacedAtUtc <= cutoff)
             .OrderBy(x => x.Id).Take(200).ToListAsync(cancellationToken);
         foreach (var sellerOrder in unpaid)
         {
-            await CancelAsync(sellerOrder, sellerOrder.Order!, "Cancelled", "Payment was not completed in time.", "Order cancelled",
+            await CancelAsync(sellerOrder, sellerOrder.Order!, SellerOrderStatus.Cancelled, "Payment was not completed in time.", "Order cancelled",
                 $"Order {sellerOrder.Order!.OrderNumber} was cancelled because payment was not completed.", now, cancellationToken);
             cancelled++;
         }
@@ -167,23 +168,23 @@ public sealed class EfOrderService(MarketplaceDbContext db, IPaymentGateway? gat
         foreach (var item in sellerOrder.Items.Where(x => x.VariantId.HasValue))
             if (variants.TryGetValue(item.VariantId!.Value, out var variant)) variant.StockQty += item.Quantity;
         db.OrderStatusHistories.Add(new OrderStatusHistory { SellerOrderId = sellerOrder.Id, Status = finalStatus, Note = reason, ChangedAtUtc = now });
-        foreach (var settlement in await db.Settlements.Where(x => x.SellerOrderId == sellerOrder.Id && x.Status == "Pending").ToListAsync(cancellationToken))
-            settlement.Status = "Cancelled";
+        foreach (var settlement in await db.Settlements.Where(x => x.SellerOrderId == sellerOrder.Id && x.Status == SettlementStatus.Pending).ToListAsync(cancellationToken))
+            settlement.Status = SettlementStatus.Cancelled;
 
         Refund? refund = null;
-        var paid = string.Equals(parent.PaymentStatus, "Paid", StringComparison.OrdinalIgnoreCase) || parent.PaymentStatus is "PartiallyRefunded";
+        var paid = string.Equals(parent.PaymentStatus, PaymentStatus.Paid, StringComparison.OrdinalIgnoreCase) || parent.PaymentStatus is PaymentStatus.PartiallyRefunded;
         if (paid)
         {
-            var payment = await db.Payments.Where(x => x.OrderId == parent.Id && x.Status == "Paid").OrderBy(x => x.Id).FirstOrDefaultAsync(cancellationToken);
-            if (payment is not null && !await db.Refunds.AnyAsync(x => x.SellerOrderId == sellerOrder.Id && x.Status != "Failed", cancellationToken))
+            var payment = await db.Payments.Where(x => x.OrderId == parent.Id && x.Status == PaymentStatus.Paid).OrderBy(x => x.Id).FirstOrDefaultAsync(cancellationToken);
+            if (payment is not null && !await db.Refunds.AnyAsync(x => x.SellerOrderId == sellerOrder.Id && x.Status != RefundStatus.Failed, cancellationToken))
             {
-                refund = new Refund { PaymentId = payment.Id, SellerOrderId = sellerOrder.Id, Amount = sellerOrder.Total, Reason = reason, Status = "Requested", CreatedAtUtc = now };
+                refund = new Refund { PaymentId = payment.Id, SellerOrderId = sellerOrder.Id, Amount = sellerOrder.Total, Reason = reason, Status = RefundStatus.Requested, CreatedAtUtc = now };
                 db.Refunds.Add(refund);
             }
         }
         var siblings = await db.SellerOrders.Where(x => x.OrderId == parent.Id && x.Id != sellerOrder.Id).Select(x => x.Status).ToListAsync(cancellationToken);
-        var allDead = siblings.All(s => s is "Rejected" or "Cancelled");
-        parent.PaymentStatus = !paid ? (allDead ? "Cancelled" : parent.PaymentStatus) : allDead ? "Refunded" : "PartiallyRefunded";
+        var allDead = siblings.All(SellerOrderStatus.IsDead);
+        parent.PaymentStatus = !paid ? (allDead ? PaymentStatus.Cancelled : parent.PaymentStatus) : allDead ? PaymentStatus.Refunded : PaymentStatus.PartiallyRefunded;
         await NotifyBusinessesAsync([parent.RetailerBusinessId], title, message, $"/orders/{parent.Id}", now, cancellationToken);
         await NotifyBusinessesAsync([sellerOrder.ManufacturerBusinessId], title, $"Order {parent.OrderNumber} was {finalStatus.ToLowerInvariant()}.", "/seller/orders", now, cancellationToken);
         return refund;
@@ -191,13 +192,13 @@ public sealed class EfOrderService(MarketplaceDbContext db, IPaymentGateway? gat
 
     private async Task ProcessRefundAsync(Refund refund, CancellationToken cancellationToken)
     {
-        if (gateway is null || refund.Status != "Requested") return;
+        if (gateway is null || refund.Status != RefundStatus.Requested) return;
         var gatewayPaymentId = await db.Payments.Where(x => x.Id == refund.PaymentId).Select(x => x.GatewayPaymentId).SingleOrDefaultAsync(cancellationToken);
         if (string.IsNullOrEmpty(gatewayPaymentId)) return;
         try
         {
             refund.GatewayRefundId = await gateway.RefundAsync(gatewayPaymentId, refund.Amount, $"refund-{refund.Id}", cancellationToken);
-            refund.Status = "Processed";
+            refund.Status = RefundStatus.Processed;
             await db.SaveChangesAsync(cancellationToken);
         }
         catch (Exception exception) when (exception is HttpRequestException or InvalidOperationException)
@@ -209,7 +210,7 @@ public sealed class EfOrderService(MarketplaceDbContext db, IPaymentGateway? gat
     private async Task RetryRequestedRefundsAsync(CancellationToken cancellationToken)
     {
         if (gateway is null) return;
-        foreach (var refund in await db.Refunds.Where(x => x.Status == "Requested").OrderBy(x => x.Id).Take(100).ToListAsync(cancellationToken))
+        foreach (var refund in await db.Refunds.Where(x => x.Status == RefundStatus.Requested).OrderBy(x => x.Id).Take(100).ToListAsync(cancellationToken))
             await ProcessRefundAsync(refund, cancellationToken);
     }
 
@@ -223,14 +224,14 @@ public sealed class EfOrderService(MarketplaceDbContext db, IPaymentGateway? gat
     /// <summary>Releases held payouts whose date has come, unless the retailer has an unresolved claim on that order.</summary>
     private async Task ReleaseDueSettlementsAsync(DateTime now, CancellationToken cancellationToken)
     {
-        var due = await db.Settlements.Where(x => x.Status == "Pending" && x.ReleaseAfter <= now
+        var due = await db.Settlements.Where(x => x.Status == SettlementStatus.Pending && x.ReleaseAfter <= now
                 && !db.ReturnClaims.Any(c => c.SellerOrderId == x.SellerOrderId && c.ResolvedAtUtc == null))
             .OrderBy(x => x.Id).Take(200).ToListAsync(cancellationToken);
         if (due.Count == 0) return;
         var orderNumbers = await db.SellerOrders.Where(x => due.Select(d => d.SellerOrderId).Contains(x.Id)).Select(x => new { x.Id, x.Order!.OrderNumber }).ToDictionaryAsync(x => x.Id, x => x.OrderNumber, cancellationToken);
         foreach (var settlement in due)
         {
-            settlement.Status = "Released";
+            settlement.Status = SettlementStatus.Released;
             settlement.SettledAt = now;
             await NotifyBusinessesAsync([settlement.ManufacturerBusinessId], "Payout released", $"Your payout for order {orderNumbers.GetValueOrDefault(settlement.SellerOrderId)} is released.", "/seller/payouts", now, cancellationToken);
         }

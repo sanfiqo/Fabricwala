@@ -1,3 +1,4 @@
+using TextileConnect.Domain;
 using Microsoft.EntityFrameworkCore;
 using TextileConnect.Application.Common;
 using TextileConnect.Domain.Businesses;
@@ -23,8 +24,8 @@ public sealed class CatalogueReader(MarketplaceDbContext db)
                            .OrderBy(a => a.AddressType == AddressType.Pickup ? 0 : 1).ThenByDescending(a => a.IsDefault).ThenBy(a => a.Id).Select(a => (long?)a.CityId).FirstOrDefault(),
                        PriceFrom = db.PriceSlabs.Where(x => x.ProductId == product.Id).Min(x => x.PricePerUnit),
                        PriceTo = db.PriceSlabs.Where(x => x.ProductId == product.Id).Max(x => x.PricePerUnit),
-                       UnitsSold = db.OrderItems.Where(x => x.ProductId == product.Id && x.SellerOrder!.Order!.PaymentStatus == "Paid"
-                           && x.SellerOrder.Status != "Rejected" && x.SellerOrder.Status != "Cancelled").Sum(x => (int?)x.Quantity) ?? 0
+                       UnitsSold = db.OrderItems.Where(x => x.ProductId == product.Id && x.SellerOrder!.Order!.PaymentStatus == PaymentStatus.Paid
+                           && x.SellerOrder.Status != SellerOrderStatus.Rejected && x.SellerOrder.Status != SellerOrderStatus.Cancelled).Sum(x => (int?)x.Quantity) ?? 0
                    };
         var text = query.Q?.Trim().ToLowerInvariant();
         if (!string.IsNullOrEmpty(text)) rows = rows.Where(x => x.Product.Title.ToLower().Contains(text) || x.Product.Description != null && x.Product.Description.ToLower().Contains(text) || x.Product.Material != null && x.Product.Material.ToLower().Contains(text));

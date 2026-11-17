@@ -1,3 +1,4 @@
+using TextileConnect.Domain;
 using Microsoft.EntityFrameworkCore;
 using TextileConnect.Domain.Businesses;
 using TextileConnect.Infrastructure.Persistence;
@@ -23,9 +24,9 @@ public static class AdminDashboardEndpoints
             async Task<AdminPeriodStats> StatsAsync(string period, DateTime from)
             {
                 // Paid orders are those whose payment was captured in the period; a fully refunded order is not revenue.
-                var paid = db.Payments.AsNoTracking().Where(p => p.Status == "Paid" && p.PaidAt >= from && p.PaidAt <= now)
-                    .Join(db.Orders.Where(o => o.PaymentStatus == "Paid" || o.PaymentStatus == "PartiallyRefunded"), p => p.OrderId, o => o.Id, (p, o) => o);
-                var live = db.SellerOrders.AsNoTracking().Where(s => s.Status != "Rejected" && s.Status != "Cancelled" && paid.Select(o => o.Id).Contains(s.OrderId));
+                var paid = db.Payments.AsNoTracking().Where(p => p.Status == PaymentStatus.Paid && p.PaidAt >= from && p.PaidAt <= now)
+                    .Join(db.Orders.Where(o => o.PaymentStatus == PaymentStatus.Paid || o.PaymentStatus == PaymentStatus.PartiallyRefunded), p => p.OrderId, o => o.Id, (p, o) => o);
+                var live = db.SellerOrders.AsNoTracking().Where(s => s.Status != SellerOrderStatus.Rejected && s.Status != SellerOrderStatus.Cancelled && paid.Select(o => o.Id).Contains(s.OrderId));
                 return new AdminPeriodStats(period, from, await paid.SumAsync(o => (decimal?)o.GrandTotal, ct) ?? 0m, await paid.CountAsync(ct),
                     await live.SumAsync(s => (decimal?)s.CommissionAmount, ct) ?? 0m,
                     await db.Businesses.AsNoTracking().CountAsync(b => b.CreatedAtUtc >= from && !b.IsDeleted, ct));
@@ -34,7 +35,7 @@ public static class AdminDashboardEndpoints
                 await db.Businesses.AsNoTracking().CountAsync(b => b.VerificationStatus == VerificationStatus.Pending && !b.IsDeleted, ct),
                 await db.ReturnClaims.AsNoTracking().CountAsync(c => c.ResolvedAtUtc == null, ct),
                 await db.Products.AsNoTracking().CountAsync(p => p.Status == Domain.Catalogue.ProductStatus.PendingReview && !p.IsDeleted, ct),
-                await db.Refunds.AsNoTracking().CountAsync(r => r.Status == "Requested", ct));
+                await db.Refunds.AsNoTracking().CountAsync(r => r.Status == RefundStatus.Requested, ct));
             return Results.Ok(new AdminDashboardResponse(await StatsAsync("today", today), await StatsAsync("7d", today.AddDays(-6)), await StatsAsync("30d", today.AddDays(-29)), needs));
         }).RequireAuthorization(p => p.RequireRole("Admin"));
     }

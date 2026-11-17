@@ -15,7 +15,7 @@ public sealed class SellerOrder
     public decimal Total { get; set; }
     public DateTime PlacedAtUtc { get; set; } = DateTime.UtcNow;
     public DateTime? AcceptDeadlineUtc { get; set; }
-    public string Status { get; set; } = "Pending";
+    public string Status { get; set; } = SellerOrderStatus.Pending;
     public string? RejectReason { get; set; }
     public DateTime? AcceptedAt { get; set; }
     public DateTime? DispatchedAt { get; set; }

@@ -1,3 +1,4 @@
+using TextileConnect.Domain;
 using System.Globalization;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
@@ -132,8 +133,8 @@ public static class AdminListEndpoints
             var start = today.AddDays(1 - today.Day); var end = today;
             if ((from is not null && !TryDate(from, out start)) || (to is not null && !TryDate(to, out end)) || start > end || (end - start).TotalDays > 366) return Results.BadRequest();
             var until = end.AddDays(1);
-            var live = db.SellerOrders.AsNoTracking().Where(s => s.PlacedAtUtc >= start && s.PlacedAtUtc < until && s.Status != "Rejected" && s.Status != "Cancelled"
-                && (s.Order!.PaymentStatus == "Paid" || s.Order.PaymentStatus == "PartiallyRefunded"));
+            var live = db.SellerOrders.AsNoTracking().Where(s => s.PlacedAtUtc >= start && s.PlacedAtUtc < until && s.Status != SellerOrderStatus.Rejected && s.Status != SellerOrderStatus.Cancelled
+                && (s.Order!.PaymentStatus == PaymentStatus.Paid || s.Order.PaymentStatus == PaymentStatus.PartiallyRefunded));
             var grouped = await live.GroupBy(s => s.ManufacturerBusinessId).Select(g => new { SellerId = g.Key, Orders = g.Count(), Goods = g.Sum(s => s.SubTotal), Fee = g.Sum(s => s.CommissionAmount) }).ToListAsync(ct);
             var ids = grouped.Select(g => g.SellerId).ToArray();
             var names = await db.Businesses.AsNoTracking().Where(b => ids.Contains(b.Id)).ToDictionaryAsync(b => b.Id, b => b.DisplayName, ct);
@@ -160,10 +161,10 @@ public static class AdminListEndpoints
         var cityOf = cities.GroupBy(x => x.BusinessId).ToDictionary(g => g.Key, g => g.First().Name);
         Dictionary<long, (int Orders, decimal Value, decimal Fee)> stats;
         if (type == BusinessType.Manufacturer)
-            stats = (await db.SellerOrders.AsNoTracking().Where(s => ids.Contains(s.ManufacturerBusinessId) && s.Status != "Rejected" && s.Status != "Cancelled" && (s.Order!.PaymentStatus == "Paid" || s.Order.PaymentStatus == "PartiallyRefunded"))
+            stats = (await db.SellerOrders.AsNoTracking().Where(s => ids.Contains(s.ManufacturerBusinessId) && s.Status != SellerOrderStatus.Rejected && s.Status != SellerOrderStatus.Cancelled && (s.Order!.PaymentStatus == PaymentStatus.Paid || s.Order.PaymentStatus == PaymentStatus.PartiallyRefunded))
                 .GroupBy(s => s.ManufacturerBusinessId).Select(g => new { g.Key, Orders = g.Count(), Value = g.Sum(s => s.SubTotal), Fee = g.Sum(s => s.CommissionAmount) }).ToListAsync(ct)).ToDictionary(x => x.Key, x => (x.Orders, x.Value, x.Fee));
         else
-            stats = (await db.Orders.AsNoTracking().Where(o => ids.Contains(o.RetailerBusinessId) && (o.PaymentStatus == "Paid" || o.PaymentStatus == "PartiallyRefunded"))
+            stats = (await db.Orders.AsNoTracking().Where(o => ids.Contains(o.RetailerBusinessId) && (o.PaymentStatus == PaymentStatus.Paid || o.PaymentStatus == PaymentStatus.PartiallyRefunded))
                 .GroupBy(o => o.RetailerBusinessId).Select(g => new { g.Key, Orders = g.Count(), Value = g.Sum(o => o.GrandTotal) }).ToListAsync(ct)).ToDictionary(x => x.Key, x => (x.Orders, x.Value, 0m));
         var products = (await db.Products.AsNoTracking().Where(p => ids.Contains(p.SellerBusinessId) && !p.IsDeleted && p.Status == ProductStatus.Active).GroupBy(p => p.SellerBusinessId).Select(g => new { g.Key, Count = g.Count() }).ToListAsync(ct)).ToDictionary(x => x.Key, x => x.Count);
         return Results.Ok(new PagedResponse<AdminPartyRow>(rows.Select(b =>

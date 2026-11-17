@@ -16,6 +16,6 @@ public sealed class Order
     public string? DeliveryLine2 { get; set; }
     public string DeliveryCity { get; set; } = string.Empty;
     public string DeliveryPincode { get; set; } = string.Empty;
-    public string PaymentStatus { get; set; } = "Pending";
+    public string PaymentStatus { get; set; } = TextileConnect.Domain.PaymentStatus.Pending;
     public ICollection<SellerOrder> SellerOrders { get; set; } = new List<SellerOrder>();
 }

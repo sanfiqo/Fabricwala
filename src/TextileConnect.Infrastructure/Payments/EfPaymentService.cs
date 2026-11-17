@@ -1,3 +1,4 @@
+using TextileConnect.Domain;
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
@@ -33,13 +34,13 @@ public sealed partial class EfPaymentService(MarketplaceDbContext db, IPaymentGa
 
         var order = await db.Orders.SingleOrDefaultAsync(x => x.Id == orderId && x.RetailerBusinessId == retailerBusinessId, cancellationToken)
             ?? throw new KeyNotFoundException("Order not found.");
-        if (!string.Equals(order.PaymentStatus, "Pending", StringComparison.OrdinalIgnoreCase))
+        if (!string.Equals(order.PaymentStatus, PaymentStatus.Pending, StringComparison.OrdinalIgnoreCase))
             throw new RuleViolationException("order_not_payable", "This order is not waiting for payment.");
-        var payment = await db.Payments.Where(x => x.OrderId == order.Id && x.Status == "Pending").OrderBy(x => x.Id).FirstOrDefaultAsync(cancellationToken);
+        var payment = await db.Payments.Where(x => x.OrderId == order.Id && x.Status == PaymentStatus.Pending).OrderBy(x => x.Id).FirstOrDefaultAsync(cancellationToken);
         if (payment is null)
         {
             var created = await gateway.CreateOrderAsync(order.GrandTotal, order.OrderNumber, cancellationToken);
-            payment = new Payment { OrderId = order.Id, GatewayOrderId = created.GatewayOrderId, Amount = created.Amount, Status = "Pending" };
+            payment = new Payment { OrderId = order.Id, GatewayOrderId = created.GatewayOrderId, Amount = created.Amount, Status = PaymentStatus.Pending };
             db.Payments.Add(payment);
         }
         db.IdempotencyRecords.Add(new IdempotencyRecord { BusinessId = retailerBusinessId, Scope = Scope, Key = idempotencyKey, RequestHash = hash, ResourceKey = payment.GatewayOrderId });
@@ -57,33 +58,33 @@ public sealed partial class EfPaymentService(MarketplaceDbContext db, IPaymentGa
     {
         var payment = await db.Payments.SingleOrDefaultAsync(x => x.GatewayOrderId == gatewayOrderId, cancellationToken);
         if (payment is null) return false;
-        if (string.Equals(payment.Status, "Paid", StringComparison.OrdinalIgnoreCase)) return true;
+        if (string.Equals(payment.Status, PaymentStatus.Paid, StringComparison.OrdinalIgnoreCase)) return true;
         if (amountPaid.HasValue && amountPaid.Value != payment.Amount)
             throw new RuleViolationException("payment_amount_mismatch", "The paid amount does not match the order.", 400);
 
         var now = (clock ?? TimeProvider.System).GetUtcNow().UtcDateTime;
-        payment.Status = "Paid";
+        payment.Status = PaymentStatus.Paid;
         payment.GatewayPaymentId = gatewayPaymentId;
         payment.PaidAt = now;
         var order = await db.Orders.Include(x => x.SellerOrders).SingleAsync(x => x.Id == payment.OrderId, cancellationToken);
-        if (order.SellerOrders.Count > 0 && order.SellerOrders.All(x => x.Status is "Cancelled" or "Rejected"))
+        if (order.SellerOrders.Count > 0 && order.SellerOrders.All(x => SellerOrderStatus.IsDead(x.Status)))
         {
             // Money arrived after the order was cancelled (payment window expired): queue a full refund, never keep it.
-            order.PaymentStatus = "Refunded";
+            order.PaymentStatus = PaymentStatus.Refunded;
             foreach (var cancelled in order.SellerOrders)
                 if (cancelled.Total > 0) db.Refunds.Add(new Refund { PaymentId = payment.Id, SellerOrderId = cancelled.Id, Amount = cancelled.Total, Reason = "Payment arrived after the order was cancelled.", CreatedAtUtc = now });
             await db.SaveChangesAsync(cancellationToken);
             return true;
         }
-        order.PaymentStatus = "Paid";
+        order.PaymentStatus = PaymentStatus.Paid;
         var window = await AcceptWindowHoursAsync(cancellationToken);
         foreach (var sellerOrder in order.SellerOrders)
         {
             sellerOrder.AcceptDeadlineUtc = now.AddHours(window);
             // Seller's share is held (Pending, no release date) until the order is shipped or delivered.
             db.Settlements.Add(new Settlement { PaymentId = payment.Id, SellerOrderId = sellerOrder.Id, ManufacturerBusinessId = sellerOrder.ManufacturerBusinessId,
-                Amount = sellerOrder.Total - sellerOrder.CommissionAmount, CommissionAmount = sellerOrder.CommissionAmount, Status = "Pending", ReleaseAfter = Settlements.NoReleaseDate });
-            db.OrderStatusHistories.Add(new OrderStatusHistory { SellerOrderId = sellerOrder.Id, Status = "Pending", Note = "Payment received; waiting for the seller to accept.", ChangedAtUtc = now });
+                Amount = sellerOrder.Total - sellerOrder.CommissionAmount, CommissionAmount = sellerOrder.CommissionAmount, Status = SettlementStatus.Pending, ReleaseAfter = Settlements.NoReleaseDate });
+            db.OrderStatusHistories.Add(new OrderStatusHistory { SellerOrderId = sellerOrder.Id, Status = SellerOrderStatus.Pending, Note = "Payment received; waiting for the seller to accept.", ChangedAtUtc = now });
         }
         await NotifyAsync(order.SellerOrders.Select(x => x.ManufacturerBusinessId), "New order", $"Order {order.OrderNumber} is paid and waiting for you to accept.", "/seller/orders", now, cancellationToken);
         await NotifyAsync([order.RetailerBusinessId], "Payment received", $"Payment for order {order.OrderNumber} was received.", $"/orders/{order.Id}", now, cancellationToken);
@@ -95,9 +96,9 @@ public sealed partial class EfPaymentService(MarketplaceDbContext db, IPaymentGa
     {
         var payment = await db.Payments.SingleOrDefaultAsync(x => x.GatewayOrderId == gatewayOrderId, cancellationToken);
         if (payment is null) return false;
-        if (string.Equals(payment.Status, "Pending", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(payment.Status, PaymentStatus.Pending, StringComparison.OrdinalIgnoreCase))
         {
-            payment.Status = "Failed";
+            payment.Status = PaymentStatus.Failed;
             await db.SaveChangesAsync(cancellationToken);
         }
         return true;

@@ -1,3 +1,4 @@
+using TextileConnect.Domain;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -110,8 +111,8 @@ public sealed class CatalogueHttpTests
             new PriceSlab { ProductId = 1, MinQty = 500, PricePerUnit = 440 },
             new PriceSlab { ProductId = 2, MinQty = 20, PricePerUnit = 300 });
         db.ProductMedia.Add(new ProductMedia { ProductId = 1, FileKey = "private-puffer.png", MediaType = "Image" });
-        var order = new Order { OrderNumber = "PAID-POPULARITY", RetailerBusinessId = 30, PaymentStatus = "Paid" };
-        var sellerOrder = new SellerOrder { Order = order, ManufacturerBusinessId = 10, Status = "Accepted" };
+        var order = new Order { OrderNumber = "PAID-POPULARITY", RetailerBusinessId = 30, PaymentStatus = PaymentStatus.Paid };
+        var sellerOrder = new SellerOrder { Order = order, ManufacturerBusinessId = 10, Status = SellerOrderStatus.Accepted };
         db.OrderItems.Add(new OrderItem { SellerOrder = sellerOrder, ProductId = 2, Quantity = 100, UnitPrice = 300 });
         await db.SaveChangesAsync();
     }

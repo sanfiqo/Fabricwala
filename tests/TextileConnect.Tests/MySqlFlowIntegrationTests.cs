@@ -1,3 +1,4 @@
+using TextileConnect.Domain;
 using Microsoft.EntityFrameworkCore;
 using TextileConnect.Domain.Businesses;
 using TextileConnect.Domain.Catalogue;
@@ -53,7 +54,7 @@ public sealed class MySqlFlowIntegrationTests
         await cart.AddAsync(retailer.Id, "integration-retailer", variant.Id, 10);
         var order = (await checkout.CheckoutAsync(retailer.Id, "integration-retailer", address.Id, "integration-key-1")).Order;
         Assert.NotNull(order);
-        order!.PaymentStatus = "Paid";
+        order!.PaymentStatus = PaymentStatus.Paid;
         await db.SaveChangesAsync();
         var sellerOrder = order.SellerOrders.Single();
         Assert.Equal("Accepted", (await orders.UpdateSellerOrderAsync(manufacturer.Id, sellerOrder.Id, "Accepted", null, null))!.Status);

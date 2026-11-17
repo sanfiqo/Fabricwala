@@ -1,3 +1,4 @@
+using TextileConnect.Domain;
 using Microsoft.EntityFrameworkCore;
 using TextileConnect.Domain.Businesses;
 using TextileConnect.Domain.Catalogue;
@@ -48,14 +49,37 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
 
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
-        Stamp();
+        BeforeSave();
         return base.SaveChanges(acceptAllChangesOnSuccess);
     }
 
     public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
     {
-        Stamp();
+        BeforeSave();
         return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+    }
+
+    /// <summary>Refuses to write a status text that is not one of the known constants (a typo would otherwise be stored silently), then stamps the times.</summary>
+    private void BeforeSave()
+    {
+        foreach (var entry in ChangeTracker.Entries().Where(x => x.State is EntityState.Added or EntityState.Modified))
+        {
+            switch (entry.Entity)
+            {
+                case SellerOrder x: RequireKnown(x.Status, SellerOrderStatus.All, "seller order"); break;
+                case OrderStatusHistory x: RequireKnown(x.Status, SellerOrderStatus.All, "order history"); break;
+                case Order x: RequireKnown(x.PaymentStatus, PaymentStatus.All, "order payment"); break;
+                case Payment x: RequireKnown(x.Status, PaymentStatus.All, "payment"); break;
+                case Settlement x: RequireKnown(x.Status, SettlementStatus.All, "settlement"); break;
+                case Refund x: RequireKnown(x.Status, RefundStatus.All, "refund"); break;
+            }
+        }
+        Stamp();
+    }
+
+    private static void RequireKnown(string status, IReadOnlyList<string> known, string what)
+    {
+        if (!known.Contains(status)) throw new InvalidOperationException($"'{status}' is not a valid {what} status. Use the constants in TextileConnect.Domain.");
     }
 
     /// <summary>New rows get CreatedAtUtc and UpdatedAtUtc, changed rows get a new UpdatedAtUtc.</summary>

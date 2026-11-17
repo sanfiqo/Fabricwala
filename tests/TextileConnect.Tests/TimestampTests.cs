@@ -1,3 +1,4 @@
+using TextileConnect.Domain;
 using Microsoft.EntityFrameworkCore;
 using TextileConnect.Domain.Community;
 using TextileConnect.Domain.Payments;
@@ -31,7 +32,7 @@ public sealed class TimestampTests
             var settlement = await db.Settlements.SingleAsync();
             var created = settlement.CreatedAtUtc;
             settlement.UpdatedAtUtc = new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc); // an old value that the save must replace
-            settlement.Status = "Released";
+            settlement.Status = SettlementStatus.Released;
             await db.SaveChangesAsync();
 
             Assert.Equal(created, settlement.CreatedAtUtc);

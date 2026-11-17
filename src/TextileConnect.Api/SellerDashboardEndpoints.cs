@@ -1,3 +1,4 @@
+using TextileConnect.Domain;
 using Microsoft.EntityFrameworkCore;
 using TextileConnect.Application.Businesses;
 using TextileConnect.Domain.Catalogue;
@@ -28,8 +29,8 @@ public static class SellerDashboardEndpoints
             var now = clock.GetUtcNow().UtcDateTime;
             var thisMonth = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
             var firstMonth = thisMonth.AddMonths(-5);
-            var paid = db.SellerOrders.AsNoTracking().Where(x => x.ManufacturerBusinessId == sellerId && x.Order!.PaymentStatus != "Pending" && x.Order.PaymentStatus != "Cancelled");
-            var counted = paid.Where(x => x.Status != "Rejected" && x.Status != "Cancelled");
+            var paid = db.SellerOrders.AsNoTracking().Where(x => x.ManufacturerBusinessId == sellerId && x.Order!.PaymentStatus != PaymentStatus.Pending && x.Order.PaymentStatus != PaymentStatus.Cancelled);
+            var counted = paid.Where(x => x.Status != SellerOrderStatus.Rejected && x.Status != SellerOrderStatus.Cancelled);
 
             var grouped = await counted.Where(x => x.PlacedAtUtc >= firstMonth)
                 .GroupBy(x => new { x.PlacedAtUtc.Year, x.PlacedAtUtc.Month })
@@ -54,7 +55,7 @@ public static class SellerDashboardEndpoints
             var stars = await db.OrderRatings.AsNoTracking().Where(r => db.SellerOrders.Any(s => s.OrderId == r.OrderId && s.ManufacturerBusinessId == sellerId)).Select(r => r.Stars).ToListAsync(ct);
             var payouts = await new SellerPayoutReader(db, clock).SummaryAsync(sellerId, null, 1, 1, ct);
             return Results.Ok(new SellerDashboardResponse(
-                await paid.CountAsync(x => x.Status == "Pending", ct), await paid.CountAsync(x => x.Status == "Accepted", ct),
+                await paid.CountAsync(x => x.Status == SellerOrderStatus.Pending, ct), await paid.CountAsync(x => x.Status == SellerOrderStatus.Accepted, ct),
                 chart[^1].Sales, payouts.NextPayoutAmount, payouts.NextPayoutDate, payouts.OnHoldAmount, chart,
                 new SellerLowStock(LowStockThreshold, await lowQuery.CountAsync(ct), lowItems),
                 best.Select(x => new SellerBestSeller(x.ProductId, products.GetValueOrDefault(x.ProductId)?.Title ?? string.Empty, products.GetValueOrDefault(x.ProductId)?.Slug ?? string.Empty, x.Quantity, x.Revenue)).ToList(),

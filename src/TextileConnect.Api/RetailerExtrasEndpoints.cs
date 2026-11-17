@@ -1,3 +1,4 @@
+using TextileConnect.Domain;
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using TextileConnect.Application.Businesses;
@@ -76,7 +77,7 @@ public static class RetailerExtrasEndpoints
             if (request.Stars is < 1 or > 5 || request.Comment?.Length > 1000) return Results.BadRequest();
             var order = await db.Orders.Include(o => o.SellerOrders).SingleOrDefaultAsync(o => o.Id == id && o.RetailerBusinessId == businessId, ct);
             if (order is null) return Results.NotFound();
-            if (!order.SellerOrders.Any(s => s.Status == "Delivered")) throw new RuleViolationException("order_not_delivered", "You can rate an order after it is delivered.");
+            if (!order.SellerOrders.Any(s => s.Status == SellerOrderStatus.Delivered)) throw new RuleViolationException("order_not_delivered", "You can rate an order after it is delivered.");
             var now = clock.GetUtcNow().UtcDateTime;
             var rating = await db.OrderRatings.SingleOrDefaultAsync(r => r.OrderId == id, ct);
             if (rating is null) db.OrderRatings.Add(rating = new OrderRating { OrderId = id, RetailerBusinessId = businessId, CreatedAtUtc = now });
@@ -131,7 +132,7 @@ public static class RetailerExtrasEndpoints
             if (number is < 1 or > 1_000_000 || size is < 1 or > 100) return Results.BadRequest();
             var seller = principal.IsInRole("Manufacturer");
             var query = db.SellerOrders.AsNoTracking().Where(s => (seller ? s.ManufacturerBusinessId == businessId : s.Order!.RetailerBusinessId == businessId)
-                && s.Status != "Rejected" && s.Status != "Cancelled" && (s.Order!.PaymentStatus == "Paid" || s.Order.PaymentStatus == "PartiallyRefunded"));
+                && s.Status != SellerOrderStatus.Rejected && s.Status != SellerOrderStatus.Cancelled && (s.Order!.PaymentStatus == PaymentStatus.Paid || s.Order.PaymentStatus == PaymentStatus.PartiallyRefunded));
             var total = await query.CountAsync(ct);
             var rows = await query.OrderByDescending(s => s.PlacedAtUtc).ThenByDescending(s => s.Id).Skip((number - 1) * size).Take(size)
                 .Select(s => new { s.Id, s.Order!.OrderNumber, s.PlacedAtUtc, s.Total, s.ManufacturerBusinessId, s.Order.RetailerBusinessId }).ToListAsync(ct);
