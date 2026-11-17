@@ -12,3 +12,6 @@ Decided by the owner: the **seller bears the commission**. The retailer pays goo
 
 ## 17 Nov 2026 - Payout delay
 Decided by the owner: keep the current rule. Payout is released when the retailer confirms delivery, or 7 days after dispatch, and is held while a problem report is open.
+
+## 17 Nov 2026 - PDF library
+Decided by the owner: QuestPDF for the GST invoice (Community license, free below USD 1M yearly revenue; revisit the license when revenue passes it).
