@@ -67,6 +67,7 @@ builder.Services.AddScoped<ICartService, EfCartService>();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<IOrderService, EfOrderService>();
 builder.Services.AddScoped<IOrderMaintenance, EfOrderService>();
+builder.Services.AddMemoryCache(); // the filter counts keep a copy of the catalogue for a few seconds (CatalogueFacetSnapshot.cs)
 builder.Services.AddHostedService<OrderMaintenanceWorker>();
 builder.Services.AddScoped<ICheckoutService, EfCheckoutService>();
 builder.Services.AddScoped<IPaymentService, EfPaymentService>();
