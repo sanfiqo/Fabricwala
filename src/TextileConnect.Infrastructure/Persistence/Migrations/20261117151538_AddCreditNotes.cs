@@ -10,10 +10,6 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropIndex(
-                name: "IX_Invoices_SellerOrderId_InvoiceType",
-                table: "Invoices");
-
             migrationBuilder.AddColumn<long>(
                 name: "RefundId",
                 table: "Invoices",
@@ -26,11 +22,22 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                 table: "Invoices",
                 columns: new[] { "SellerOrderId", "InvoiceType", "RefundId" },
                 unique: true);
+
+            // The foreign key on SellerOrderId needs an index all the time: the new index is built before the old one is dropped.
+            migrationBuilder.DropIndex(
+                name: "IX_Invoices_SellerOrderId_InvoiceType",
+                table: "Invoices");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.CreateIndex(
+                name: "IX_Invoices_SellerOrderId_InvoiceType",
+                table: "Invoices",
+                columns: new[] { "SellerOrderId", "InvoiceType" },
+                unique: true);
+
             migrationBuilder.DropIndex(
                 name: "IX_Invoices_SellerOrderId_InvoiceType_RefundId",
                 table: "Invoices");
@@ -38,12 +45,6 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
             migrationBuilder.DropColumn(
                 name: "RefundId",
                 table: "Invoices");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Invoices_SellerOrderId_InvoiceType",
-                table: "Invoices",
-                columns: new[] { "SellerOrderId", "InvoiceType" },
-                unique: true);
         }
     }
 }
