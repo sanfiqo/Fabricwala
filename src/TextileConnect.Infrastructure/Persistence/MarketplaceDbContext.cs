@@ -101,6 +101,7 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
     protected override void OnModelCreating(ModelBuilder builder)
     {
         ConfigureRelationships(builder);
+        ConfigureHotQueryIndexes(builder);
         builder.Entity<Business>(entity =>
         {
             entity.ToTable("Businesses");
@@ -201,7 +202,6 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
         builder.Entity<SellerOrder>().Property(x => x.CommissionAmount).HasPrecision(18, 2);
         builder.Entity<SellerOrder>().Property(x => x.Total).HasPrecision(18, 2);
         builder.Entity<SellerOrder>().HasIndex(x => new { x.ManufacturerBusinessId, x.Status, x.Id });
-        builder.Entity<Order>().HasIndex(x => new { x.RetailerBusinessId, x.Id });
         builder.Entity<ProductVariant>().Property(x => x.StockQty).IsConcurrencyToken();
         builder.Entity<SellerOrder>().Property(x => x.SubTotal).HasPrecision(18, 2);
         builder.Entity<SellerOrder>().Property(x => x.CommissionRate).HasPrecision(5, 4);
@@ -291,5 +291,21 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
         Link<Refund, Payment>(x => x.PaymentId);
         Link<Refund, SellerOrder>(x => x.SellerOrderId);
         Link<Invoice, SellerOrder>(x => x.SellerOrderId);
+    }
+
+    /// <summary>
+    /// Indexes for the queries that run on every screen or every minute. docs/INDEXES.md says which query each one serves.
+    /// Foreign key columns are already indexed (EF adds one for each relation), so only composite indexes are listed here.
+    /// </summary>
+    private static void ConfigureHotQueryIndexes(ModelBuilder builder)
+    {
+        builder.Entity<Order>().HasIndex(x => new { x.RetailerBusinessId, x.PlacedAtUtc, x.Id });
+        builder.Entity<Order>().HasIndex(x => new { x.PaymentStatus, x.PlacedAtUtc });
+        builder.Entity<SellerOrder>().HasIndex(x => new { x.Status, x.AcceptDeadlineUtc });
+        builder.Entity<SellerOrder>().HasIndex(x => new { x.ManufacturerBusinessId, x.PlacedAtUtc, x.Id });
+        builder.Entity<Settlement>().HasIndex(x => new { x.Status, x.ReleaseAfter });
+        builder.Entity<Settlement>().HasIndex(x => new { x.ManufacturerBusinessId, x.Status });
+        builder.Entity<Refund>().HasIndex(x => new { x.Status, x.Id });
+        builder.Entity<Product>().HasIndex(x => new { x.SellerBusinessId, x.IsDeleted, x.UpdatedAtUtc });
     }
 }

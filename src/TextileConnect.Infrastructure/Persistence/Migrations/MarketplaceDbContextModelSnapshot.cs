@@ -512,10 +512,10 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("CategoryId");
 
-                    b.HasIndex("SellerBusinessId");
-
                     b.HasIndex("Slug")
                         .IsUnique();
+
+                    b.HasIndex("SellerBusinessId", "IsDeleted", "UpdatedAtUtc");
 
                     b.HasIndex("Status", "IsDeleted", "CategoryId", "Id");
 
@@ -996,7 +996,7 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("PaymentStatus")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasColumnType("varchar(255)");
 
                     b.Property<DateTime>("PlacedAtUtc")
                         .HasColumnType("datetime(6)");
@@ -1026,7 +1026,9 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                     b.HasIndex("OrderNumber")
                         .IsUnique();
 
-                    b.HasIndex("RetailerBusinessId", "Id");
+                    b.HasIndex("PaymentStatus", "PlacedAtUtc");
+
+                    b.HasIndex("RetailerBusinessId", "PlacedAtUtc", "Id");
 
                     b.ToTable("Orders");
                 });
@@ -1277,6 +1279,10 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("OrderId");
+
+                    b.HasIndex("Status", "AcceptDeadlineUtc");
+
+                    b.HasIndex("ManufacturerBusinessId", "PlacedAtUtc", "Id");
 
                     b.HasIndex("ManufacturerBusinessId", "Status", "Id");
 
@@ -1530,6 +1536,8 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("SellerOrderId", "Status");
 
+                    b.HasIndex("Status", "Id");
+
                     b.ToTable("Refunds");
                 });
 
@@ -1567,7 +1575,7 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasColumnType("varchar(255)");
 
                     b.Property<DateTime>("UpdatedAtUtc")
                         .HasColumnType("datetime(6)");
@@ -1577,6 +1585,10 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                     b.HasIndex("PaymentId");
 
                     b.HasIndex("SellerOrderId");
+
+                    b.HasIndex("ManufacturerBusinessId", "Status");
+
+                    b.HasIndex("Status", "ReleaseAfter");
 
                     b.ToTable("Settlements");
                 });
