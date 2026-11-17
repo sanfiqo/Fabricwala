@@ -125,6 +125,8 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CityId");
+
                     b.HasIndex("BusinessId", "AddressType", "IsDefault", "Id");
 
                     b.ToTable("BusinessAddresses");
@@ -156,6 +158,8 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("BusinessId");
 
                     b.ToTable("BusinessDocuments");
                 });
@@ -343,6 +347,8 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
 
                     b.HasKey("FromZoneId", "ToZoneId", "RateType");
 
+                    b.HasIndex("ToZoneId");
+
                     b.ToTable("DeliveryZoneRates");
                 });
 
@@ -504,6 +510,10 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CategoryId");
+
+                    b.HasIndex("SellerBusinessId");
+
                     b.HasIndex("Slug")
                         .IsUnique();
 
@@ -601,6 +611,8 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("FromCityId", "ToCityId", "RateType");
+
+                    b.HasIndex("ToCityId");
 
                     b.ToTable("ShippingRates");
                 });
@@ -852,6 +864,8 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("VariantId");
+
                     b.HasIndex("RetailerBusinessId", "VariantId")
                         .IsUnique();
 
@@ -1014,7 +1028,11 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ProductId");
+
                     b.HasIndex("SellerOrderId");
+
+                    b.HasIndex("VariantId");
 
                     b.ToTable("OrderItems");
                 });
@@ -1314,6 +1332,8 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                     b.HasIndex("InvoiceNumber")
                         .IsUnique();
 
+                    b.HasIndex("SellerOrderId");
+
                     b.ToTable("Invoices");
                 });
 
@@ -1354,6 +1374,8 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("GatewayOrderId")
                         .IsUnique();
+
+                    b.HasIndex("OrderId");
 
                     b.ToTable("Payments");
                 });
@@ -1421,6 +1443,8 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("PaymentId");
+
                     b.HasIndex("SellerOrderId", "Status");
 
                     b.ToTable("Refunds");
@@ -1461,7 +1485,53 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("PaymentId");
+
+                    b.HasIndex("SellerOrderId");
+
                     b.ToTable("Settlements");
+                });
+
+            modelBuilder.Entity("TextileConnect.Domain.Businesses.BusinessAddress", b =>
+                {
+                    b.HasOne("TextileConnect.Domain.Businesses.Business", null)
+                        .WithMany()
+                        .HasForeignKey("BusinessId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("TextileConnect.Domain.Businesses.City", null)
+                        .WithMany()
+                        .HasForeignKey("CityId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TextileConnect.Domain.Businesses.BusinessDocument", b =>
+                {
+                    b.HasOne("TextileConnect.Domain.Businesses.Business", null)
+                        .WithMany()
+                        .HasForeignKey("BusinessId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TextileConnect.Domain.Businesses.BusinessUser", b =>
+                {
+                    b.HasOne("TextileConnect.Domain.Businesses.Business", null)
+                        .WithMany()
+                        .HasForeignKey("BusinessId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TextileConnect.Domain.Businesses.City", b =>
+                {
+                    b.HasOne("TextileConnect.Domain.Businesses.State", null)
+                        .WithMany()
+                        .HasForeignKey("StateId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("TextileConnect.Domain.Businesses.PostalCode", b =>
@@ -1473,13 +1543,114 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("TextileConnect.Domain.Catalogue.DeliveryZoneRate", b =>
+                {
+                    b.HasOne("TextileConnect.Domain.Businesses.DeliveryZone", null)
+                        .WithMany()
+                        .HasForeignKey("FromZoneId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("TextileConnect.Domain.Businesses.DeliveryZone", null)
+                        .WithMany()
+                        .HasForeignKey("ToZoneId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TextileConnect.Domain.Catalogue.PriceSlab", b =>
+                {
+                    b.HasOne("TextileConnect.Domain.Catalogue.Product", null)
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TextileConnect.Domain.Catalogue.Product", b =>
+                {
+                    b.HasOne("TextileConnect.Domain.Catalogue.Category", null)
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("TextileConnect.Domain.Businesses.Business", null)
+                        .WithMany()
+                        .HasForeignKey("SellerBusinessId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TextileConnect.Domain.Catalogue.ProductMedia", b =>
+                {
+                    b.HasOne("TextileConnect.Domain.Catalogue.Product", null)
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TextileConnect.Domain.Catalogue.ProductVariant", b =>
+                {
+                    b.HasOne("TextileConnect.Domain.Catalogue.Product", null)
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TextileConnect.Domain.Catalogue.ShippingRate", b =>
+                {
+                    b.HasOne("TextileConnect.Domain.Businesses.City", null)
+                        .WithMany()
+                        .HasForeignKey("FromCityId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("TextileConnect.Domain.Businesses.City", null)
+                        .WithMany()
+                        .HasForeignKey("ToCityId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TextileConnect.Domain.Orders.CartItem", b =>
+                {
+                    b.HasOne("TextileConnect.Domain.Catalogue.ProductVariant", null)
+                        .WithMany()
+                        .HasForeignKey("VariantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TextileConnect.Domain.Orders.Order", b =>
+                {
+                    b.HasOne("TextileConnect.Domain.Businesses.Business", null)
+                        .WithMany()
+                        .HasForeignKey("RetailerBusinessId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("TextileConnect.Domain.Orders.OrderItem", b =>
                 {
+                    b.HasOne("TextileConnect.Domain.Catalogue.Product", null)
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("TextileConnect.Domain.Orders.SellerOrder", "SellerOrder")
                         .WithMany("Items")
                         .HasForeignKey("SellerOrderId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("TextileConnect.Domain.Catalogue.ProductVariant", null)
+                        .WithMany()
+                        .HasForeignKey("VariantId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("SellerOrder");
                 });
@@ -1489,7 +1660,7 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                     b.HasOne("TextileConnect.Domain.Orders.SellerOrder", "SellerOrder")
                         .WithMany("History")
                         .HasForeignKey("SellerOrderId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("SellerOrder");
@@ -1500,7 +1671,7 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                     b.HasOne("TextileConnect.Domain.Orders.SellerOrder", "SellerOrder")
                         .WithMany()
                         .HasForeignKey("SellerOrderId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("SellerOrder");
@@ -1511,19 +1682,91 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                     b.HasOne("TextileConnect.Domain.Orders.ReturnClaim", null)
                         .WithMany("Photos")
                         .HasForeignKey("ReturnClaimId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 
             modelBuilder.Entity("TextileConnect.Domain.Orders.SellerOrder", b =>
                 {
+                    b.HasOne("TextileConnect.Domain.Businesses.Business", null)
+                        .WithMany()
+                        .HasForeignKey("ManufacturerBusinessId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("TextileConnect.Domain.Orders.Order", "Order")
                         .WithMany("SellerOrders")
                         .HasForeignKey("OrderId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Order");
+                });
+
+            modelBuilder.Entity("TextileConnect.Domain.Orders.Shipment", b =>
+                {
+                    b.HasOne("TextileConnect.Domain.Orders.SellerOrder", null)
+                        .WithMany()
+                        .HasForeignKey("SellerOrderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TextileConnect.Domain.Payments.Invoice", b =>
+                {
+                    b.HasOne("TextileConnect.Domain.Orders.SellerOrder", null)
+                        .WithMany()
+                        .HasForeignKey("SellerOrderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TextileConnect.Domain.Payments.Payment", b =>
+                {
+                    b.HasOne("TextileConnect.Domain.Orders.Order", null)
+                        .WithMany()
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TextileConnect.Domain.Payments.PayoutAccount", b =>
+                {
+                    b.HasOne("TextileConnect.Domain.Businesses.Business", null)
+                        .WithMany()
+                        .HasForeignKey("BusinessId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TextileConnect.Domain.Payments.Refund", b =>
+                {
+                    b.HasOne("TextileConnect.Domain.Payments.Payment", null)
+                        .WithMany()
+                        .HasForeignKey("PaymentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("TextileConnect.Domain.Orders.SellerOrder", null)
+                        .WithMany()
+                        .HasForeignKey("SellerOrderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TextileConnect.Domain.Payments.Settlement", b =>
+                {
+                    b.HasOne("TextileConnect.Domain.Payments.Payment", null)
+                        .WithMany()
+                        .HasForeignKey("PaymentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("TextileConnect.Domain.Orders.SellerOrder", null)
+                        .WithMany()
+                        .HasForeignKey("SellerOrderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("TextileConnect.Domain.Orders.Order", b =>

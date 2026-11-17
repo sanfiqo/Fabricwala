@@ -197,3 +197,8 @@ One agent per folder at a time. A [WEB] task starts only after its [BE] task is 
 - [x] F0.2 `ProductionAdapterGuard`: outside Development and Testing the app stops at startup while file storage, payment gateway or OTP sender is a development or unconfigured adapter. 7 tests; shown with a real `Production` start.
 - [x] F0.3 `AddControllers` and `MapControllers` removed (no controller class exists); JSON enum options stay on `ConfigureHttpJsonOptions`. OpenAPI drift test unchanged and green.
 - [x] F0.4 `docs/ARCHITECTURE.md` section 2 and tech stack, and the stack lines in `docs/AGENTS.md`, now say what is built and what is planned.
+
+### Phase F1 - Data integrity
+- [x] F1.1 Every relation in the F1.1 list is a real foreign key with `ON DELETE RESTRICT` (relations with navigation properties are configured through them). The model test pins the list.
+- [x] F1.2 `docs/FK_ORPHAN_CHECK.sql` is generated from the model (a test keeps it in step). Run it on a non-empty database before the migration.
+- [ ] F1.3 Migration `AddForeignKeys` is generated (32 foreign keys, 11 new indexes, the 5 old cascade keys become restrict) and its SQL was reviewed offline. **Not yet applied to a fresh MySQL database and to a database built from the old migrations: needs the owner (see the commands in the F1 report).**

@@ -48,6 +48,7 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
+        ConfigureRelationships(builder);
         builder.Entity<Business>(entity =>
         {
             entity.ToTable("Businesses");
@@ -127,7 +128,6 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
         builder.Entity<Order>().Property(x => x.GrandTotal).HasPrecision(18, 2);
         builder.Entity<SellerOrder>().HasKey(x => x.Id);
         builder.Entity<SellerOrder>().Property(x => x.Status).HasMaxLength(40).IsConcurrencyToken();
-        builder.Entity<SellerOrder>().HasMany(x => x.History).WithOne(x => x.SellerOrder).HasForeignKey(x => x.SellerOrderId);
         builder.Entity<OrderStatusHistory>(entity => { entity.HasKey(x => x.Id); entity.Property(x => x.Status).HasMaxLength(40).IsRequired(); entity.Property(x => x.Note).HasMaxLength(1000); entity.HasIndex(x => new { x.SellerOrderId, x.ChangedAtUtc, x.Id }); });
         builder.Entity<OrderRating>(entity => { entity.HasKey(x => x.Id); entity.Property(x => x.Comment).HasMaxLength(1000); entity.HasIndex(x => x.OrderId).IsUnique(); });
         builder.Entity<IdempotencyRecord>(entity => { entity.HasKey(x => x.Id); entity.Property(x => x.Scope).HasMaxLength(40).IsRequired(); entity.Property(x => x.Key).HasMaxLength(100).IsRequired(); entity.Property(x => x.RequestHash).HasMaxLength(64).IsRequired(); entity.Property(x => x.ResourceKey).HasMaxLength(100).IsRequired(); entity.HasIndex(x => new { x.BusinessId, x.Scope, x.Key }).IsUnique(); });
@@ -181,5 +181,55 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
         builder.Entity<PlatformSetting>().Property(x => x.Key).HasMaxLength(200);
         builder.Entity<PlatformSetting>().Property(x => x.Value).HasMaxLength(4000).IsRequired();
         builder.Entity<Enquiry>().HasKey(x => x.Id); builder.Entity<Quotation>().HasKey(x => x.Id); builder.Entity<Dispute>().HasKey(x => x.Id); builder.Entity<Review>().HasKey(x => x.Id); builder.Entity<Favourite>().HasKey(x => x.Id); builder.Entity<Favourite>().HasIndex(x => new { x.RetailerBusinessId, x.ProductId }).IsUnique(); builder.Entity<GroupBuy>().HasKey(x => x.Id); builder.Entity<GroupBuyParticipant>().HasKey(x => x.Id); builder.Entity<LogisticsAssignment>().HasKey(x => x.Id);
+    }
+
+    /// <summary>
+    /// Every relation between marketplace tables is a real foreign key. Delete is always Restrict: rows are soft-deleted or kept, never cascaded.
+    /// Notification.UserId and the user columns point to the identity database and are deliberately not foreign keys.
+    /// docs/FK_ORPHAN_CHECK.sql is generated from this model; a test keeps it in step.
+    /// </summary>
+    private static void ConfigureRelationships(ModelBuilder builder)
+    {
+        void Link<TDependent, TPrincipal>(System.Linq.Expressions.Expression<Func<TDependent, object?>> foreignKey)
+            where TDependent : class where TPrincipal : class
+            => builder.Entity<TDependent>().HasOne<TPrincipal>().WithMany().HasForeignKey(foreignKey).OnDelete(DeleteBehavior.Restrict);
+
+        // Businesses
+        Link<BusinessUser, Business>(x => x.BusinessId);
+        Link<BusinessAddress, Business>(x => x.BusinessId);
+        Link<BusinessAddress, City>(x => x.CityId);
+        Link<BusinessDocument, Business>(x => x.BusinessId);
+        Link<PayoutAccount, Business>(x => x.BusinessId);
+        Link<City, State>(x => x.StateId);
+        // Catalogue
+        Link<Product, Business>(x => x.SellerBusinessId);
+        Link<Product, Category>(x => x.CategoryId);
+        Link<ProductVariant, Product>(x => x.ProductId);
+        Link<PriceSlab, Product>(x => x.ProductId);
+        Link<ProductMedia, Product>(x => x.ProductId);
+        Link<ShippingRate, City>(x => x.FromCityId);
+        Link<ShippingRate, City>(x => x.ToCityId);
+        Link<DeliveryZoneRate, DeliveryZone>(x => x.FromZoneId);
+        Link<DeliveryZoneRate, DeliveryZone>(x => x.ToZoneId);
+        // Relations that have navigation properties are configured with them, so EF does not add a second foreign key column.
+        builder.Entity<SellerOrder>().HasOne(x => x.Order).WithMany(x => x.SellerOrders).HasForeignKey(x => x.OrderId).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<SellerOrder>().HasMany(x => x.Items).WithOne(x => x.SellerOrder).HasForeignKey(x => x.SellerOrderId).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<SellerOrder>().HasMany(x => x.History).WithOne(x => x.SellerOrder).HasForeignKey(x => x.SellerOrderId).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<ReturnClaim>().HasOne(x => x.SellerOrder).WithMany().HasForeignKey(x => x.SellerOrderId).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<ReturnClaim>().HasMany(x => x.Photos).WithOne().HasForeignKey(x => x.ReturnClaimId).OnDelete(DeleteBehavior.Restrict);
+        // Cart and orders
+        Link<CartItem, ProductVariant>(x => x.VariantId);
+        Link<Order, Business>(x => x.RetailerBusinessId);
+        Link<SellerOrder, Business>(x => x.ManufacturerBusinessId);
+        Link<OrderItem, Product>(x => x.ProductId);
+        Link<OrderItem, ProductVariant>(x => x.VariantId);
+        Link<Shipment, SellerOrder>(x => x.SellerOrderId);
+        // Money
+        Link<Payment, Order>(x => x.OrderId);
+        Link<Settlement, Payment>(x => x.PaymentId);
+        Link<Settlement, SellerOrder>(x => x.SellerOrderId);
+        Link<Refund, Payment>(x => x.PaymentId);
+        Link<Refund, SellerOrder>(x => x.SellerOrderId);
+        Link<Invoice, SellerOrder>(x => x.SellerOrderId);
     }
 }
