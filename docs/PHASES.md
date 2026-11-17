@@ -29,7 +29,7 @@ Owners of work: [BE] backend, folders `src/` and `tests/`; [WEB] the web app, fo
 - [x] P1.7 OTP delivery interface with a Development fake sender. **The real MSG91 sender does not exist** (P5.9, P11.1, F3.2).
 - [x] P1.8 Wired into the Api; initial migration
 - [x] P1.9 End to end OTP login tests, wrong code locks after 5 tries
-- [ ] P1.10 Data Protection keys are persisted in the identity database (`PersistKeysToDbContext`), but no test proves it and the keys are not encrypted at rest yet (F3.6)
+- [x] P1.10 Data Protection keys are persisted in the identity database (`PersistKeysToDbContext`) and a test proves it (`DataProtectionKeysTests`: stored in the database, a restarted instance opens what the first one sealed). **Not encrypted at rest yet** (needs a certificate, F3.6)
 
 ## Phase 2 — Businesses and approval
 - [x] P2.1 Domain: Business, BusinessUser, BusinessAddress, BusinessDocument
