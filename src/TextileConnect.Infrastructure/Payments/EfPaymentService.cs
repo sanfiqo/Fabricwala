@@ -13,7 +13,7 @@ using TextileConnect.Infrastructure.Persistence;
 
 namespace TextileConnect.Infrastructure.Payments;
 
-public sealed partial class EfPaymentService(MarketplaceDbContext db, IPaymentGateway gateway, TimeProvider? clock = null) : IPaymentService
+public sealed partial class EfPaymentService(MarketplaceDbContext db, IPaymentGateway gateway, TimeProvider? clock = null, IAuditTrail? audit = null) : IPaymentService
 {
     private const string Scope = "payment";
     private const int DefaultAcceptWindowHours = 24;
@@ -89,11 +89,13 @@ public sealed partial class EfPaymentService(MarketplaceDbContext db, IPaymentGa
         payment.Status = PaymentStatus.Paid;
         payment.GatewayPaymentId = gatewayPaymentId;
         payment.PaidAt = now;
+        audit?.Record("payment.paid", nameof(Payment), payment.Id, $"order {payment.OrderId}, amount {AuditText.Money(payment.Amount)}");
         var order = await db.Orders.Include(x => x.SellerOrders).SingleAsync(x => x.Id == payment.OrderId, cancellationToken);
         if (order.SellerOrders.Count > 0 && order.SellerOrders.All(x => SellerOrderStatus.IsDead(x.Status)))
         {
             // Money arrived after the order was cancelled (payment window expired): queue a full refund, never keep it.
             order.PaymentStatus = PaymentStatus.Refunded;
+            audit?.Record("payment.late_refund", nameof(Payment), payment.Id, $"order {payment.OrderId}, paid after cancellation");
             foreach (var cancelled in order.SellerOrders)
                 if (cancelled.Total > 0) db.Refunds.Add(new Refund { PaymentId = payment.Id, SellerOrderId = cancelled.Id, Amount = cancelled.Total, Reason = "Payment arrived after the order was cancelled.", CreatedAtUtc = now });
             await db.SaveChangesAsync(cancellationToken);
@@ -122,6 +124,7 @@ public sealed partial class EfPaymentService(MarketplaceDbContext db, IPaymentGa
         if (string.Equals(payment.Status, PaymentStatus.Pending, StringComparison.OrdinalIgnoreCase))
         {
             payment.Status = PaymentStatus.Failed;
+            audit?.Record("payment.failed", nameof(Payment), payment.Id, $"order {payment.OrderId}");
             await db.SaveChangesAsync(cancellationToken);
         }
         return true;

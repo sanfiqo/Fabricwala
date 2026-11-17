@@ -76,7 +76,7 @@ public static class ReturnClaimEndpoints
         });
 
         var admin = app.MapGroup("/api/v1/admin/claims").RequireAuthorization(p => p.RequireRole("Admin"));
-        admin.MapPost("/{claimId:long}/decide", async (long claimId, AdminDecision request, MarketplaceDbContext db, TimeProvider clock, CancellationToken ct) =>
+        admin.MapPost("/{claimId:long}/decide", async (long claimId, AdminDecision request, MarketplaceDbContext db, TimeProvider clock, IAuditTrail audit, CancellationToken ct) =>
         {
             var claim = await db.ReturnClaims.Include(x => x.Photos).Include(x => x.SellerOrder).ThenInclude(x => x!.Order).SingleOrDefaultAsync(x => x.Id == claimId, ct);
             if (claim is null) return Results.NotFound();
@@ -86,6 +86,7 @@ public static class ReturnClaimEndpoints
                 || (request.Decision != "Rejected" && refund == 0) || string.IsNullOrWhiteSpace(request.Note) || request.Note.Length > 1000) return Results.BadRequest();
             if (claim.ResolvedAtUtc is not null) throw new RuleViolationException("claim_not_open", "This problem report is already resolved.");
             var now = clock.GetUtcNow().UtcDateTime;
+            audit.Record("claim.decided", nameof(ReturnClaim), claim.Id, $"{request.Decision}, refund {AuditText.Money(refund)}");
             claim.Status = request.Decision; claim.AdminDecision = request.Note.Trim(); claim.ApprovedRefundAmount = refund; claim.ResolvedAtUtc = now;
             if (refund > 0)
             {

@@ -10,8 +10,10 @@ public static class AdminEndpoints
     {
         var admin = app.MapGroup("/api/v1/admin").RequireAuthorization(p => p.RequireRole("Admin"));
         admin.MapGet("/settings", async (MarketplaceDbContext db, CancellationToken ct) => Results.Ok(await SettingsAsync(db, ct)));
-        admin.MapPut("/settings", async (SettingsRequest request, MarketplaceDbContext db, CancellationToken ct) =>
+        admin.MapPut("/settings", async (SettingsRequest request, MarketplaceDbContext db, TextileConnect.Application.Common.IAuditTrail audit, CancellationToken ct) =>
         {
+            // The commission rate and the payout delay decide how much money moves, so the new values are written down with who set them.
+            audit.Record("settings.updated", "PlatformSetting", null, $"Commission.DefaultRate={request.CommissionDefaultRate}; Settlement.AutoReleaseDays={request.SettlementAutoReleaseDays}");
             await UpsertAsync(db, "Commission.DefaultRate", request.CommissionDefaultRate, ct);
             await UpsertAsync(db, "Settlement.AutoReleaseDays", request.SettlementAutoReleaseDays, ct);
             await db.SaveChangesAsync(ct);

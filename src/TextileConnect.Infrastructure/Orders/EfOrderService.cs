@@ -11,7 +11,7 @@ using TextileConnect.Infrastructure.Persistence;
 
 namespace TextileConnect.Infrastructure.Orders;
 
-public sealed class EfOrderService(MarketplaceDbContext db, IPaymentGateway? gateway = null, TimeProvider? clock = null) : IOrderService, IOrderMaintenance
+public sealed class EfOrderService(MarketplaceDbContext db, IPaymentGateway? gateway = null, TimeProvider? clock = null, IAuditTrail? audit = null) : IOrderService, IOrderMaintenance
 {
     private const int DefaultUnpaidExpiryMinutes = 60;
     private DateTime Now => (clock ?? TimeProvider.System).GetUtcNow().UtcDateTime;
@@ -38,6 +38,7 @@ public sealed class EfOrderService(MarketplaceDbContext db, IPaymentGateway? gat
         {
             sellerOrder.Status = SellerOrderStatus.Delivered;
             sellerOrder.DeliveredAt = now;
+            audit?.Record("order.delivered", nameof(SellerOrder), sellerOrder.Id, $"order {order.OrderNumber}");
             db.OrderStatusHistories.Add(new OrderStatusHistory { SellerOrderId = sellerOrder.Id, Status = SellerOrderStatus.Delivered, Note = "Delivery confirmed by the retailer.", ChangedAtUtc = now });
         }
         foreach (var settlement in await db.Settlements.Where(x => shippedIds.Contains(x.SellerOrderId) && x.Status == SettlementStatus.Pending).ToListAsync(cancellationToken))
@@ -72,6 +73,7 @@ public sealed class EfOrderService(MarketplaceDbContext db, IPaymentGateway? gat
                     throw new RuleViolationException("accept_window_expired", "The time to accept this order has passed.");
                 order.Status = SellerOrderStatus.Accepted;
                 order.AcceptedAt = now;
+                audit?.Record("order.accepted", nameof(SellerOrder), order.Id, $"order {parent.OrderNumber}");
                 db.OrderStatusHistories.Add(new OrderStatusHistory { SellerOrderId = order.Id, Status = SellerOrderStatus.Accepted, ChangedAtUtc = now });
                 await NotifyBusinessesAsync([parent.RetailerBusinessId], "Order accepted", $"The seller accepted order {parent.OrderNumber}.", $"/orders/{parent.Id}", now, cancellationToken);
                 break;
@@ -88,6 +90,7 @@ public sealed class EfOrderService(MarketplaceDbContext db, IPaymentGateway? gat
                 if (string.IsNullOrEmpty(lr) || lr.Length > 60 || carrier?.Length > 80) throw new ArgumentException("An LR/tracking number of up to 60 characters is required.");
                 order.Status = SellerOrderStatus.Dispatched;
                 order.DispatchedAt = now;
+                audit?.Record("order.dispatched", nameof(SellerOrder), order.Id, $"order {parent.OrderNumber}");
                 var shipment = await db.Shipments.SingleOrDefaultAsync(x => x.SellerOrderId == order.Id, cancellationToken);
                 if (shipment is null) db.Shipments.Add(new Shipment { SellerOrderId = order.Id, LrNumber = lr, CarrierName = carrier, DispatchedAt = now });
                 else { shipment.LrNumber = lr; shipment.CarrierName = carrier; shipment.DispatchedAt = now; shipment.Status = ShipmentProgress.Dispatched; }
@@ -174,6 +177,7 @@ public sealed class EfOrderService(MarketplaceDbContext db, IPaymentGateway? gat
         RequireMove(sellerOrder, finalStatus);
         sellerOrder.Status = finalStatus;
         sellerOrder.RejectReason = reason;
+        audit?.Record("order." + finalStatus.ToLowerInvariant(), nameof(SellerOrder), sellerOrder.Id, $"order {parent.OrderNumber}: {reason}");
         var variantIds = sellerOrder.Items.Where(x => x.VariantId.HasValue).Select(x => x.VariantId!.Value).ToArray();
         var variants = await db.ProductVariants.Where(x => variantIds.Contains(x.Id)).ToDictionaryAsync(x => x.Id, cancellationToken);
         foreach (var item in sellerOrder.Items.Where(x => x.VariantId.HasValue))
@@ -191,6 +195,7 @@ public sealed class EfOrderService(MarketplaceDbContext db, IPaymentGateway? gat
             {
                 refund = new Refund { PaymentId = payment.Id, SellerOrderId = sellerOrder.Id, Amount = sellerOrder.Total, Reason = reason, Status = RefundStatus.Requested, CreatedAtUtc = now };
                 db.Refunds.Add(refund);
+                audit?.Record("refund.requested", nameof(SellerOrder), sellerOrder.Id, $"amount {AuditText.Money(refund.Amount)}");
             }
         }
         var siblings = await db.SellerOrders.Where(x => x.OrderId == parent.Id && x.Id != sellerOrder.Id).Select(x => x.Status).ToListAsync(cancellationToken);
@@ -210,6 +215,7 @@ public sealed class EfOrderService(MarketplaceDbContext db, IPaymentGateway? gat
         {
             refund.GatewayRefundId = await gateway.RefundAsync(gatewayPaymentId, refund.Amount, $"refund-{refund.Id}", cancellationToken);
             refund.Status = RefundStatus.Processed;
+            audit?.Record("refund.processed", nameof(Refund), refund.Id, $"amount {AuditText.Money(refund.Amount)}");
             await db.SaveChangesAsync(cancellationToken);
         }
         catch (Exception exception) when (exception is HttpRequestException or InvalidOperationException)
@@ -244,6 +250,7 @@ public sealed class EfOrderService(MarketplaceDbContext db, IPaymentGateway? gat
         {
             settlement.Status = SettlementStatus.Released;
             settlement.SettledAt = now;
+            audit?.Record("settlement.released", nameof(Settlement), settlement.Id, $"amount {AuditText.Money(settlement.Amount)}");
             await NotifyBusinessesAsync([settlement.ManufacturerBusinessId], "Payout released", $"Your payout for order {orderNumbers.GetValueOrDefault(settlement.SellerOrderId)} is released.", "/seller/payouts", now, cancellationToken);
         }
     }

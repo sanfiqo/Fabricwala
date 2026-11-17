@@ -1,3 +1,4 @@
+using TextileConnect.Application.Common;
 using Serilog;
 using Microsoft.AspNetCore.Authorization;
 using Sanfiqo.Identity;
@@ -54,6 +55,7 @@ builder.Services.AddFrontendCors(builder.Configuration, builder.Environment);
 builder.Services.AddHealthChecks();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentBusiness, CurrentBusiness>();
+builder.Services.AddScoped<IAuditTrail, HttpAuditTrail>();
 builder.Services.AddSingleton<IAuthorizationHandler, ApprovedBusinessHandler>();
 builder.Services.AddMarketplacePersistence(builder.Configuration);
 builder.Services.AddScoped<IBusinessDirectory, EfBusinessDirectory>();
@@ -122,6 +124,7 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseMiddleware<ApiCsrfMiddleware>();
+app.UseMiddleware<AdminAuditMiddleware>();
 app.UseAntiforgery();
 
 app.MapSanfiqoAuthEndpoints();

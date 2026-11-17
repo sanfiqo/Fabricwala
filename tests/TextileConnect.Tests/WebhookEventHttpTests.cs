@@ -83,6 +83,22 @@ public sealed class WebhookEventHttpTests
             Assert.NotNull((await scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>().PaymentWebhookEvents.SingleAsync(x => x.EventId == "evt_200")).ProcessedAtUtc);
     }
 
+    /// <summary>Called from AuditTrailTests: a webhook has no signed-in user, so its audit row says "anonymous" and keeps the IP of the caller.</summary>
+    internal static async Task PaidByWebhookAndAuditedAsync()
+    {
+        await using var fixture = await PaymentHttpTests.StartAsync();
+        using var client = await fixture.ClientAsync("Retailer", "retailer-user", RetailerId);
+        using var gateway = await fixture.ClientAsync(null);
+        var order = await NewOrderAsync(client, "audit-pay-1");
+        Assert.Equal(HttpStatusCode.OK, (await WebhookAsync(gateway, Captured(order.GatewayOrderId, order.Paise), "evt_audit_1")).StatusCode);
+
+        using var scope = fixture.Services.CreateScope();
+        var row = await scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>().AuditLogs.SingleAsync(x => x.Action == "payment.paid");
+        Assert.Equal("anonymous", row.UserId);
+        Assert.True(System.Net.IPAddress.TryParse(row.IpAddress, out _));
+        Assert.Contains($"order {order.OrderId}", row.Details);
+    }
+
     [Fact]
     public async Task Without_an_event_id_header_an_identical_body_counts_as_the_same_deliveryAsync()
     {

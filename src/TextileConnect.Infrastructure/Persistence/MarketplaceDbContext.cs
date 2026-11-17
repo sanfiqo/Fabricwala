@@ -236,7 +236,11 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
         builder.Entity<Invoice>().HasKey(x => x.Id);
         builder.Entity<Invoice>().HasIndex(x => x.InvoiceNumber).IsUnique();
         builder.Entity<AuditLog>().HasKey(x => x.Id);
-        builder.Entity<AuditLog>().Property(x => x.Action).HasMaxLength(32).IsRequired();
+        builder.Entity<AuditLog>().Property(x => x.Action).HasMaxLength(64).IsRequired();
+        builder.Entity<AuditLog>().Property(x => x.EntityId).HasMaxLength(64);
+        builder.Entity<AuditLog>().Property(x => x.IpAddress).HasMaxLength(45);
+        builder.Entity<AuditLog>().Property(x => x.Details).HasMaxLength(1000);
+        builder.Entity<AuditLog>().HasIndex(x => new { x.EntityName, x.EntityId, x.CreatedAtUtc });
         builder.Entity<AuditLog>().Property(x => x.EntityName).HasMaxLength(200).IsRequired();
         builder.Entity<PlatformSetting>().HasKey(x => x.Key);
         builder.Entity<PlatformSetting>().Property(x => x.Key).HasMaxLength(200);

@@ -55,6 +55,7 @@ public sealed class MarketplaceHttpFixture(WebApplication app) : IAsyncDisposabl
         builder.Services.AddSingleton<IAuthorizationHandler, ApprovedBusinessHandler>();
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddScoped<ICurrentBusiness, CurrentBusiness>();
+        builder.Services.AddScoped<TextileConnect.Application.Common.IAuditTrail, HttpAuditTrail>();
         builder.Services.AddScoped<IBusinessDirectory, EfBusinessDirectory>();
         builder.Services.AddScoped<IProductPricing, EfProductPricing>();
         builder.Services.AddScoped<ISellerProductService, EfSellerProductService>();
@@ -89,6 +90,7 @@ public sealed class MarketplaceHttpFixture(WebApplication app) : IAsyncDisposabl
         app.UseAuthentication();
         app.UseAuthorization();
         app.UseMiddleware<ApiCsrfMiddleware>();
+        app.UseMiddleware<AdminAuditMiddleware>();
         app.UseAntiforgery();
         app.MapGet("/api/v1/test/csrf", (Microsoft.AspNetCore.Antiforgery.IAntiforgery antiforgery, Microsoft.AspNetCore.Http.HttpContext context) => new { token = antiforgery.GetAndStoreTokens(context).RequestToken });
         app.MapBusinessEndpoints();
