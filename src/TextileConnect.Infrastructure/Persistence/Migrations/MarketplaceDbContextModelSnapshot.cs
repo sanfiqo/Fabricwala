@@ -475,6 +475,14 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                     b.Property<int>("Moq")
                         .HasColumnType("int");
 
+                    b.Property<decimal?>("PriceFrom")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("PriceTo")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<string>("ReturnPolicy")
                         .HasColumnType("longtext");
 
@@ -520,7 +528,11 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("SellerBusinessId", "IsDeleted", "UpdatedAtUtc");
 
+                    b.HasIndex("Status", "IsDeleted", "Id");
+
                     b.HasIndex("Status", "IsDeleted", "CategoryId", "Id");
+
+                    b.HasIndex("Status", "IsDeleted", "PriceFrom", "Id");
 
                     b.HasIndex("Status", "IsDeleted", "UnitsSold", "Id");
 

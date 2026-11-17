@@ -35,12 +35,10 @@ public sealed partial class CatalogueReader
     {
         var sellerIds = await db.Businesses.AsNoTracking()
             .Where(b => !b.IsDeleted && b.BusinessType == BusinessType.Manufacturer && b.VerificationStatus == VerificationStatus.Approved).Select(b => b.Id).ToListAsync(ct);
-        var products = await db.Products.AsNoTracking().Where(p => !p.IsDeleted && p.Status == ProductStatus.Active && sellerIds.Contains(p.SellerBusinessId))
-            .Select(p => new { p.Id, p.CategoryId, p.SellerBusinessId, p.Material, p.Season, p.Moq }).Take(SnapshotLimit + 1).ToListAsync(ct);
+        var products = await db.Products.AsNoTracking().Where(p => !p.IsDeleted && p.Status == ProductStatus.Active && p.PriceFrom != null && sellerIds.Contains(p.SellerBusinessId))
+            .Select(p => new { p.Id, p.CategoryId, p.SellerBusinessId, p.Material, p.Season, p.Moq, PriceFrom = p.PriceFrom!.Value }).Take(SnapshotLimit + 1).ToListAsync(ct);
         if (products.Count > SnapshotLimit) return null;
-        var prices = await db.PriceSlabs.AsNoTracking().GroupBy(s => s.ProductId).Select(g => new { ProductId = g.Key, Min = g.Min(s => s.PricePerUnit) })
-            .ToDictionaryAsync(x => x.ProductId, x => x.Min, ct);
-        var listed = products.Where(p => prices.ContainsKey(p.Id)).Select(p => new SnapProduct(p.Id, p.CategoryId, p.SellerBusinessId, p.Material, p.Season, p.Moq, prices[p.Id])).ToArray();
+        var listed = products.Select(p => new SnapProduct(p.Id, p.CategoryId, p.SellerBusinessId, p.Material, p.Season, p.Moq, p.PriceFrom)).ToArray();
         var listedIds = listed.Select(p => p.Id).ToHashSet();
         var variants = (await db.ProductVariants.AsNoTracking().Where(v => v.IsActive).Select(v => new { v.ProductId, v.Size, v.Colour }).ToListAsync(ct))
             .Where(v => listedIds.Contains(v.ProductId)).GroupBy(v => v.ProductId).ToDictionary(g => g.Key, g => g.Select(v => (v.Size, v.Colour)).ToArray());

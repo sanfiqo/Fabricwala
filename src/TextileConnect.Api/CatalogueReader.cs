@@ -60,11 +60,8 @@ public sealed partial class CatalogueReader(MarketplaceDbContext db, Microsoft.E
     /// ForCount picks the shape that is fastest for counting and grouping (every product is looked at anyway, so a semi-join is best); the other shape, used for a page,
     /// asks about the seller and the price slabs one product at a time, which lets MySQL walk the products in order and stop after the first page. Both mean the same.
     /// </summary>
-    private IQueryable<CatalogueRow> Rows(CatalogueQuery query, Facet skip, Geo? geo, bool forCount, bool joinPrices = false)
+    private IQueryable<CatalogueRow> Rows(CatalogueQuery query, Facet skip, Geo? geo, bool forCount)
     {
-        // The lowest and highest price of a product are asked one product at a time (right when only a page of products is shown), or all at once by joining the grouped price slabs
-        // (right when the sort or a filter needs the price of every product: about twice as fast then). A product without price slabs is not listed either way.
-        joinPrices |= query.Sort is not null && query.Sort.ToLowerInvariant() is "price-asc" or "price-desc" || query.MinPrice.HasValue || query.MaxPrice.HasValue;
         var search = ProductTextSearch.For(query.Q);
         var useFullText = search.BooleanQuery is not null && IsMySql;
         // On MySQL a plain word search goes through the full-text index (FTX_Products_Search, migration AddProductFullText). The SELECT * is the same table, so every other filter still applies on top of it.
@@ -79,6 +76,8 @@ public sealed partial class CatalogueReader(MarketplaceDbContext db, Microsoft.E
             products = products.Where(x => x.Title.ToLower().Contains(text) || x.Description != null && x.Description.ToLower().Contains(text) || x.Material != null && x.Material.ToLower().Contains(text));
         if (query.CategoryId.HasValue && skip != Facet.Category) products = products.Where(x => x.CategoryId == query.CategoryId);
         if (query.MaxMoq.HasValue) products = products.Where(x => x.Moq <= query.MaxMoq);
+        if (query.MinPrice.HasValue && skip != Facet.Price) products = products.Where(x => x.PriceFrom >= query.MinPrice);
+        if (query.MaxPrice.HasValue && skip != Facet.Price) products = products.Where(x => x.PriceFrom <= query.MaxPrice);
         if (!string.IsNullOrWhiteSpace(query.Material) && skip != Facet.Material) products = products.Where(x => x.Material != null && x.Material.Contains(query.Material));
         if (!string.IsNullOrWhiteSpace(query.Season) && skip != Facet.Season) products = products.Where(x => x.Season != null && x.Season.Contains(query.Season));
         if (query.StateId.HasValue && skip != Facet.State) { var sellers = geo!.SellersInState(s => s.Id == query.StateId); products = products.Where(x => sellers.Contains(x.SellerBusinessId)); }
@@ -90,33 +89,11 @@ public sealed partial class CatalogueReader(MarketplaceDbContext db, Microsoft.E
         if (query.SellerCityId.HasValue && skip != Facet.City) { var sellers = geo!.SellersInCity(query.SellerCityId.Value); products = products.Where(x => sellers.Contains(x.SellerBusinessId)); }
         if (!string.IsNullOrWhiteSpace(query.Size) && skip != Facet.Size) products = products.Where(x => db.ProductVariants.Any(v => v.ProductId == x.Id && v.IsActive && v.Size == query.Size));
         if (!string.IsNullOrWhiteSpace(query.Colour) && skip != Facet.Colour) products = products.Where(x => db.ProductVariants.Any(v => v.ProductId == x.Id && v.IsActive && v.Colour == query.Colour));
-        if (joinPrices)
-            products = forCount
-                ? products.Where(p => db.Businesses.Any(b => b.Id == p.SellerBusinessId && !b.IsDeleted && b.BusinessType == BusinessType.Manufacturer && b.VerificationStatus == VerificationStatus.Approved))
-                : products.Where(p => db.Businesses.Count(b => b.Id == p.SellerBusinessId && !b.IsDeleted && b.BusinessType == BusinessType.Manufacturer && b.VerificationStatus == VerificationStatus.Approved) > 0);
-        else
-            products = forCount
-                ? products.Where(p => db.Businesses.Any(b => b.Id == p.SellerBusinessId && !b.IsDeleted && b.BusinessType == BusinessType.Manufacturer && b.VerificationStatus == VerificationStatus.Approved)
-                    && db.PriceSlabs.Any(x => x.ProductId == p.Id))
-                : products.Where(p => db.Businesses.Count(b => b.Id == p.SellerBusinessId && !b.IsDeleted && b.BusinessType == BusinessType.Manufacturer && b.VerificationStatus == VerificationStatus.Approved) > 0
-                    && db.PriceSlabs.Count(x => x.ProductId == p.Id) > 0);
-        IQueryable<CatalogueRow> rows;
-        if (joinPrices)
-        {
-            var prices = db.PriceSlabs.GroupBy(x => x.ProductId).Select(g => new { ProductId = g.Key, Lowest = g.Min(x => x.PricePerUnit), Highest = g.Max(x => x.PricePerUnit) });
-            rows = from product in products join price in prices on product.Id equals price.ProductId
-                   select new CatalogueRow { Product = product, PriceFrom = price.Lowest, PriceTo = price.Highest, UnitsSold = product.UnitsSold };
-        }
-        else
-            rows = products.Select(product => new CatalogueRow
-            {
-                Product = product,
-                PriceFrom = db.PriceSlabs.Where(x => x.ProductId == product.Id).Min(x => x.PricePerUnit),
-                PriceTo = db.PriceSlabs.Where(x => x.ProductId == product.Id).Max(x => x.PricePerUnit),
-                UnitsSold = product.UnitsSold
-            });
-        if (query.MinPrice.HasValue && skip != Facet.Price) rows = rows.Where(x => x.PriceFrom >= query.MinPrice);
-        if (query.MaxPrice.HasValue && skip != Facet.Price) rows = rows.Where(x => x.PriceFrom <= query.MaxPrice);
+        // A product is listed when its seller is approved and it has at least one price tier, which is the same as having a lowest price (Product.PriceFrom).
+        products = forCount
+            ? products.Where(p => p.PriceFrom != null && db.Businesses.Any(b => b.Id == p.SellerBusinessId && !b.IsDeleted && b.BusinessType == BusinessType.Manufacturer && b.VerificationStatus == VerificationStatus.Approved))
+            : products.Where(p => p.PriceFrom != null && db.Businesses.Count(b => b.Id == p.SellerBusinessId && !b.IsDeleted && b.BusinessType == BusinessType.Manufacturer && b.VerificationStatus == VerificationStatus.Approved) > 0);
+        var rows = products.Select(product => new CatalogueRow { Product = product, PriceFrom = product.PriceFrom!.Value, PriceTo = product.PriceTo!.Value, UnitsSold = product.UnitsSold });
         return rows;
     }
 
@@ -133,7 +110,7 @@ public sealed partial class CatalogueReader(MarketplaceDbContext db, Microsoft.E
     public async Task<ProductFiltersResponse> FacetsFromDatabaseAsync(CatalogueQuery query, CancellationToken ct)
     {
         var geo = await LoadGeoAsync(null, ct);
-        IQueryable<CatalogueRow> Facets(Facet skip) => Rows(query, skip, geo, forCount: true, joinPrices: true);
+        IQueryable<CatalogueRow> Facets(Facet skip) => Rows(query, skip, geo, forCount: true);
         var total = await Facets(Facet.None).CountAsync(ct);
 
         var categoryCounts = await Facets(Facet.Category).GroupBy(x => x.Product.CategoryId).Select(g => new { Id = g.Key, Count = g.Count() }).ToListAsync(ct);

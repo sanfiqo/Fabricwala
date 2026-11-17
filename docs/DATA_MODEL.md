@@ -421,6 +421,8 @@ Indexes: (ProductId, IsActive); unique (Sku)
 | IsDeleted | tinyint(1) | no |  |
 | Material | varchar(100) | yes |  |
 | Moq | int | no |  |
+| PriceFrom | decimal(18,2) | yes |  |
+| PriceTo | decimal(18,2) | yes |  |
 | ReturnPolicy | longtext | yes |  |
 | Season | varchar(80) | yes |  |
 | SellerBusinessId | bigint | no | -> Businesses.Id |
@@ -432,7 +434,7 @@ Indexes: (ProductId, IsActive); unique (Sku)
 | UpdatedAtUtc | datetime(6) | no |  |
 | WeightPerUnitGrams | decimal(18,2) | no |  |
 
-Indexes: (CategoryId); (SellerBusinessId, IsDeleted, UpdatedAtUtc); unique (Slug); (Status, IsDeleted, CategoryId, Id); (Status, IsDeleted, UnitsSold, Id)
+Indexes: (CategoryId); (SellerBusinessId, IsDeleted, UpdatedAtUtc); unique (Slug); (Status, IsDeleted, CategoryId, Id); (Status, IsDeleted, Id); (Status, IsDeleted, PriceFrom, Id); (Status, IsDeleted, UnitsSold, Id)
 
 ## Refunds
 

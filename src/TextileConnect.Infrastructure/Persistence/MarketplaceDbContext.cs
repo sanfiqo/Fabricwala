@@ -53,14 +53,68 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
 
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
+        var ids = ChangedPriceProducts();
+        if (ids.Count > 0)
+        {
+            var stored = PriceSlabs.AsNoTracking().Where(s => ids.Contains(s.ProductId)).Select(s => new StoredSlab(s.Id, s.ProductId, s.PricePerUnit)).ToList();
+            var products = TrackedProducts(ids);
+            var missing = ids.Where(id => !products.ContainsKey(id)).ToList();
+            if (missing.Count > 0) foreach (var product in Products.Where(p => missing.Contains(p.Id)).ToList()) products[product.Id] = product;
+            ApplyPrices(ids, stored, products);
+        }
         BeforeSave();
         return base.SaveChanges(acceptAllChangesOnSuccess);
     }
 
-    public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+    public override async Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
     {
+        var ids = ChangedPriceProducts();
+        if (ids.Count > 0)
+        {
+            var stored = await PriceSlabs.AsNoTracking().Where(s => ids.Contains(s.ProductId)).Select(s => new StoredSlab(s.Id, s.ProductId, s.PricePerUnit)).ToListAsync(cancellationToken);
+            var products = TrackedProducts(ids);
+            var missing = ids.Where(id => !products.ContainsKey(id)).ToList();
+            if (missing.Count > 0) foreach (var product in await Products.Where(p => missing.Contains(p.Id)).ToListAsync(cancellationToken)) products[product.Id] = product;
+            ApplyPrices(ids, stored, products);
+        }
         BeforeSave();
-        return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+        return await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+    }
+
+    private sealed record StoredSlab(long Id, long ProductId, decimal Price);
+
+    private Dictionary<long, Product> TrackedProducts(List<long> ids)
+    {
+        var wanted = ids.ToHashSet();
+        return ChangeTracker.Entries<Product>().Where(e => wanted.Contains(e.Entity.Id)).Select(e => e.Entity).GroupBy(x => x.Id).ToDictionary(g => g.Key, g => g.First());
+    }
+
+    /// <summary>The products whose price tiers are being added, changed or removed by this save.</summary>
+    private List<long> ChangedPriceProducts()
+    {
+        if (ChangeTracker.AutoDetectChangesEnabled) ChangeTracker.DetectChanges();
+        return ChangeTracker.Entries<PriceSlab>().Where(e => e.State is EntityState.Added or EntityState.Modified or EntityState.Deleted).Select(e => e.Entity.ProductId).Distinct().ToList();
+    }
+
+    /// <summary>
+    /// Sets the lowest and highest price of each product from the tiers it will have after this save: the tiers being added or changed here, plus the stored ones that are neither changed nor removed here.
+    /// Done in the same save, so the product and its price columns are never out of step.
+    /// </summary>
+    private void ApplyPrices(List<long> productIds, List<StoredSlab> stored, Dictionary<long, Product> products)
+    {
+        var entries = ChangeTracker.Entries<PriceSlab>().Where(e => productIds.Contains(e.Entity.ProductId)).ToList();
+        var removed = entries.Where(e => e.State == EntityState.Deleted).Select(e => e.Entity.Id).ToHashSet();
+        var tracked = entries.Where(e => e.State is not (EntityState.Deleted or EntityState.Detached)).Select(e => e.Entity).ToList();
+        var trackedIds = tracked.Where(x => x.Id != 0).Select(x => x.Id).ToHashSet();
+        foreach (var productId in productIds)
+        {
+            var prices = tracked.Where(x => x.ProductId == productId).Select(x => x.PricePerUnit)
+                .Concat(stored.Where(x => x.ProductId == productId && !trackedIds.Contains(x.Id) && !removed.Contains(x.Id)).Select(x => x.Price)).ToList();
+            if (!products.TryGetValue(productId, out var product)) continue;
+            var entry = Entry(product);
+            entry.Property(x => x.PriceFrom).CurrentValue = prices.Count == 0 ? null : prices.Min();
+            entry.Property(x => x.PriceTo).CurrentValue = prices.Count == 0 ? null : prices.Max();
+        }
     }
 
     /// <summary>Refuses to write a status text that is not one of the known constants (a typo would otherwise be stored silently), then stamps the times.</summary>
@@ -380,5 +434,9 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
         builder.Entity<Refund>().HasIndex(x => new { x.Status, x.Id });
         builder.Entity<Product>().HasIndex(x => new { x.SellerBusinessId, x.IsDeleted, x.UpdatedAtUtc });
         builder.Entity<Product>().HasIndex(x => new { x.Status, x.IsDeleted, x.UnitsSold, x.Id });
+        builder.Entity<Product>().Property(x => x.PriceFrom).HasPrecision(18, 2);
+        builder.Entity<Product>().Property(x => x.PriceTo).HasPrecision(18, 2);
+        builder.Entity<Product>().HasIndex(x => new { x.Status, x.IsDeleted, x.PriceFrom, x.Id });
+        builder.Entity<Product>().HasIndex(x => new { x.Status, x.IsDeleted, x.Id });
     }
 }

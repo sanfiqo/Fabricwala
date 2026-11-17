@@ -18,6 +18,12 @@ public sealed class Product
     public decimal WeightPerUnitGrams { get; set; }
     /// <summary>Pieces of this product in seller orders that were delivered. Raised when the retailer confirms delivery; cancelled, rejected and reported orders never raise it. Used to sort by popularity.</summary>
     public int UnitsSold { get; set; }
+    /// <summary>
+    /// The lowest and the highest price per unit of the price tiers of this product, or null while it has no tier. Kept in step with the tiers by <c>MarketplaceDbContext</c> on every save
+    /// (nobody sets them by hand), so that a list can sort and filter by price without reading the tiers of every product. A product without a tier is not listed.
+    /// </summary>
+    public decimal? PriceFrom { get; set; }
+    public decimal? PriceTo { get; set; }
     public int DispatchDays { get; set; }
     public string? ReturnPolicy { get; set; }
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
