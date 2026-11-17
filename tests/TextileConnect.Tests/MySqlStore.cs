@@ -31,7 +31,8 @@ public static class MySqlStore
 
     public static async Task RunAsync(Func<Task> test)
     {
-        var server = new MySqlConnectionStringBuilder(Environment.GetEnvironmentVariable(Variable) ?? throw new InvalidOperationException($"{Variable} is not set.")) { Database = string.Empty };
+        var server = new MySqlConnectionStringBuilder((Environment.GetEnvironmentVariable(Variable) ?? throw new InvalidOperationException($"{Variable} is not set."))
+            .Replace("SslMode=None", "SslMode=Disabled", StringComparison.OrdinalIgnoreCase)) { Database = string.Empty };   // the app makes the same change (docs/RUN_LOCAL.md uses SslMode=None)
         var name = "tc_test_" + Guid.NewGuid().ToString("N")[..12];
         await using (var connection = new MySqlConnection(server.ConnectionString))
         {
@@ -48,6 +49,8 @@ public static class MySqlStore
                 await db.Database.MigrateAsync();
                 await MarketplaceSeed.SeedAsync(db); // states, cities, pincodes, categories and settings, as the app does at startup
             }
+            await using (var identity = new Sanfiqo.Identity.ApplicationIdentityDbContext(new DbContextOptionsBuilder<Sanfiqo.Identity.ApplicationIdentityDbContext>().UseMySQL(database).Options))
+                await identity.Database.MigrateAsync();   // the sign-in tables live in the same database
             Current.Value = database;
             await test();
             failed = false;

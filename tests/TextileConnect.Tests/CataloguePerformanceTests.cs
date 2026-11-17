@@ -64,6 +64,7 @@ public sealed class CataloguePerformanceTests
     public Task Catalogue_list_search_and_filters_stay_under_300_ms_at_p95_with_20000_products() => MySqlStore.RunAsync(async () =>
     {
         var products = int.TryParse(Environment.GetEnvironmentVariable("TEXTILECONNECT_PERF_PRODUCTS"), out var n) ? n : 20_000;
+        MarketplaceHttpFixture.SearchLimitOverride.Value = 1_000_000;   // the benchmark sends thousands of searches from one address: the per-client limit is not what it measures
         await using var fixture = await MarketplaceHttpFixture.StartAsync(app => app.MapProductEndpoints());
         var seeding = Stopwatch.StartNew();
         using (var scope = fixture.Services.CreateScope())

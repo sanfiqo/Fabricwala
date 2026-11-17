@@ -28,7 +28,7 @@ public sealed class CheckoutHttpTests
             new BusinessAddress { Id = 101, BusinessId = 31, AddressType = AddressType.Delivery, Line1 = "Other shop", CityId = indore.Id, Pincode = "452001" });
         db.Businesses.AddRange(new Business { Id = 11, BusinessType = BusinessType.Manufacturer, LegalName = "Gupta Garments", DisplayName = "Gupta Garments", Phone = "+919000000011", VerificationStatus = VerificationStatus.Approved, CommissionRateOverride = 0.05m },
             new Business { Id = 31, BusinessType = BusinessType.Retailer, LegalName = "Other", DisplayName = "Other", Phone = "+919000000031", VerificationStatus = VerificationStatus.Approved });
-        db.BusinessAddresses.Add(new BusinessAddress { BusinessId = 11, AddressType = AddressType.Pickup, Line1 = "Gupta factory", CityId = ludhiana.Id, Pincode = "141001", IsDefault = true });
+        db.BusinessAddresses.Add(new BusinessAddress { Id = 102, BusinessId = 11, AddressType = AddressType.Pickup, Line1 = "Gupta factory", CityId = ludhiana.Id, Pincode = "141001", IsDefault = true });
         var category = await db.Categories.FirstAsync();
         db.Products.Add(new Product { Id = 5, SellerBusinessId = 11, CategoryId = category.Id, Title = "Cotton kurti", Slug = "kurti", Moq = 10, Status = ProductStatus.Active, GstRate = 12 });
         db.ProductVariants.Add(new ProductVariant { Id = 20, ProductId = 5, Sku = "KURTI-M", Size = "M", Colour = "Blue", StockQty = 100 });

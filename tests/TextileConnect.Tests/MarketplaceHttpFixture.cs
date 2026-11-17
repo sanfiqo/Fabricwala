@@ -38,6 +38,9 @@ public sealed class MarketplaceHttpFixture(WebApplication app) : IAsyncDisposabl
     public TestClock Clock => (TestClock)app.Services.GetRequiredService<TimeProvider>();
     public ValueTask DisposeAsync() => app.DisposeAsync();
 
+    /// <summary>A test that sends many search requests (the benchmark) raises the search limit of its own API with this; it does not touch other tests.</summary>
+    public static readonly AsyncLocal<int?> SearchLimitOverride = new();
+
     public static async Task<MarketplaceHttpFixture> StartAsync(Action<WebApplication>? map = null, Action<WebApplicationBuilder>? configure = null)
     {
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions { EnvironmentName = "Testing", ContentRootPath = AppContext.BaseDirectory });
@@ -75,14 +78,18 @@ public sealed class MarketplaceHttpFixture(WebApplication app) : IAsyncDisposabl
         builder.Services.AddRateLimiter(options =>
         {
             options.RejectionStatusCode = 429;
-            options.AddFixedWindowLimiter("search", limiter => { limiter.PermitLimit = 60; limiter.Window = TimeSpan.FromMinutes(1); });
+            options.AddFixedWindowLimiter("search", limiter => { limiter.PermitLimit = SearchLimitOverride.Value ?? 60; limiter.Window = TimeSpan.FromMinutes(1); });
         });
         if (MySqlStore.CurrentConnectionString is { } mysql)
         {
-            // Inside MySqlStore.RunAsync the marketplace data lives in a real, migrated MySQL database (identity stays in memory: the tests sign in with test headers).
+            // Inside MySqlStore.RunAsync the marketplace data and the identity data live in one real, migrated MySQL database, as in production: the approval of a business changes
+            // both in one transaction on one connection, which only works when both are relational. (The tests still sign in with test headers.)
             builder.Services.RemoveAll<DbContextOptions<MarketplaceDbContext>>();
             builder.Services.RemoveAll<Microsoft.EntityFrameworkCore.Infrastructure.IDbContextOptionsConfiguration<MarketplaceDbContext>>();
             builder.Services.AddDbContext<MarketplaceDbContext>(options => options.UseMySQL(mysql));
+            builder.Services.RemoveAll<DbContextOptions<ApplicationIdentityDbContext>>();
+            builder.Services.RemoveAll<Microsoft.EntityFrameworkCore.Infrastructure.IDbContextOptionsConfiguration<ApplicationIdentityDbContext>>();
+            builder.Services.AddDbContext<ApplicationIdentityDbContext>(options => options.UseMySQL(mysql));
         }
         configure?.Invoke(builder);
         var app = builder.Build();

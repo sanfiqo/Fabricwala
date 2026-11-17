@@ -18,6 +18,7 @@ public sealed class RetailerExtrasHttpTests
         {
             var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
             db.Orders.RemoveRange(db.Orders.Where(x => x.OrderNumber == "PAID-POPULARITY"));
+            db.OrderItems.RemoveRange(db.OrderItems.Where(x => x.SellerOrder!.Order!.OrderNumber == "PAID-POPULARITY"));   // a real database refuses to delete a parent that still has lines
             db.SellerOrders.RemoveRange(db.SellerOrders.Where(x => x.Order!.OrderNumber == "PAID-POPULARITY"));
             await db.SaveChangesAsync();
         }
