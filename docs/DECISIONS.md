@@ -15,3 +15,6 @@ Decided by the owner: keep the current rule. Payout is released when the retaile
 
 ## 17 Nov 2026 - PDF library
 Decided by the owner: QuestPDF for the GST invoice (Community license, free below USD 1M yearly revenue; revisit the license when revenue passes it).
+
+## 17 Nov 2026 - Log sink and error tracker
+Decided by the owner: Sentry for errors and Better Stack for logs. Needs an account and a DSN or source token from the owner, to be kept in secrets; not wired yet.
