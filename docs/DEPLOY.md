@@ -19,6 +19,7 @@ Set as environment variables (`__` for `:`) or the host's secret store. Never pu
 | `DataProtection__KeyRingConnectionString` | yes | durable key ring (database); never local disk |
 | `Cors__FrontendOrigin` or `Cors__FrontendOrigins` | yes | exact origin(s) of the client, e.g. `https://app.example.in` |
 | `Proxy__KnownProxies__0` / `Proxy__KnownNetworks__0` | yes behind a proxy | address or network of your proxy; without it every visitor looks like the proxy and the rate limits and audit log are useless (the app logs a warning) |
+| `Auth__AdminMfa` | before launch | `Off` (default) or `Required`. With `Required` an admin needs a code from an authenticator app after the mobile code; without it an admin session has no Admin role. Enrol first (below), then switch it on. The app logs a warning at start while it is not `Required` outside Development |
 | `Bootstrap__AdminPhones__0` | first start | phone number that becomes Admin when it signs in; remove afterwards |
 | `Payments__Razorpay__KeyId`, `KeySecret`, `WebhookSecret` | yes | use `rzp_test_` keys first |
 | `Otp__Msg91__AuthKey`, `TemplateId` | when built | real SMS sender (not built yet) |
@@ -36,6 +37,13 @@ Set as environment variables (`__` for `:`) or the host's secret store. Never pu
 5. Load the pincode directory: `dotnet run --project src/TextileConnect.Api -- import-pincodes <file.csv>` (see [MASTER_DATA.md](MASTER_DATA.md); only 2 sample pincodes exist until the real file is loaded).
 6. Start the API container with the settings above.
 7. Build the client (`npm ci && npm run build` in `client/`) and publish `dist/` on the static host.
+
+### Admin second step (authenticator app)
+1. Leave `Auth__AdminMfa` as `Off`, sign in as the admin, and call `POST /api/v1/auth/mfa/setup`: it returns a secret and an `otpauth://` address (make a QR code of it, or type the secret into Google Authenticator, Microsoft Authenticator or similar).
+2. Call `POST /api/v1/auth/mfa/enable` with the six digit code from the app. The answer holds **10 recovery codes, shown once**: save them somewhere safe. Each works once instead of an app code.
+3. Set `Auth__AdminMfa=Required` and restart. Admin sessions that were open are ended; the next sign-in asks for the code (`POST /api/v1/auth/mfa/verify`).
+4. If the phone with the app is lost: use a recovery code; with none left, set `Auth__AdminMfa` back to `Off`, sign in, enrol again, switch it on. Five wrong codes lock that user for a few minutes.
+5. **Enrol before you switch it on**: while it is `Required`, an admin who has not enrolled can only enrol (and whoever holds that phone's mobile code can do it). There is no screen for this in the client yet; the routes are in [API_REFERENCE.md](API_REFERENCE.md).
 
 ## 4. Health probes
 - Liveness: `GET /health/live` (the process answers). Restart the container if it fails.

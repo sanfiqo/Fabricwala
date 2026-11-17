@@ -65,6 +65,9 @@ Errors are always `{ "code": "...", "message": "...", "fields": { ... } }`. Requ
 | GET | `/api/v1/auth/csrf` | public |  |  |  |
 | POST | `/api/v1/auth/logout` | any signed-in user |  |  |  |
 | GET | `/api/v1/auth/me` | any signed-in user |  |  |  |
+| POST | `/api/v1/auth/mfa/enable` | any signed-in user | auth | MfaCodeRequest |  |
+| POST | `/api/v1/auth/mfa/setup` | any signed-in user | auth |  |  |
+| POST | `/api/v1/auth/mfa/verify` | any signed-in user | auth | MfaCodeRequest |  |
 | POST | `/api/v1/auth/otp/request` | public | auth | OtpRequest |  |
 | POST | `/api/v1/auth/otp/verify` | public | auth | OtpVerifyRequest |  |
 | POST | `/api/v1/auth/refresh` | any signed-in user |  |  |  |

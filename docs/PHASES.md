@@ -244,3 +244,9 @@ Owner decisions (17 Nov 2026): delete RFQ, delete product reviews, delete group 
 Owner has only Razorpay test keys (17 Nov 2026); MSG91, R2, WhatsApp and Route are not started because each needs an account.
 - [ ] F3.4 Razorpay in test mode: the client now sends per-call credentials (the shared header was a race), cuts receipts to Razorpay's 40 characters, returns Razorpay's own reason on refusal (`PaymentGatewayException`, no key in it), turns a gateway failure at payment start into `payment_gateway_unavailable`, and the key id sent to the client now follows the documented `Payments:Razorpay:KeyId` name (it used to fall back to `dev_key`). 11 tests against a fake server. **One real test-mode order was created** (`RAZORPAY_LIVE_TEST=1`). Not yet tried against the real service: a refund, a webhook delivery (needs the webhook secret and a public URL), the checkout popup with the frontend.
 - [ ] F3.1 R2 storage, F3.2 MSG91, F3.3 WhatsApp, F3.5 Route payouts, F3.6 key encryption: waiting for accounts.
+
+### Night work 17 Nov 2026 (autonomous, branch `backend/night-17-nov`, not pushed)
+- [x] Admin audit log can be read (`GET /api/v1/admin/audit-log`) and a seller own commission rate can be set (`PUT /api/v1/admin/sellers/{id}/commission-rate`, audited).
+- [x] Order lines keep the main product photo as at checkout (`imageUrl`; migration `AddOrderItemImage`).
+- [x] Credit notes for processed refunds (`GET /api/v1/invoices/refunds/{id}/credit-note`; migration `AddCreditNotes`). Simplification to confirm with an accountant: see INVOICING.md.
+- [x] Admin second step with an authenticator app, `Auth:AdminMfa` Off (default) or Required; no migration; **no client screen yet**, and nobody has enrolled, so it is off.

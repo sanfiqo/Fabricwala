@@ -42,7 +42,7 @@ Domain references nothing.
 
 ## Roles
 `Admin`, `Retailer`, `Manufacturer` (later `Logistics`). Seeded at startup.
-No MFA requirement on Retailer/Manufacturer policies. Admin MFA is a later TODO.
+No MFA requirement on Retailer/Manufacturer policies. Admin MFA (authenticator app) is built and switched by `Auth:AdminMfa` (off by default until every admin has enrolled).
 
 ## Data rules
 - Businesses own everything commercial. Users act for a business through `BusinessUsers` (BusinessId + UserId PK, BusinessRole Owner/Staff).

@@ -145,7 +145,7 @@ Price a retailer sees for a pincode: tier price + GST on it + freight. Freight c
 - Secrets live in user-secrets or environment variables, never in a file in git. Webhooks are verified by signature.
 - Headers on every answer: nosniff, no framing, no-referrer, a CSP of `default-src 'none'`, no-store for private answers, HSTS outside Development.
 - Logs hold method, path (no query string), status, time, user id and client address under a correlation id; never bodies, codes, numbers or tokens.
-- Not done yet: admin MFA, signed URLs for private files (needs R2), a secret scanner and a penetration test.
+- Admin second step: a code from an authenticator app after the mobile code (`Auth:AdminMfa`, off by default; an unconfirmed admin session has no Admin role). Not done yet: signed URLs for private files (needs R2), a secret scanner and a penetration test.
 
 | Action | Admin | Retailer | Manufacturer |
 | --- | --- | --- | --- |

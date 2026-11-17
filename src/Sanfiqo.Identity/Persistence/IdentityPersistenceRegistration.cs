@@ -31,7 +31,8 @@ public static class IdentityPersistenceRegistration
             options.Stores.SchemaVersion = IdentitySchemaVersions.Version1;
         }).AddRoles<ApplicationRole>()
           .AddEntityFrameworkStores<ApplicationIdentityDbContext>()
-          .AddSignInManager();
+          .AddSignInManager()
+          .AddDefaultTokenProviders(); // the authenticator (TOTP) provider of the admin second step
         // Web supplies the canonical principal factory and per-request cookie revalidation.
         return services;
     }
