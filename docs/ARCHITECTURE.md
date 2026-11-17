@@ -1,257 +1,160 @@
 # ARCHITECTURE.md — TextileConnect
 
-Source of truth for data model, flows and API. If this file and code disagree, ask before changing either.
-Rules for working are in `AGENTS.md`; the task list is in `docs/PHASES.md`.
-
-Last updated: 2026-11-12. Decisions changed since the first draft: .NET 10 (not 8/9), `MySql.EntityFrameworkCore`
-(not Pomelo), cookie auth reused from the old project (no JWT, no refresh tokens).
+How the system is built, as it is in the code on 17 Nov 2026. Where a part is planned but not built, it says so.
+Generated and detailed documents: [DATA_MODEL.md](DATA_MODEL.md) (every table), [API_REFERENCE.md](API_REFERENCE.md) (every route), [openapi.json](openapi.json) (the contract for the frontend), [SETTLEMENT.md](SETTLEMENT.md) (money rules), [AUDIT.md](AUDIT.md), [SEARCH.md](SEARCH.md), [MEDIA.md](MEDIA.md), [MASTER_DATA.md](MASTER_DATA.md), [SECURITY_REVIEW.md](SECURITY_REVIEW.md), [DEPLOY.md](DEPLOY.md), [TESTING.md](TESTING.md).
+Rules for working are in `AGENTS.md`; the task list and its honest status are in `docs/PHASES.md`.
 
 ---
 
 ## 1. Overview
 
-Multi-vendor B2B marketplace. Verified manufacturers list wholesale textiles; verified retailers in Jammu & Kashmir
-order in bulk; the platform takes a commission per order. The platform company can also sell its own stock through a
-seller business with `IsPlatformOwned = true`.
+A multi-vendor B2B marketplace for textiles in India. Verified manufacturers list wholesale products; verified retailers (shops) order in bulk; the platform takes a commission per order. The platform company can also sell through its own seller business (`IsPlatformOwned`).
 
-**Roles:** Admin, Retailer, Manufacturer (later Logistics).
+**Roles:** Admin, Retailer, Manufacturer.
 
-**MVP scope:** mobile OTP login, business registration + admin approval, categories, products, variants, price slabs,
-MOQ, search/filters, Kashmir landed cost calculator, cart, checkout split per manufacturer, Razorpay Route payment with
-split settlement, order tracking, WhatsApp notifications.
+**What works end to end** (shown by `FullJourneyHttpTests`, over HTTP, with data made only through the API): mobile OTP sign-in, business sign-up and admin approval, products with sizes, colours and price tiers, search and filters, landed cost with freight and GST, cart, checkout split per seller, payment (fake gateway), seller accept, reject or dispatch, retailer delivery confirmation, payout hold and release (status only), problem reports with photos and refunds, notifications, seller dashboard, admin lists and reports.
 
-**Not in MVP:** RFQ/quotations, disputes (problem reports on an order exist), product reviews (the order rating exists), collective buying, negotiation, logistics role,
-credit, inspections, analytics.
+**Not built:** real SMS (MSG91), WhatsApp, real file storage (R2), real money transfer to sellers (Razorpay Route), a GST-compliant invoice, RFQ, product reviews, group buying, a logistics role. See `PHASES.md`.
 
 ---
 
 ## 2. System architecture
 
-Status legend: **built** = code and tests exist; **planned** = described in the plan, not in the code yet (see the completion plan, `FABRICWALA_COMPLETION_PROMPT.md`, task ids F0 to F9).
-
 ```
 React + Vite PWA (client/)        retailer, manufacturer, admin areas
         |  HTTPS, auth cookie + X-CSRF-TOKEN header
         v
-TextileConnect.Api                minimal API endpoint files (no controllers), middleware, rate limiting, Swagger, /api/v1
+TextileConnect.Api                minimal API endpoint files (no controllers), middleware, rate limiting, /api/v1
         |
-        +--> Sanfiqo.Identity      users, roles, OTP, contact ownership, cookie security
-        +--> TextileConnect.Application   services, DTOs, validators, interfaces
+        +--> Sanfiqo.Identity      users, roles, OTP, contact ownership, cookie security (own database)
+        +--> TextileConnect.Application   services, rules, interfaces
                  |
                  v
-        TextileConnect.Infrastructure     EF Core DbContext (MySQL), services, Razorpay client, development file storage
+        TextileConnect.Infrastructure     EF Core (MySQL), services, Razorpay client, photo copies (SkiaSharp), development file storage
                  |
                  v
-              MySQL 8
-
-External, built:   Razorpay (order, refund, webhook). Needs real keys in Production.
-External, planned: MSG91 (OTP SMS), WhatsApp Cloud API (alerts), Razorpay Route (split payouts), Cloudflare R2 (files).
-Razorpay -> POST /api/v1/payments/webhook (signature verified; each event id is stored in PaymentWebhookEvents and applied once)
+              MySQL 8   (marketplace database + identity database)
 ```
 
-Frontend never calls external services directly. All money/SMS/WhatsApp traffic goes through the API.
-In any environment except Development and Testing the app refuses to start while a development or unconfigured adapter
-(file storage, payment gateway, OTP sender) is still registered; the error names the config keys to set (`ProductionAdapterGuard`).
+Dependency direction: Api -> Application / Infrastructure / Sanfiqo.Identity; Infrastructure -> Application -> Domain. Domain references nothing.
+
+External: Razorpay (order, refund, webhook; needs real keys in Production). Planned, not built: MSG91, WhatsApp Cloud API, Razorpay Route, Cloudflare R2.
+The frontend never calls an external service directly. In every environment except Development and Testing the app **refuses to start** while a development adapter (file storage, payment gateway, OTP sender) is still in place (`ProductionAdapterGuard`).
 
 ### Tech stack
 | Layer | Choice | Status |
 | --- | --- | --- |
-| Runtime | .NET 10, ASP.NET Core minimal APIs (endpoint files per area, no controllers) | built |
-| ORM / DB | EF Core + `MySql.EntityFrameworkCore`, MySQL 8 | built |
-| Auth | ASP.NET Core Identity + mobile OTP + HttpOnly secure cookie (SameSite=Lax) + antiforgery | built |
-| Validation | FluentValidation | built |
-| Background jobs | `BackgroundService` (`OrderMaintenanceWorker`, once a minute). Hangfire is not used | built |
-| Logging | Serilog (console sink when nothing else is configured) | built |
-| SMS | MSG91 (DLT) behind `IOtpDelivery`. Only a fake sender (Development) and an "unconfigured" sender exist | planned |
-| WhatsApp | Meta WhatsApp Cloud API behind `INotificationSender`. The interface exists but nothing calls it | planned |
-| Payments | Razorpay behind `IPaymentGateway` (orders, refunds, webhook). Route transfers are not built; settlement only changes a status | partly built |
-| Files | Cloudflare R2 behind `IFileStorage`. Only the local-disk Development implementation exists | planned |
-| Frontend | React + Vite + TypeScript PWA, Tailwind, shadcn/ui, TanStack Query | built |
-| Hosting | DigitalOcean or Azure, India region | planned |
+| Runtime | .NET 10, ASP.NET Core minimal APIs | built |
+| Database | MySQL 8 through EF Core and `MySql.EntityFrameworkCore`; migrations applied by `dotnet ef`, never by the app | built |
+| Auth | ASP.NET Core Identity + mobile OTP + HttpOnly cookie (SameSite=Lax) + antiforgery header; no JWT | built |
+| Validation | FluentValidation and explicit rule checks | built |
+| Background work | `BackgroundService` (`OrderMaintenanceWorker`, every minute: expiry of unaccepted and unpaid orders, refund retries, payout release) | built |
+| Logging | Serilog, one JSON line per request in production, correlation id, no secrets (see section 8) | built; sink and error tracker not chosen |
+| Images | SkiaSharp (MIT): square WebP copies and a blur preview | built |
+| SMS | MSG91 behind `IOtpDelivery`; only a fake sender exists | planned |
+| WhatsApp | behind `INotificationSender`; nothing calls it | planned |
+| Payments | Razorpay behind `IPaymentGateway` (orders, refunds, webhook); the fake gateway is the one used in tests | partly built |
+| Files | `IFileStorage`; only the local disk implementation for Development | planned (R2) |
+| Frontend | React + Vite + TypeScript PWA, Tailwind, shadcn/ui, TanStack Query | built, see `client/` |
+| Hosting | Docker image + MySQL; see DEPLOY.md | written, not run |
 
-Cookie note: frontend and API must be same-site (e.g. `app.example.in` + `api.example.in`) so the cookie works.
-JWT is added only if a native mobile app is built later.
+The frontend and the API must be on the same site (for example `app.example.in` and `api.example.in`) so that the cookie works.
 
 ---
 
 ## 3. Data model
 
-### Conventions
-- Business tables: `BIGINT` auto-increment `Id`. Identity users: string Id (as in Sanfiqo.Identity).
-- Money `decimal(18,2)`. Times UTC. `CreatedAt`, `UpdatedAt` on every table.
-- **Reality check (17 Nov 2026):** the tables below say "FK" for the logical relation. The database enforces only 6 foreign keys today (order lines, status history, shipments and settlements to `SellerOrders`, claim photos to `ReturnClaims`, `SellerOrders` to `Orders`, plus one to `Cities`); the other relations are plain `bigint` columns. Task F1 adds the rest. `CreatedAt`/`UpdatedAt` are also missing on several tables (task F1.4).
-- Enums stored as int. Soft delete `IsDeleted` on Businesses and Products.
-- Table names plural, PascalCase.
+Every table, column, key, foreign key and index is in [DATA_MODEL.md](DATA_MODEL.md), made from the EF model by a test, so it cannot drift. The shape:
 
-### ER diagram (core)
 ```mermaid
 erDiagram
-    AspNetUsers ||--o{ BusinessUsers : "member of"
-    Businesses ||--o{ BusinessUsers : has
+    Businesses ||--o{ BusinessUsers : "members (user id as text)"
     Businesses ||--o{ BusinessAddresses : has
     Businesses ||--o{ BusinessDocuments : has
-    Businesses ||--o| PayoutAccounts : "manufacturer only"
+    Businesses ||--o| PayoutAccounts : "manufacturer"
     States ||--o{ Cities : has
+    Cities ||--o{ PostalCodes : has
     Cities ||--o{ BusinessAddresses : in
-    Categories ||--o{ Categories : parent
     Categories ||--o{ Products : contains
-    Businesses ||--o{ Products : "sells (SellerBusinessId)"
+    Businesses ||--o{ Products : "sells"
     Products ||--o{ ProductVariants : has
     Products ||--o{ PriceSlabs : has
     Products ||--o{ ProductMedia : has
-    Businesses ||--o{ CartItems : "retailer cart"
     ProductVariants ||--o{ CartItems : in
-    Businesses ||--o{ Orders : "places (RetailerBusinessId)"
-    Orders ||--|{ SellerOrders : "split per manufacturer"
-    Businesses ||--o{ SellerOrders : "fulfils (ManufacturerBusinessId)"
+    Businesses ||--o{ Orders : "places"
+    Orders ||--|{ SellerOrders : "one per manufacturer"
+    Businesses ||--o{ SellerOrders : "fulfils"
     SellerOrders ||--|{ OrderItems : contains
-    ProductVariants ||--o{ OrderItems : "snapshot of"
-    SellerOrders ||--o{ OrderStatusHistory : logs
+    SellerOrders ||--o{ OrderStatusHistories : logs
     SellerOrders ||--o| Shipments : ships
     SellerOrders ||--o{ Invoices : has
+    SellerOrders ||--o{ ReturnClaims : "problem reports"
     Orders ||--o{ Payments : "paid by"
-    Payments ||--o{ Settlements : "transfers"
+    Payments ||--o{ Settlements : "payout of"
     SellerOrders ||--o| Settlements : "settled by"
     Payments ||--o{ Refunds : refunds
     Cities ||--o{ ShippingRates : "from / to"
-    AspNetUsers ||--o{ Notifications : receives
+    DeliveryZones ||--o{ DeliveryZoneRates : "from / to"
+    Businesses ||--o{ Favourites : "saved products"
 ```
 
-### 3.1 Identity (from Sanfiqo.Identity — keep its existing schema)
-| Table | Key columns | Notes |
-| --- | --- | --- |
-| AspNetUsers (ApplicationUser) | Id, PhoneNumber (unique), UserName, IsActive, CreatedAt, LastLoginAt | Add FullName, PreferredLanguage (en/hi/ur). No business fields here. |
-| AspNetRoles, AspNetUserRoles | Standard | Roles: Admin, Retailer, Manufacturer |
-| OTP + contact tables | As in old project, renamed from Customer* | Keep expiry, single use, attempt limits, hashed storage |
-| DataProtectionKeys | Id, FriendlyName, Xml | Persist Data Protection keys (P1.10) |
-
-### 3.2 Businesses
-| Table | Key columns | Relationships |
-| --- | --- | --- |
-| Businesses | Id, BusinessType (Retailer/Manufacturer/Logistics), LegalName, DisplayName, GSTIN (unique, nullable), PAN, Phone, Email, VerificationStatus (Pending/Approved/Rejected/Suspended), RejectionNote, IsPlatformOwned, CommissionRateOverride (nullable), AvgRating, ApprovedByUserId, ApprovedAt, IsDeleted | Hub of the model |
-| BusinessUsers | BusinessId (FK), UserId (FK), BusinessRole (Owner/Staff), IsPrimary; PK (BusinessId, UserId) | Users act for a business through this |
-| BusinessAddresses | Id, BusinessId (FK), AddressType (Registered/Pickup/Delivery), Line1, Line2, CityId (FK), Pincode, IsDefault | Many -> 1 Business, many -> 1 City |
-| BusinessDocuments | Id, BusinessId (FK), DocType (GST/PAN/ShopLicence/Udyam), FileKey, Status (Pending/Accepted/Rejected), ReviewedByUserId, ReviewNote | Files private |
-| PayoutAccounts | Id, BusinessId (FK, unique), Gateway, GatewayLinkedAccountId, Status | Manufacturer only. No bank numbers stored. |
-
-### 3.3 Master data
-| Table | Key columns | Notes |
-| --- | --- | --- |
-| States | Id, Name, Code | |
-| Cities | Id, StateId (FK), Name, IsDeliveryZone, IsSourcingHub | Seed J&K cities + sourcing hubs |
-| Categories | Id, ParentId (FK self, nullable), Name, Slug (unique), SortOrder, IsActive | Tree |
-| PlatformSettings | Key (PK), Value, UpdatedByUserId | e.g. `Commission.DefaultRate`, `Settlement.AutoReleaseDays` |
-
-### 3.4 Catalogue
-| Table | Key columns | Notes |
-| --- | --- | --- |
-| Products | Id, SellerBusinessId (FK), CategoryId (FK), Title, Slug (unique), Description, Material, FabricSpec, Season, HsnCode, GstRate, Moq, Unit (Piece/Set/Metre/Kg), WeightPerUnitGrams, DispatchDays, ReturnPolicy, Status (Draft/PendingReview/Active/Inactive), IsDeleted | Seller must be Manufacturer or IsPlatformOwned |
-| ProductMedia | Id, ProductId (FK), FileKey, MediaType (Image/Video), SortOrder | |
-| ProductVariants | Id, ProductId (FK), Sku (unique), Size, Colour, StockQty, IsActive | |
-| PriceSlabs | Id, ProductId (FK), MinQty, MaxQty (nullable = and above), PricePerUnit | No overlaps; first MinQty = Moq |
-
-### 3.5 Cart
-| Table | Key columns | Notes |
-| --- | --- | --- |
-| CartItems | Id, RetailerBusinessId (FK), AddedByUserId (FK), VariantId (FK), Quantity | Cart belongs to the business, shared by staff |
-
-### 3.6 Orders, shipping, payments
-| Table | Key columns | Notes |
-| --- | --- | --- |
-| Orders | Id, OrderNumber (unique), RetailerBusinessId (FK), PlacedByUserId, DeliveryAddressId (FK), SubTotal, ShippingTotal, PlatformFeeTotal, TaxTotal, GrandTotal, PaymentStatus | One per checkout |
-| SellerOrders | Id, OrderId (FK), ManufacturerBusinessId (FK), SubOrderNumber (unique), SubTotal, ShippingAmount, CommissionRate, CommissionAmount, TaxAmount, Total, Status, RejectReason, AcceptedAt, DispatchedAt, DeliveredAt | One per manufacturer per order |
-| OrderItems | Id, SellerOrderId (FK), ProductId (FK), VariantId (FK), TitleSnapshot, Size, Colour, HsnCode, Quantity, UnitPrice, GstRate, LineTotal | Snapshots at checkout |
-| OrderStatusHistory | Id, SellerOrderId (FK), Status, Note, ChangedByUserId, ChangedAt | Tracking timeline |
-| ShippingRates | Id, FromCityId (FK), ToCityId (FK), RateType (PerKg/PerPiece), Rate, MinCharge, TransitDays, IsActive | Landed cost input |
-| Shipments | Id, SellerOrderId (FK, unique), LogisticsBusinessId (nullable), CarrierName, LrNumber, DispatchedAt, DeliveredAt, ProofOfDeliveryKey | |
-| Payments | Id, OrderId (FK), Gateway, GatewayOrderId (unique), GatewayPaymentId, Amount, Method, Status, PaidAt | Retries allowed |
-| PaymentWebhookEvents | Id, Gateway, EventId (unique with Gateway), EventType, ReceivedAtUtc, ProcessedAtUtc | Idempotency: a delivery is applied once. EventId is the `X-Razorpay-Event-Id` header, or a hash of the body when it is missing |
-| Settlements | Id, PaymentId (FK), SellerOrderId (FK, unique), ManufacturerBusinessId (FK), Amount, CommissionAmount, GatewayTransferId, Status, ReleaseAfter, SettledAt | |
-| Refunds | Id, PaymentId (FK), SellerOrderId (FK), Amount, Reason, GatewayRefundId, Status | |
-| Invoices | Id, SellerOrderId (FK), InvoiceNumber (unique), InvoiceType (SellerToRetailer/PlatformCommission), FileKey, IssuedAt | |
-
-### 3.7 Notifications and audit
-| Table | Key columns | Notes |
-| --- | --- | --- |
-| Notifications | Id, UserId (FK), Channel (WhatsApp/SMS/InApp), TemplateKey, PayloadJson, Status, SentAt, ReadAt | |
-| AuditLogs | Id, UserId, Action, EntityName, EntityId, IpAddress, Details, CreatedAtUtc | Written by `AdminAuditMiddleware` and `IAuditTrail`, see AUDIT.md |
-
-### 3.8 Later (do not build early)
-Enquiries, Quotations, Disputes, Reviews, GroupBuys and LogisticsAssignments were empty stub tables and endpoints; they were deleted on 17 Nov 2026 (task F6) and come back only as a real feature with screens.
-NegotiationMessages,
-Inspections, LogisticsQuotes, CreditLines, Subscriptions, PromotedListings.
+Conventions:
+- Business tables use `BIGINT` auto number keys. Users keep their text id (identity database), so no business table has a foreign key to a user.
+- Every relation between business tables is a real foreign key with `ON DELETE RESTRICT`; rows are soft deleted (`IsDeleted`) or kept, never cascaded.
+- Money `decimal(18,2)`, one rounding rule (half away from zero). Times UTC. Created and changed times are filled by `MarketplaceDbContext` on save.
+- Statuses are text constants in `TextileConnect.Domain` (`SellerOrderStatus`, `PaymentStatus`, `SettlementStatus`, `RefundStatus`, `ShipmentProgress`); saving any other text is refused.
+- Order lines keep a snapshot of title, size, colour, price and GST at checkout. An order keeps its own copy of the delivery address.
+- Run `docs/FK_ORPHAN_CHECK.sql` before applying the foreign key migration to a database that already holds data.
 
 ---
 
-## 4. Business rules
-1. VerificationStatus != Approved -> cannot list products or place orders (policy `ApprovedBusiness` + service check).
-2. Qty per product >= Moq. UnitPrice = PriceSlab where MinQty <= totalQty <= (MaxQty ?? infinity).
-3. Server recalculates every price, shipping, GST and commission at checkout. Client totals are ignored.
-4. Commission = SellerOrder.SubTotal x (Business.CommissionRateOverride ?? PlatformSettings `Commission.DefaultRate`).
-5. Platform never holds funds: Razorpay collects, Route transfers to manufacturer linked account minus commission.
-6. Settlement released after retailer confirms delivery, or after `Settlement.AutoReleaseDays` with no dispute.
-7. Every status change -> OrderStatusHistory row + queued Notification.
-8. All business data queries filtered by `ICurrentBusiness.BusinessId`. Admin bypasses with explicit admin endpoints only.
-9. A rejected SellerOrder refunds only that SellerOrder's amount.
+## 4. Business rules (each is enforced in the services and covered by tests)
+
+1. A business that is not Approved cannot list products or order (policy `ApprovedBusiness` plus checks in the services).
+2. Quantity per product must reach the MOQ; the price tier is chosen by the **total** quantity of the product across sizes and colours.
+3. The server recomputes every price, freight, GST and commission at checkout. Client totals are ignored.
+4. Commission = goods subtotal x (seller's own rate, else the setting `Commission.DefaultRate`), frozen on the order when it is placed. The retailer pays goods + GST + freight; the commission is taken from the seller's payout. Details and the open questions are in SETTLEMENT.md.
+5. Seller order moves are defined once (`SellerOrderTransitions`): Pending to Accepted, Rejected or Cancelled; Accepted to Dispatched; Dispatched to Delivered; the rest are final. Only the retailer can mark delivery.
+6. A seller has 24 hours to accept; an unpaid order is cancelled after 60 minutes (settings). A payment that arrives after cancellation is refunded.
+7. The payout is held until delivery is confirmed or 7 days after dispatch, and while a problem report is open. (It is a status change: no money moves to the seller yet.)
+8. Checkout and payments are idempotent per `Idempotency-Key`; a webhook event is applied once.
+9. Stock is reserved at checkout (a concurrency check on the stock count), and given back when an order is rejected or cancelled.
+10. Every query for business data is filtered by the signed-in business; `IdorWalkTests` calls every route that takes an id as a business that owns nothing.
+11. Every money, approval, moderation and configuration action is written to the audit log (AUDIT.md).
 
 ## 5. Landed cost
-```
-landedPerUnit = slabPrice
-              + max(rate x totalWeightKg, minCharge) / qty     (PerKg)   or rate (PerPiece)
-              + slabPrice x platformFeeRate                    (0 in MVP if manufacturer pays commission)
-              + GST on slabPrice (product GstRate)
-```
-Rate from ShippingRates (manufacturer pickup city -> retailer delivery city). Missing rate -> return "shipping on request".
-Example: 200 pcs at 300, freight 4,000 (20/pc), GST 5% (15) -> 335 per piece.
+Price a retailer sees for a pincode: tier price + GST on it + freight. Freight comes from the rate between the pincode zones (first digit of the pincode) or, failing that, between the two cities; per piece or per kg with a minimum charge. No rate means "shipping on request" and checkout says "We cannot deliver to this address yet." Example: 200 pieces at 300, freight 20 a piece, GST 5% (15) gives 335 a piece.
 
 ## 6. Core flows
-**A. Onboarding:** request OTP -> verify -> cookie session -> create Business (Pending) + BusinessUsers (Owner)
--> upload documents -> admin approves (role assigned) or rejects with note -> WhatsApp to owner
--> manufacturer creates gateway linked account.
+**A. Onboarding:** OTP request, OTP verify (cookie session), create business (Pending) with the owner, upload documents, admin approves or rejects with a note (the role is assigned on approval and the session refreshes without a new login).
 
-**B. Order:** retailer cart (multiple manufacturers) -> checkout validates MOQ/approval/stock, recalculates totals
--> Orders + SellerOrders + OrderItems -> Razorpay order -> payment -> webhook marks Paid
--> each manufacturer accepts or rejects within 24h (reject -> partial refund).
+**B. Order:** cart (several sellers) -> checkout checks MOQ, approval, stock and delivery pricing, then creates one Order and one SellerOrder per seller -> payment session -> payment confirmed (return from the gateway or webhook) -> each seller accepts or rejects within 24 hours (a rejection refunds that seller order only).
 
-**C. Fulfilment:** dispatch with LR number -> In transit -> Reached Kashmir -> Delivered -> retailer confirms
-(or auto) -> Hangfire releases Settlement -> invoices generated.
+**C. Fulfilment:** seller dispatches with an LR number -> may note InTransit or ReachedCity -> retailer confirms delivery -> the payout is released by the per-minute job (or 7 days after dispatch) -> sales counter of each product goes up.
 
-## 7. API (`/api/v1`, kebab-case)
-| Module | Endpoints | Access |
-| --- | --- | --- |
-| Auth | POST auth/otp/request, POST auth/otp/verify, POST auth/logout, GET auth/me, GET auth/csrf | Public / logged in |
-| Businesses | POST businesses, GET/PUT businesses/me, POST businesses/me/addresses, POST businesses/me/documents, POST businesses/me/users | Logged in |
-| Admin | GET admin/businesses?status=, POST admin/businesses/{id}/approve, POST admin/businesses/{id}/reject, GET/PUT admin/settings, CRUD admin/shipping-rates | Admin |
-| Master | GET categories, GET states, GET cities?zone= | Public |
-| Products | GET products, GET products/{slug}, CRUD seller/products, PUT seller/products/{id}/slabs, POST seller/products/{id}/media | Public read; Manufacturer + Approved write |
-| Landed cost | GET landed-cost?productId=&qty=&cityId= | Retailer |
-| Cart | GET cart, POST cart/items, PUT cart/items/{id}, DELETE cart/items/{id} | Retailer + Approved |
-| Orders | POST checkout, GET orders, GET orders/{id}, POST orders/{id}/confirm-delivery | Retailer |
-| Seller orders | GET seller/orders, GET seller/orders/{id}, POST seller/orders/{id}/accept, /reject, /dispatch, /status | Manufacturer |
-| Seller products | GET seller/products/{id} | Manufacturer |
-| Payments | POST payments, POST webhooks/razorpay | Retailer / gateway |
-| Notifications | GET notifications, POST notifications/{id}/read | Logged in |
+**D. Problem:** retailer reports a problem with photos -> payout held -> seller replies -> admin decides (refund 0 or part) -> payout minus the refund released.
 
-## 8. Security
-- Cookie: HttpOnly, Secure, SameSite=Lax, fixed expiry (configure, default 8h), antiforgery header on unsafe methods.
-- OTP: hashed, short expiry, single use, attempt + resend + IP limits (from old project).
-- Data Protection keys persisted in DB before production.
-- Ownership check in every service, not only `[Authorize(Roles=...)]`.
-- Webhooks: signature verify + `PaymentWebhookEvents` idempotency.
-- Secrets in user-secrets / environment variables only.
-- Private documents via short-lived signed URLs.
-- Rate limiting on auth and search. CORS only for the frontend origin. Daily MySQL backups.
+## 7. API
+`/api/v1`, JSON, errors always `{ code, message, fields? }`. The full list with who may call each route is [API_REFERENCE.md](API_REFERENCE.md); the schemas are in [openapi.json](openapi.json); screen by screen notes are in [API_SCREENS.md](API_SCREENS.md). Health: `/api/v1/health` and `/health/live` (process is running), `/health/ready` (database and storage work).
+
+## 8. Security (the review is in SECURITY_REVIEW.md)
+- Cookie: HttpOnly, Secure outside Development, SameSite=Lax; antiforgery header on every changing call; one-time codes hashed, 5 minutes, single use, 5 wrong tries, limits per number and per address.
+- Rate limits are per client address (sign-in, search, and an overall limit); the address is trusted from `X-Forwarded-For` only from proxies named in configuration.
+- Ownership is checked in every service, not only by role; roles are checked by policy.
+- Uploads are judged by their first bytes and size; photos are decoded and re-encoded into copies.
+- Secrets live in user-secrets or environment variables, never in a file in git. Webhooks are verified by signature.
+- Headers on every answer: nosniff, no framing, no-referrer, a CSP of `default-src 'none'`, no-store for private answers, HSTS outside Development.
+- Logs hold method, path (no query string), status, time, user id and client address under a correlation id; never bodies, codes, numbers or tokens.
+- Not done yet: admin MFA, signed URLs for private files (needs R2), a secret scanner and a penetration test.
 
 | Action | Admin | Retailer | Manufacturer |
 | --- | --- | --- | --- |
-| Approve businesses, settings | Yes | No | No |
+| Approve businesses, settings, moderation | Yes | No | No |
 | Browse products, landed cost | Yes | Yes | Yes |
-| Create/edit own products | No | No | Yes (Approved) |
-| Cart, checkout | No | Yes (Approved) | No |
-| View orders | All | Own business | Own SellerOrders |
-| Accept/dispatch SellerOrder | Override | No | Own only |
+| Create and edit own products and photos | No | No | Yes (approved) |
+| Cart, checkout, pay, confirm delivery, report a problem | No | Yes (approved) | No |
+| View orders | All | Own business | Own seller orders |
+| Accept, reject, dispatch | No | No | Own only |
 
 ## 9. Open decisions
-- Who pays commission in MVP: manufacturer only (recommended) or shared?
-- `Settlement.AutoReleaseDays` value.
-- Brand name and domain.
+See the list in `PHASES.md` ("Open decisions"): who bears the commission, the payout delay, brand name and domain, the PDF library for invoices, the log sink and error tracker, the source of the pincode directory.

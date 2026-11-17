@@ -142,7 +142,7 @@ public static class AdminListEndpoints
             var report = new AdminCommissionReport(start, end, rows.Sum(r => r.Orders), rows.Sum(r => r.GoodsValue), rows.Sum(r => r.Commission), rows);
             if (csv != true) return Results.Ok(report);
             var text = new StringBuilder("sellerId,seller,orders,goodsValue,commission\n");
-            foreach (var r in rows) text.Append(string.Join(',', r.SellerId, Csv(r.SellerName), r.Orders, Money(r.GoodsValue), Money(r.Commission))).Append('\n');
+            foreach (var r in rows) text.Append(string.Join(',', r.SellerId, CsvCell.Text(r.SellerName), r.Orders, Money(r.GoodsValue), Money(r.Commission))).Append('\n');
             return Results.File(Encoding.UTF8.GetBytes(text.ToString()), "text/csv; charset=utf-8", "commission.csv");
         });
     }
@@ -181,7 +181,6 @@ public static class AdminListEndpoints
 
     private static string Money(decimal value) => value.ToString("0.00", CultureInfo.InvariantCulture);
 
-    private static string Csv(string value) => value.Contains(',') || value.Contains('"') ? $"\"{value.Replace("\"", "\"\"")}\"" : value;
 
     /// <summary>Recognises PNG, JPEG and WebP by their first bytes. Anything else is not served.</summary>
     internal static string? ImageType(byte[] b)

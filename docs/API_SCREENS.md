@@ -1,6 +1,6 @@
 # API screen audit
 
-Step A audit from `docs/CODEX_API_FOR_SCREENS_PROMPT.md`. Status describes whether the
+Step A audit from `docs/archive/CODEX_API_FOR_SCREENS_PROMPT.md`. Status describes whether the
 current API covers the complete screen contract, not merely whether one related route exists.
 
 The prompt lists **23 screens** in section 2. The follow-up adds **15 not-yet-designed
