@@ -28,5 +28,6 @@ The request body (an admin's note, a rejection reason typed by the admin), OTP c
 - The middleware row is saved right after the admin action, in a second save. If the server dies between the two, the action stays without its row. The explicit rows are saved in the same save as the change.
 - Behind a proxy or load balancer the IP is the proxy's until forwarded headers are configured (task F9.5).
 - There is no screen or endpoint to read the audit log, and no retention or archiving rule yet.
-- There is no endpoint to set a seller's own commission rate (`CommissionRateOverride`), so that change is done in the database and is not audited. Add the endpoint with its audit row when the owner decides how commission is set (see SETTLEMENT.md).
+- A seller own commission rate is set with `PUT /api/v1/admin/sellers/{id}/commission-rate` (`{ "rate": 0.03 }`, null goes back to the default); the old and new value are written as `seller.commission-rate`. It changes orders placed from then on. [AdminAuditAndCommissionHttpTests]
+- The log is read with `GET /api/v1/admin/audit-log` (filters: action prefix, entity, user id, from and to dates; newest first; paged).
 - The earlier generic interceptor (a row per changed entity, no user, only for synchronous saves, so almost never) was removed.

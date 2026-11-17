@@ -27,6 +27,13 @@ public sealed record AdminProductRow(long Id, string Title, string Slug, string 
 
 public sealed record AdminPayoutList(decimal OnHoldAmount, decimal ScheduledAmount, decimal PaidThisMonth, PagedResponse<SellerPayoutRow> Payouts);
 
+public sealed record AuditLogRow(long Id, string? UserId, string Action, string EntityName, string? EntityId, string? IpAddress, string? Details, DateTime CreatedAt);
+
+/// <summary>Rate is a fraction (0.03 is 3%); null means the seller pays the platform default.</summary>
+public sealed record CommissionRateRequest(decimal? Rate);
+
+public sealed record CommissionRateResponse(long SellerId, decimal? Rate, bool UsesDefault);
+
 public sealed record AdminCommissionRow(long SellerId, string SellerName, int Orders, decimal GoodsValue, decimal Commission);
 
 /// <summary>Commission is the platform fee on seller orders that were paid and not rejected or cancelled, by the day they were placed (UTC, From and To included).</summary>
@@ -37,6 +44,38 @@ public static class AdminListEndpoints
     public static void MapAdminListEndpoints(this WebApplication app)
     {
         var admin = app.MapGroup("/api/v1/admin").RequireAuthorization(p => p.RequireRole("Admin"));
+
+        // The audit log, newest first. Filters: action starts with, entity name, user id, and a date range (UTC, yyyy-MM-dd). Never holds bodies or secrets (docs/AUDIT.md).
+        admin.MapGet("/audit-log", async (string? action, string? entity, string? userId, string? from, string? to, int? page, int? pageSize, MarketplaceDbContext db, CancellationToken ct) =>
+        {
+            var number = page ?? 1; var size = pageSize ?? 20;
+            if (!ValidPaging(number, size) || action?.Length > 60 || entity?.Length > 60 || userId?.Length > 64) return Results.BadRequest();
+            var query = db.AuditLogs.AsNoTracking().AsQueryable();
+            if (!string.IsNullOrWhiteSpace(action)) query = query.Where(x => x.Action.StartsWith(action));
+            if (!string.IsNullOrWhiteSpace(entity)) query = query.Where(x => x.EntityName == entity);
+            if (!string.IsNullOrWhiteSpace(userId)) query = query.Where(x => x.UserId == userId);
+            if (!string.IsNullOrWhiteSpace(from)) { if (!TryDate(from, out var start)) return Results.BadRequest(); query = query.Where(x => x.CreatedAtUtc >= start); }
+            if (!string.IsNullOrWhiteSpace(to)) { if (!TryDate(to, out var end)) return Results.BadRequest(); query = query.Where(x => x.CreatedAtUtc < end.AddDays(1)); }
+            var total = await query.CountAsync(ct);
+            var rows = await query.OrderByDescending(x => x.CreatedAtUtc).ThenByDescending(x => x.Id).Skip((number - 1) * size).Take(size)
+                .Select(x => new AuditLogRow(x.Id, x.UserId, x.Action, x.EntityName, x.EntityId, x.IpAddress, x.Details, x.CreatedAtUtc)).ToListAsync(ct);
+            return Results.Ok(new PagedResponse<AuditLogRow>(rows, total, number, size));
+        });
+
+        // The commission rate of one seller. A rate between 0 and 1 (0.03 is 3%) replaces the platform default for orders placed from now on; null goes back to the default.
+        // Orders already placed keep the rate they were placed with.
+        admin.MapPut("/sellers/{id:long}/commission-rate", async (long id, CommissionRateRequest request, MarketplaceDbContext db, IAuditTrail audit, CancellationToken ct) =>
+        {
+            if (request.Rate is < 0m or > 1m) throw new RuleViolationException("commission_rate_invalid", "The rate must be between 0 and 1 (0.03 means 3%).", 400);
+            var seller = await db.Businesses.SingleOrDefaultAsync(x => x.Id == id && x.BusinessType == BusinessType.Manufacturer && !x.IsDeleted, ct);
+            if (seller is null) return Results.NotFound();
+            var rate = request.Rate is null ? (decimal?)null : decimal.Round(request.Rate.Value, 4, MidpointRounding.AwayFromZero);
+            audit.Record("seller.commission-rate", nameof(Business), seller.Id, $"{seller.CommissionRateOverride?.ToString(CultureInfo.InvariantCulture) ?? "default"} -> {rate?.ToString(CultureInfo.InvariantCulture) ?? "default"}");
+            seller.CommissionRateOverride = rate;
+            seller.UpdatedAtUtc = DateTime.UtcNow;
+            await db.SaveChangesAsync(ct);
+            return Results.Ok(new CommissionRateResponse(seller.Id, seller.CommissionRateOverride, seller.CommissionRateOverride is null));
+        });
 
         admin.MapGet("/orders", async (string? status, string? q, int? page, int? pageSize, MarketplaceDbContext db, CancellationToken ct) =>
         {
