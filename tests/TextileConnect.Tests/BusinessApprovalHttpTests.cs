@@ -118,7 +118,7 @@ public sealed class BusinessApprovalHttpTests
 
     private static async Task<long> CreateAsync(HttpClient client)
     {
-        var response = await client.PostAsJsonAsync("/api/v1/businesses", new { businessType = "Manufacturer", legalName = "Knits", displayName = "Knits", gstin = "27ABCDE1234F1Z5" });
+        var response = await client.PostAsJsonAsync("/api/v1/businesses", new { businessType = "Manufacturer", legalName = "Knits", displayName = "Knits", gstin = "27ABCDE1234F1Z0" });
         // Other businesses in the same test omit GST to preserve its uniqueness.
         if (response.StatusCode == HttpStatusCode.Conflict)
             response = await client.PostAsJsonAsync("/api/v1/businesses", new { businessType = "Manufacturer", legalName = "Knits", displayName = "Knits" });

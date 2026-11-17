@@ -10,6 +10,7 @@ public sealed record CartLine(long ItemId, long VariantId, int Quantity, decimal
     public string? Size { get; init; }
     public string? Colour { get; init; }
     public string? ImageUrl { get; init; }
+    public string? ImageLqip { get; init; }
     public int Moq { get; init; }
     public ProductUnit Unit { get; init; }
     /// <summary>Total pieces of this product in the cart across sizes/colours; the price tier uses this.</summary>

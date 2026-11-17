@@ -1,3 +1,4 @@
+using TextileConnect.Domain;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -57,7 +58,7 @@ public sealed class RetailerOrderHttpTests
         {
             var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
             db.ReturnClaims.Add(new ReturnClaim { SellerOrderId = problem.SellerOrderId, Reason = "Damaged" });
-            (await db.SellerOrders.SingleAsync(x => x.Id == cancelled.SellerOrderId)).Status = "Cancelled";
+            (await db.SellerOrders.SingleAsync(x => x.Id == cancelled.SellerOrderId)).Status = SellerOrderStatus.Cancelled;
             await db.SaveChangesAsync();
         }
 

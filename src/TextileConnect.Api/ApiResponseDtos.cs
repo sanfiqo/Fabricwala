@@ -1,3 +1,4 @@
+using TextileConnect.Domain;
 using TextileConnect.Application.Catalogue;
 using TextileConnect.Application.Orders;
 using TextileConnect.Domain.Catalogue;
@@ -9,6 +10,9 @@ public sealed record ProductSummaryResponse(long Id, string Slug, string Title, 
 {
     public int AvailableStock { get; init; }
     public int UnitsSold { get; init; }
+    /// <summary>Card-size copies of the main photo: address list for the browser ("... 400w, ... 800w") and a tiny blurred preview to show while it loads. Null when the photo has none.</summary>
+    public string? ImageSrcSet { get; init; }
+    public string? ImageLqip { get; init; }
     public LandedCostResponse? LandedCost { get; init; }
     public static ProductSummaryResponse From(Product value) => new(value.Id, value.Slug, value.Title, value.CategoryId, value.SellerBusinessId, string.Empty, string.Empty, null, value.Moq, value.Unit, 0m, 0m, value.Material, value.Status);
 }
@@ -25,11 +29,16 @@ public sealed record PriceSlabResponse(long? Id, int MinQty, int? MaxQty, decima
 
 public sealed record ProductMediaResponse(long Id, string? Url, string MediaType, int SortOrder)
 {
+    /// <summary>"... 400w, ... 800w" for the browser, and a tiny blurred preview. Both are null for photos that have no small copies.</summary>
+    public string? SrcSet { get; init; }
+    public string? Lqip { get; init; }
     public static ProductMediaResponse From(ProductMedia value) => new(value.Id, value.FileKey, value.MediaType, value.SortOrder);
 }
 
 public sealed record ProductDetailResponse(long Id, string Slug, string Title, long CategoryId, long SellerBusinessId, string SellerName, string SellerCity, string? ImageUrl, int Moq, ProductUnit Unit, decimal PriceFrom, decimal PriceTo, string? Material, string? Description, string? FabricSpec, string? Season, string? HsnCode, decimal GstRate, decimal WeightPerUnitGrams, int DispatchDays, string? ReturnPolicy, ProductStatus Status, IReadOnlyList<ProductMediaResponse> Media, IReadOnlyList<ProductVariantResponse> Variants, IReadOnlyList<PriceSlabResponse> Slabs)
 {
+    public string? ImageSrcSet { get; init; }
+    public string? ImageLqip { get; init; }
     public LandedCostResponse? LandedCost { get; init; }
     public static ProductDetailResponse From(ProductDetail value)
     {
@@ -40,6 +49,8 @@ public sealed record ProductDetailResponse(long Id, string Slug, string Title, l
 
 public sealed record CartItemResponse(long Id, long VariantId, long ProductId, string Slug, string Title, string? Size, string? Colour, string? ImageUrl, int Quantity, int Moq, ProductUnit Unit, decimal UnitPrice, decimal LineTotal)
 {
+    public string? ImageSrcSet { get; init; }
+    public string? ImageLqip { get; init; }
     public int ProductQuantity { get; init; }
     public decimal LineSubTotal { get; init; }
     public decimal LineTax { get; init; }
@@ -57,7 +68,7 @@ public sealed record CartGroupResponse(long ManufacturerId, string ManufacturerN
 public sealed record CartResponse(IReadOnlyList<CartGroupResponse> Groups, decimal SubTotal, decimal? ShippingTotal, decimal TaxTotal, decimal GrandTotal, IReadOnlyList<object> Addresses)
 {
     public bool CanCheckout { get; init; }
-    public static CartResponse From(CartView value) => new(value.Sellers.Select(group => new CartGroupResponse(group.SellerBusinessId, group.ManufacturerName, group.Items.Select(line => new CartItemResponse(line.ItemId, line.VariantId, line.ProductId, line.Slug, line.Title, line.Size, line.Colour, line.ImageUrl, line.Quantity, line.Moq, line.Unit, line.SlabPrice, line.Total) { ProductQuantity = line.ProductQuantity, LineSubTotal = line.LineSubTotal, LineTax = line.LineGst, AvailableStock = line.AvailableStock, NextTier = line.NextTier, Issues = line.Issues }).ToList(), group.SubTotal, group.ShippingTotal, group.GstTotal, group.Total)).ToList(), value.Sellers.Sum(x => x.SubTotal), value.Sellers.Any(x => x.ShippingTotal is null) ? null : value.Sellers.Sum(x => x.ShippingTotal ?? 0), value.Sellers.Sum(x => x.GstTotal), value.Sellers.Sum(x => x.Total), []) { CanCheckout = value.CanCheckout };
+    public static CartResponse From(CartView value) => new(value.Sellers.Select(group => new CartGroupResponse(group.SellerBusinessId, group.ManufacturerName, group.Items.Select(line => new CartItemResponse(line.ItemId, line.VariantId, line.ProductId, line.Slug, line.Title, line.Size, line.Colour, line.ImageUrl, line.Quantity, line.Moq, line.Unit, line.SlabPrice, line.Total) { ImageLqip = line.ImageLqip, ProductQuantity = line.ProductQuantity, LineSubTotal = line.LineSubTotal, LineTax = line.LineGst, AvailableStock = line.AvailableStock, NextTier = line.NextTier, Issues = line.Issues }).ToList(), group.SubTotal, group.ShippingTotal, group.GstTotal, group.Total)).ToList(), value.Sellers.Sum(x => x.SubTotal), value.Sellers.Any(x => x.ShippingTotal is null) ? null : value.Sellers.Sum(x => x.ShippingTotal ?? 0), value.Sellers.Sum(x => x.GstTotal), value.Sellers.Sum(x => x.Total), []) { CanCheckout = value.CanCheckout };
 }
 
 public sealed record OrderItemResponse(long Id, long ProductId, string Title, string? Size, string? Colour, int Quantity, decimal UnitPrice, decimal GstRate, decimal LineTotal)
@@ -75,8 +86,8 @@ public sealed record SellerOrderResponse(long Id, long OrderId, string OrderNumb
     /// <summary>OrderValue minus PlatformFee: what the seller receives.</summary>
     public decimal YouGet { get; init; }
     public DateTime? AcceptDeadline { get; init; }
-    public static SellerOrderResponse From(SellerOrder value) => new(value.Id, value.OrderId, value.Order?.OrderNumber ?? string.Empty, $"{value.Order?.OrderNumber ?? ""}-{value.Id}", string.Empty, string.Empty, value.Order?.DeliveryCity ?? string.Empty, value.Status == "Pending" ? "PendingAcceptance" : value.Status, value.Order?.PaymentStatus ?? "Pending", value.PlacedAtUtc, value.Items.Select(x => new OrderItemResponse(x.Id, x.ProductId, x.Title, x.Size, x.Colour, x.Quantity, x.UnitPrice, x.GstRate, x.LineTotal) { GstAmount = x.GstAmount }).ToList(), value.SubTotal, value.ShippingAmount, value.TaxAmount, value.Total, value.CommissionRate, value.CommissionAmount, value.RejectReason, value.History.OrderBy(x => x.ChangedAtUtc).ThenBy(x => x.Id).Select(x => new StatusHistoryResponse(x.Status, x.Note, x.ChangedAtUtc)).ToList(), null)
-        { OrderValue = value.Total, PlatformFee = value.CommissionAmount, YouGet = value.Total - value.CommissionAmount, AcceptDeadline = value.Status == "Pending" ? value.AcceptDeadlineUtc : null };
+    public static SellerOrderResponse From(SellerOrder value) => new(value.Id, value.OrderId, value.Order?.OrderNumber ?? string.Empty, $"{value.Order?.OrderNumber ?? ""}-{value.Id}", string.Empty, string.Empty, value.Order?.DeliveryCity ?? string.Empty, value.Status == SellerOrderStatus.Pending ? "PendingAcceptance" : value.Status, value.Order?.PaymentStatus ?? TextileConnect.Domain.PaymentStatus.Pending, value.PlacedAtUtc, value.Items.Select(x => new OrderItemResponse(x.Id, x.ProductId, x.Title, x.Size, x.Colour, x.Quantity, x.UnitPrice, x.GstRate, x.LineTotal) { GstAmount = x.GstAmount }).ToList(), value.SubTotal, value.ShippingAmount, value.TaxAmount, value.Total, value.CommissionRate, value.CommissionAmount, value.RejectReason, value.History.OrderBy(x => x.ChangedAtUtc).ThenBy(x => x.Id).Select(x => new StatusHistoryResponse(x.Status, x.Note, x.ChangedAtUtc)).ToList(), null)
+        { OrderValue = value.Total, PlatformFee = value.CommissionAmount, YouGet = value.Total - value.CommissionAmount, AcceptDeadline = value.Status == SellerOrderStatus.Pending ? value.AcceptDeadlineUtc : null };
 }
 
 public sealed record OrderResponse(long Id, string OrderNumber, DateTime? PlacedAt, decimal SubTotal, decimal ShippingTotal, decimal TaxTotal, decimal GrandTotal, string PaymentStatus, object? DeliveryAddress, IReadOnlyList<SellerOrderResponse> SellerOrders)

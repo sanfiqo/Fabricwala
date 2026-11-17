@@ -78,23 +78,44 @@
         },
         "type": "object"
       },
-      "BusinessAddress": {
+      "BannerRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "endsAtUtc": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "imageUrl": {
+            "nullable": true,
+            "type": "string"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "isValid": {
+            "readOnly": true,
+            "type": "boolean"
+          },
+          "link": {
+            "nullable": true,
+            "type": "string"
+          },
+          "sortOrder": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "startsAtUtc": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "BusinessAddressRequest": {
         "additionalProperties": false,
         "properties": {
           "addressType": {
             "$ref": "#/components/schemas/AddressType"
-          },
-          "businessId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "cityId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "id": {
-            "format": "int64",
-            "type": "integer"
           },
           "isDefault": {
             "type": "boolean"
@@ -112,10 +133,6 @@
             "type": "string"
           }
         },
-        "required": [
-          "line1",
-          "pincode"
-        ],
         "type": "object"
       },
       "BusinessCreateRequest": {
@@ -191,14 +208,14 @@
         },
         "type": "object"
       },
-      "Category": {
+      "CategoryRequest": {
         "additionalProperties": false,
         "properties": {
-          "id": {
-            "format": "int64",
-            "type": "integer"
-          },
           "isActive": {
+            "type": "boolean"
+          },
+          "isValid": {
+            "readOnly": true,
             "type": "boolean"
           },
           "name": {
@@ -219,10 +236,6 @@
             "type": "integer"
           }
         },
-        "required": [
-          "name",
-          "slug"
-        ],
         "type": "object"
       },
       "CheckoutRequest": {
@@ -260,75 +273,6 @@
             "$ref": "#/components/schemas/ClaimReason"
           }
         },
-        "type": "object"
-      },
-      "EnquiryRequest": {
-        "additionalProperties": false,
-        "properties": {
-          "description": {
-            "nullable": true,
-            "type": "string"
-          },
-          "productId": {
-            "format": "int64",
-            "nullable": true,
-            "type": "integer"
-          }
-        },
-        "type": "object"
-      },
-      "GroupBuyRequest": {
-        "additionalProperties": false,
-        "properties": {
-          "closesAtUtc": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "productId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "targetQuantity": {
-            "format": "int32",
-            "type": "integer"
-          }
-        },
-        "type": "object"
-      },
-      "HomeBanner": {
-        "additionalProperties": false,
-        "properties": {
-          "endsAtUtc": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "id": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "imageUrl": {
-            "nullable": true,
-            "type": "string"
-          },
-          "isActive": {
-            "type": "boolean"
-          },
-          "link": {
-            "nullable": true,
-            "type": "string"
-          },
-          "sortOrder": {
-            "format": "int32",
-            "type": "integer"
-          },
-          "startsAtUtc": {
-            "format": "date-time",
-            "type": "string"
-          }
-        },
-        "required": [
-          "imageUrl"
-        ],
         "type": "object"
       },
       "ModerationRequest": {
@@ -413,24 +357,6 @@
           "note": {
             "nullable": true,
             "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "ReviewRequest": {
-        "additionalProperties": false,
-        "properties": {
-          "comment": {
-            "nullable": true,
-            "type": "string"
-          },
-          "productId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "rating": {
-            "format": "int32",
-            "type": "integer"
           }
         },
         "type": "object"
@@ -1068,7 +994,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/HomeBanner"
+                "$ref": "#/components/schemas/BannerRequest"
               }
             }
           },
@@ -1101,7 +1027,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/HomeBanner"
+                "$ref": "#/components/schemas/BannerRequest"
               }
             }
           },
@@ -1133,7 +1059,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Category"
+                "$ref": "#/components/schemas/CategoryRequest"
               }
             }
           },
@@ -1166,7 +1092,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Category"
+                "$ref": "#/components/schemas/CategoryRequest"
               }
             }
           },
@@ -1978,7 +1904,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/BusinessAddress"
+                "$ref": "#/components/schemas/BusinessAddressRequest"
               }
             }
           },
@@ -2259,73 +2185,6 @@
             }
           }
         ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "testhost"
-        ]
-      }
-    },
-    "/api/v1/enquiries": {
-      "post": {
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/EnquiryRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "testhost"
-        ]
-      }
-    },
-    "/api/v1/favourites/{productId}": {
-      "post": {
-        "parameters": [
-          {
-            "in": "path",
-            "name": "productId",
-            "required": true,
-            "schema": {
-              "format": "int64",
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "testhost"
-        ]
-      }
-    },
-    "/api/v1/group-buys": {
-      "post": {
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/GroupBuyRequest"
-              }
-            }
-          },
-          "required": true
-        },
         "responses": {
           "200": {
             "description": "OK"
@@ -2949,6 +2808,140 @@
         ]
       }
     },
+    "/api/v1/products/filters": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "Q",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "CategoryId",
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "MinPrice",
+            "schema": {
+              "format": "double",
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "MaxPrice",
+            "schema": {
+              "format": "double",
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "MaxMoq",
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "StateId",
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "State",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "SellerCityId",
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "Material",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "Size",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "Colour",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "Sort",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "Page",
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "PageSize",
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "Pincode",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "Season",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "testhost"
+        ]
+      }
+    },
     "/api/v1/products/{slug}": {
       "get": {
         "parameters": [
@@ -3005,30 +2998,15 @@
               "format": "int64",
               "type": "integer"
             }
+          },
+          {
+            "in": "query",
+            "name": "size",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "testhost"
-        ]
-      }
-    },
-    "/api/v1/reviews": {
-      "post": {
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ReviewRequest"
-              }
-            }
-          },
-          "required": true
-        },
         "responses": {
           "200": {
             "description": "OK"

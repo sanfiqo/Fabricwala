@@ -125,6 +125,8 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CityId");
+
                     b.HasIndex("BusinessId", "AddressType", "IsDefault", "Id");
 
                     b.ToTable("BusinessAddresses");
@@ -156,6 +158,8 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("BusinessId");
 
                     b.ToTable("BusinessDocuments");
                 });
@@ -343,6 +347,8 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
 
                     b.HasKey("FromZoneId", "ToZoneId", "RateType");
 
+                    b.HasIndex("ToZoneId");
+
                     b.ToTable("DeliveryZoneRates");
                 });
 
@@ -495,6 +501,9 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                     b.Property<int>("Unit")
                         .HasColumnType("int");
 
+                    b.Property<int>("UnitsSold")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("UpdatedAtUtc")
                         .HasColumnType("datetime(6)");
 
@@ -504,10 +513,16 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CategoryId");
+
                     b.HasIndex("Slug")
                         .IsUnique();
 
+                    b.HasIndex("SellerBusinessId", "IsDeleted", "UpdatedAtUtc");
+
                     b.HasIndex("Status", "IsDeleted", "CategoryId", "Id");
+
+                    b.HasIndex("Status", "IsDeleted", "UnitsSold", "Id");
 
                     b.ToTable("Products");
                 });
@@ -518,9 +533,21 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
 
+                    b.Property<string>("CardKey")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
                     b.Property<string>("FileKey")
                         .IsRequired()
                         .HasColumnType("longtext");
+
+                    b.Property<string>("Lqip")
+                        .HasMaxLength(2000)
+                        .HasColumnType("varchar(2000)");
+
+                    b.Property<string>("MainKey")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
 
                     b.Property<string>("MediaType")
                         .IsRequired()
@@ -531,6 +558,10 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
 
                     b.Property<int>("SortOrder")
                         .HasColumnType("int");
+
+                    b.Property<string>("ThumbKey")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
 
                     b.HasKey("Id");
 
@@ -602,57 +633,9 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
 
                     b.HasKey("FromCityId", "ToCityId", "RateType");
 
+                    b.HasIndex("ToCityId");
+
                     b.ToTable("ShippingRates");
-                });
-
-            modelBuilder.Entity("TextileConnect.Domain.Community.Dispute", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("RaisedByBusinessId")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("Reason")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<long>("SellerOrderId")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Disputes");
-                });
-
-            modelBuilder.Entity("TextileConnect.Domain.Community.Enquiry", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<long?>("ProductId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("RetailerBusinessId")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Enquiries");
                 });
 
             modelBuilder.Entity("TextileConnect.Domain.Community.Favourite", b =>
@@ -661,136 +644,26 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
 
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<long>("ProductId")
                         .HasColumnType("bigint");
 
                     b.Property<long>("RetailerBusinessId")
                         .HasColumnType("bigint");
 
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("datetime(6)");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
 
                     b.HasIndex("RetailerBusinessId", "ProductId")
                         .IsUnique();
 
                     b.ToTable("Favourites");
-                });
-
-            modelBuilder.Entity("TextileConnect.Domain.Community.GroupBuy", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTime>("ClosesAtUtc")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<long>("OwnerBusinessId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("ProductId")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<int>("TargetQuantity")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("GroupBuys");
-                });
-
-            modelBuilder.Entity("TextileConnect.Domain.Community.GroupBuyParticipant", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("BusinessId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("GroupBuyId")
-                        .HasColumnType("bigint");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("GroupBuyParticipants");
-                });
-
-            modelBuilder.Entity("TextileConnect.Domain.Community.LogisticsAssignment", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("LogisticsBusinessId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("SellerOrderId")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("LogisticsAssignments");
-                });
-
-            modelBuilder.Entity("TextileConnect.Domain.Community.Quotation", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("EnquiryId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("ManufacturerBusinessId")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<decimal>("UnitPrice")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<int>("ValidDays")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Quotations");
-                });
-
-            modelBuilder.Entity("TextileConnect.Domain.Community.Review", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("Comment")
-                        .HasColumnType("longtext");
-
-                    b.Property<long>("ProductId")
-                        .HasColumnType("bigint");
-
-                    b.Property<int>("Rating")
-                        .HasColumnType("int");
-
-                    b.Property<long>("RetailerBusinessId")
-                        .HasColumnType("bigint");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Reviews");
                 });
 
             modelBuilder.Entity("TextileConnect.Domain.Notifications.Notification", b =>
@@ -851,6 +724,8 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                         .HasColumnType("bigint");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("VariantId");
 
                     b.HasIndex("RetailerBusinessId", "VariantId")
                         .IsUnique();
@@ -934,7 +809,7 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("PaymentStatus")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasColumnType("varchar(255)");
 
                     b.Property<DateTime>("PlacedAtUtc")
                         .HasColumnType("datetime(6)");
@@ -964,7 +839,9 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                     b.HasIndex("OrderNumber")
                         .IsUnique();
 
-                    b.HasIndex("RetailerBusinessId", "Id");
+                    b.HasIndex("PaymentStatus", "PlacedAtUtc");
+
+                    b.HasIndex("RetailerBusinessId", "PlacedAtUtc", "Id");
 
                     b.ToTable("Orders");
                 });
@@ -1014,7 +891,11 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ProductId");
+
                     b.HasIndex("SellerOrderId");
+
+                    b.HasIndex("VariantId");
 
                     b.ToTable("OrderItems");
                 });
@@ -1212,6 +1093,10 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("OrderId");
 
+                    b.HasIndex("Status", "AcceptDeadlineUtc");
+
+                    b.HasIndex("ManufacturerBusinessId", "PlacedAtUtc", "Id");
+
                     b.HasIndex("ManufacturerBusinessId", "Status", "Id");
 
                     b.ToTable("SellerOrders");
@@ -1264,24 +1149,35 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("Action")
                         .IsRequired()
-                        .HasMaxLength(32)
-                        .HasColumnType("varchar(32)");
+                        .HasMaxLength(64)
+                        .HasColumnType("varchar(64)");
 
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<string>("Details")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
+
                     b.Property<string>("EntityId")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(64)
+                        .HasColumnType("varchar(64)");
 
                     b.Property<string>("EntityName")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("varchar(200)");
 
+                    b.Property<string>("IpAddress")
+                        .HasMaxLength(45)
+                        .HasColumnType("varchar(45)");
+
                     b.Property<string>("UserId")
                         .HasColumnType("longtext");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("EntityName", "EntityId", "CreatedAtUtc");
 
                     b.ToTable("AuditLogs");
                 });
@@ -1313,6 +1209,8 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("InvoiceNumber")
                         .IsUnique();
+
+                    b.HasIndex("SellerOrderId");
 
                     b.ToTable("Invoices");
                 });
@@ -1355,7 +1253,44 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                     b.HasIndex("GatewayOrderId")
                         .IsUnique();
 
+                    b.HasIndex("OrderId");
+
                     b.ToTable("Payments");
+                });
+
+            modelBuilder.Entity("TextileConnect.Domain.Payments.PaymentWebhookEvent", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("EventId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("varchar(64)");
+
+                    b.Property<string>("Gateway")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("varchar(32)");
+
+                    b.Property<DateTime?>("ProcessedAtUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("ReceivedAtUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Gateway", "EventId")
+                        .IsUnique();
+
+                    b.ToTable("PaymentWebhookEvents");
                 });
 
             modelBuilder.Entity("TextileConnect.Domain.Payments.PayoutAccount", b =>
@@ -1421,7 +1356,11 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("PaymentId");
+
                     b.HasIndex("SellerOrderId", "Status");
+
+                    b.HasIndex("Status", "Id");
 
                     b.ToTable("Refunds");
                 });
@@ -1440,6 +1379,9 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<long>("ManufacturerBusinessId")
                         .HasColumnType("bigint");
 
@@ -1457,11 +1399,64 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("datetime(6)");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("PaymentId");
+
+                    b.HasIndex("SellerOrderId");
+
+                    b.HasIndex("ManufacturerBusinessId", "Status");
+
+                    b.HasIndex("Status", "ReleaseAfter");
+
                     b.ToTable("Settlements");
+                });
+
+            modelBuilder.Entity("TextileConnect.Domain.Businesses.BusinessAddress", b =>
+                {
+                    b.HasOne("TextileConnect.Domain.Businesses.Business", null)
+                        .WithMany()
+                        .HasForeignKey("BusinessId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("TextileConnect.Domain.Businesses.City", null)
+                        .WithMany()
+                        .HasForeignKey("CityId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TextileConnect.Domain.Businesses.BusinessDocument", b =>
+                {
+                    b.HasOne("TextileConnect.Domain.Businesses.Business", null)
+                        .WithMany()
+                        .HasForeignKey("BusinessId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TextileConnect.Domain.Businesses.BusinessUser", b =>
+                {
+                    b.HasOne("TextileConnect.Domain.Businesses.Business", null)
+                        .WithMany()
+                        .HasForeignKey("BusinessId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TextileConnect.Domain.Businesses.City", b =>
+                {
+                    b.HasOne("TextileConnect.Domain.Businesses.State", null)
+                        .WithMany()
+                        .HasForeignKey("StateId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("TextileConnect.Domain.Businesses.PostalCode", b =>
@@ -1473,13 +1468,129 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("TextileConnect.Domain.Catalogue.DeliveryZoneRate", b =>
+                {
+                    b.HasOne("TextileConnect.Domain.Businesses.DeliveryZone", null)
+                        .WithMany()
+                        .HasForeignKey("FromZoneId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("TextileConnect.Domain.Businesses.DeliveryZone", null)
+                        .WithMany()
+                        .HasForeignKey("ToZoneId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TextileConnect.Domain.Catalogue.PriceSlab", b =>
+                {
+                    b.HasOne("TextileConnect.Domain.Catalogue.Product", null)
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TextileConnect.Domain.Catalogue.Product", b =>
+                {
+                    b.HasOne("TextileConnect.Domain.Catalogue.Category", null)
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("TextileConnect.Domain.Businesses.Business", null)
+                        .WithMany()
+                        .HasForeignKey("SellerBusinessId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TextileConnect.Domain.Catalogue.ProductMedia", b =>
+                {
+                    b.HasOne("TextileConnect.Domain.Catalogue.Product", null)
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TextileConnect.Domain.Catalogue.ProductVariant", b =>
+                {
+                    b.HasOne("TextileConnect.Domain.Catalogue.Product", null)
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TextileConnect.Domain.Catalogue.ShippingRate", b =>
+                {
+                    b.HasOne("TextileConnect.Domain.Businesses.City", null)
+                        .WithMany()
+                        .HasForeignKey("FromCityId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("TextileConnect.Domain.Businesses.City", null)
+                        .WithMany()
+                        .HasForeignKey("ToCityId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TextileConnect.Domain.Community.Favourite", b =>
+                {
+                    b.HasOne("TextileConnect.Domain.Catalogue.Product", null)
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("TextileConnect.Domain.Businesses.Business", null)
+                        .WithMany()
+                        .HasForeignKey("RetailerBusinessId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TextileConnect.Domain.Orders.CartItem", b =>
+                {
+                    b.HasOne("TextileConnect.Domain.Catalogue.ProductVariant", null)
+                        .WithMany()
+                        .HasForeignKey("VariantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TextileConnect.Domain.Orders.Order", b =>
+                {
+                    b.HasOne("TextileConnect.Domain.Businesses.Business", null)
+                        .WithMany()
+                        .HasForeignKey("RetailerBusinessId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("TextileConnect.Domain.Orders.OrderItem", b =>
                 {
+                    b.HasOne("TextileConnect.Domain.Catalogue.Product", null)
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("TextileConnect.Domain.Orders.SellerOrder", "SellerOrder")
                         .WithMany("Items")
                         .HasForeignKey("SellerOrderId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("TextileConnect.Domain.Catalogue.ProductVariant", null)
+                        .WithMany()
+                        .HasForeignKey("VariantId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("SellerOrder");
                 });
@@ -1489,7 +1600,7 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                     b.HasOne("TextileConnect.Domain.Orders.SellerOrder", "SellerOrder")
                         .WithMany("History")
                         .HasForeignKey("SellerOrderId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("SellerOrder");
@@ -1500,7 +1611,7 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                     b.HasOne("TextileConnect.Domain.Orders.SellerOrder", "SellerOrder")
                         .WithMany()
                         .HasForeignKey("SellerOrderId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("SellerOrder");
@@ -1511,19 +1622,91 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                     b.HasOne("TextileConnect.Domain.Orders.ReturnClaim", null)
                         .WithMany("Photos")
                         .HasForeignKey("ReturnClaimId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 
             modelBuilder.Entity("TextileConnect.Domain.Orders.SellerOrder", b =>
                 {
+                    b.HasOne("TextileConnect.Domain.Businesses.Business", null)
+                        .WithMany()
+                        .HasForeignKey("ManufacturerBusinessId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("TextileConnect.Domain.Orders.Order", "Order")
                         .WithMany("SellerOrders")
                         .HasForeignKey("OrderId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Order");
+                });
+
+            modelBuilder.Entity("TextileConnect.Domain.Orders.Shipment", b =>
+                {
+                    b.HasOne("TextileConnect.Domain.Orders.SellerOrder", null)
+                        .WithMany()
+                        .HasForeignKey("SellerOrderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TextileConnect.Domain.Payments.Invoice", b =>
+                {
+                    b.HasOne("TextileConnect.Domain.Orders.SellerOrder", null)
+                        .WithMany()
+                        .HasForeignKey("SellerOrderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TextileConnect.Domain.Payments.Payment", b =>
+                {
+                    b.HasOne("TextileConnect.Domain.Orders.Order", null)
+                        .WithMany()
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TextileConnect.Domain.Payments.PayoutAccount", b =>
+                {
+                    b.HasOne("TextileConnect.Domain.Businesses.Business", null)
+                        .WithMany()
+                        .HasForeignKey("BusinessId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TextileConnect.Domain.Payments.Refund", b =>
+                {
+                    b.HasOne("TextileConnect.Domain.Payments.Payment", null)
+                        .WithMany()
+                        .HasForeignKey("PaymentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("TextileConnect.Domain.Orders.SellerOrder", null)
+                        .WithMany()
+                        .HasForeignKey("SellerOrderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TextileConnect.Domain.Payments.Settlement", b =>
+                {
+                    b.HasOne("TextileConnect.Domain.Payments.Payment", null)
+                        .WithMany()
+                        .HasForeignKey("PaymentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("TextileConnect.Domain.Orders.SellerOrder", null)
+                        .WithMany()
+                        .HasForeignKey("SellerOrderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("TextileConnect.Domain.Orders.Order", b =>

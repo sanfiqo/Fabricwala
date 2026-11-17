@@ -1,3 +1,4 @@
+using TextileConnect.Application.Common;
 using Serilog;
 using Microsoft.AspNetCore.Authorization;
 using Sanfiqo.Identity;
@@ -11,8 +12,6 @@ using TextileConnect.Infrastructure.Businesses;
 using TextileConnect.Infrastructure.Catalogue;
 using TextileConnect.Application.Orders;
 using TextileConnect.Infrastructure.Orders;
-using TextileConnect.Application.Community;
-using TextileConnect.Infrastructure.Community;
 using TextileConnect.Application.Payments;
 using TextileConnect.Infrastructure.Payments;
 using System.Text.Json.Serialization;
@@ -32,20 +31,18 @@ ProductionSecretGuard.Validate(builder.Configuration, builder.Environment.Enviro
 // (so "Now listening" and the Startup lines are visible), and keep framework and per-query SQL logging quiet.
 builder.Host.UseSerilog((context, configuration) =>
 {
-    configuration.ReadFrom.Configuration(context.Configuration).Enrich.FromLogContext();
+    configuration.ReadFrom.Configuration(context.Configuration).Enrich.FromLogContext().KeepSecretsOut();
     if (!context.Configuration.GetSection("Serilog:WriteTo").Exists())
-        configuration.MinimumLevel.Information()
-            .MinimumLevel.Override("Microsoft.AspNetCore", Serilog.Events.LogEventLevel.Warning)
-            .MinimumLevel.Override("Microsoft.EntityFrameworkCore", Serilog.Events.LogEventLevel.Warning)
-            .WriteTo.Console();
+    {
+        // Development reads the console; anywhere else every line is one JSON object, which log tools can search by field (CorrelationId, UserId, StatusCode ...).
+        var console = configuration.MinimumLevel.Information();
+        if (context.HostingEnvironment.IsDevelopment()) console.WriteTo.Console();
+        else console.WriteTo.Console(new Serilog.Formatting.Compact.RenderedCompactJsonFormatter());
+    }
 });
 
 // Add services to the container.
 
-builder.Services.AddControllers().AddJsonOptions(options =>
-{
-    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-});
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
@@ -55,9 +52,11 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddProblemDetails();
 builder.Services.AddApiRateLimiter();
 builder.Services.AddFrontendCors(builder.Configuration, builder.Environment);
-builder.Services.AddHealthChecks();
+builder.Services.AddAppHealthChecks();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentBusiness, CurrentBusiness>();
+builder.Services.AddScoped<IAuditTrail, HttpAuditTrail>();
+builder.Services.AddSingleton<IImageVariantMaker, SkiaImageVariantMaker>();
 builder.Services.AddSingleton<IAuthorizationHandler, ApprovedBusinessHandler>();
 builder.Services.AddMarketplacePersistence(builder.Configuration);
 builder.Services.AddScoped<IBusinessDirectory, EfBusinessDirectory>();
@@ -72,7 +71,6 @@ builder.Services.AddHostedService<OrderMaintenanceWorker>();
 builder.Services.AddScoped<ICheckoutService, EfCheckoutService>();
 builder.Services.AddScoped<IPaymentService, EfPaymentService>();
 builder.Services.AddScoped<IFinanceService, EfFinanceService>();
-builder.Services.AddScoped<ICommunityService, EfCommunityService>();
 builder.Services.AddScoped<IAuthBusinessProfileReader, AuthBusinessProfileReader>();
 if (builder.Environment.IsDevelopment())
     builder.Services.AddSingleton<IFileStorage, DevelopmentFileStorage>();
@@ -85,6 +83,15 @@ builder.Services.AddAuthorization(options => options.AddPolicy("ApprovedBusiness
     policy => policy.RequireAuthenticatedUser().AddRequirements(new ApprovedBusinessRequirement())));
 
 var app = builder.Build();
+
+// "import-pincodes <file.csv>" loads the pincode directory and exits without starting the web server (see PincodeImportCommand).
+if (PincodeImportCommand.IsRequested(args))
+{
+    Environment.ExitCode = await PincodeImportCommand.RunAsync(app.Services, args, Console.Out);
+    return;
+}
+
+ProductionAdapterGuard.Validate(app.Services, app.Configuration, app.Environment.EnvironmentName);
 
 if (!app.Environment.IsEnvironment("Testing"))
 {
@@ -108,6 +115,13 @@ if (!app.Environment.IsEnvironment("Testing"))
 }
 app.Logger.LogInformation("Startup: seeding finished, starting hosted services and the web server");
 
+app.UseApiRequestLogging(); // first, so every later line carries the correlation id
+// Behind a reverse proxy the real client address comes from X-Forwarded-For, but only from the proxies named in configuration.
+if (ForwardedHeadersSetup.Options(app.Configuration) is { } forwarded) app.UseForwardedHeaders(forwarded);
+else if (!app.Environment.IsDevelopment() && !app.Environment.IsEnvironment("Testing"))
+    app.Logger.LogWarning("Proxy:KnownProxies and Proxy:KnownNetworks are not set. If this app runs behind a proxy or load balancer, every client will look like the proxy to the rate limits and the audit log. See docs/DEPLOY.md.");
+if (!app.Environment.IsDevelopment() && !app.Environment.IsEnvironment("Testing")) app.UseHsts();
+app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseMiddleware<ApiErrorMiddleware>();
 app.UseRateLimiter();
 app.UseCors(FrontendCors.PolicyName);
@@ -124,9 +138,9 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseMiddleware<ApiCsrfMiddleware>();
+app.UseMiddleware<AdminAuditMiddleware>();
 app.UseAntiforgery();
 
-app.MapControllers();
 app.MapSanfiqoAuthEndpoints();
 app.MapBusinessEndpoints();
 app.MapPincodeEndpoints();
@@ -152,7 +166,6 @@ app.MapBusinessSuspensionEndpoints();
 app.MapCartEndpoints();
 app.MapOrderEndpoints();
 app.MapPaymentEndpoints();
-app.MapCommunityEndpoints();
-app.MapHealthChecks("/api/v1/health");
+app.MapHealthEndpoints();
 
 app.Run();

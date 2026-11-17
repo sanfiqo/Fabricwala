@@ -36,7 +36,7 @@ public sealed class OpenApiExportTests
         return directory?.FullName ?? throw new InvalidOperationException("Solution root not found.");
     }
 
-    private static async Task<JsonNode> MarketplaceSpecAsync()
+    private static async Task<JsonNode> MarketplaceSpecAsync(List<RouteInfo> routes)
     {
         await using var fixture = await MarketplaceHttpFixture.StartAsync(app =>
         {
@@ -44,14 +44,15 @@ public sealed class OpenApiExportTests
             app.MapAdminEndpoints(); app.MapProductEndpoints(); app.MapLandedCostEndpoints(); app.MapInvoiceEndpoints(); app.MapReturnClaimEndpoints();
             app.MapNotificationEndpoints(); app.MapAccountEndpoints(); app.MapStorefrontEndpoints(); app.MapSellerDashboardEndpoints(); app.MapBulkProductEndpoints();
             app.MapStockAlertEndpoints(); app.MapPayoutEndpoints(); app.MapAdminDashboardEndpoints(); app.MapAdminReportEndpoints(); app.MapProductModerationEndpoints();
-            app.MapCategoryBannerEndpoints(); app.MapBusinessSuspensionEndpoints(); app.MapAdminListEndpoints(); app.MapRetailerExtrasEndpoints(); app.MapCartEndpoints(); app.MapOrderEndpoints(); app.MapPaymentEndpoints(); app.MapCommunityEndpoints();
+            app.MapCategoryBannerEndpoints(); app.MapBusinessSuspensionEndpoints(); app.MapAdminListEndpoints(); app.MapRetailerExtrasEndpoints(); app.MapCartEndpoints(); app.MapOrderEndpoints(); app.MapPaymentEndpoints(); app.MapHealthEndpoints();
         }, builder =>
         {
+            builder.Services.AddAppHealthChecks();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
             builder.Services.AddScoped<IFinanceService, EfFinanceService>();
-            builder.Services.AddScoped<TextileConnect.Application.Community.ICommunityService, TextileConnect.Infrastructure.Community.EfCommunityService>();
         });
+        routes.AddRange(RoutesOf(fixture.Services));
         using var client = new HttpClient { BaseAddress = new Uri(fixture.BaseAddress) };
         var response = await client.GetAsync("/swagger/v1/swagger.json");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -59,7 +60,7 @@ public sealed class OpenApiExportTests
     }
 
     /// <summary>Sign-in routes (send OTP, verify, refresh, logout, profile) from the identity library, on a host with in-memory identity data.</summary>
-    private static async Task<JsonNode> AuthSpecAsync()
+    private static async Task<JsonNode> AuthSpecAsync(List<RouteInfo> routes)
     {
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions { EnvironmentName = "Development", ContentRootPath = AppContext.BaseDirectory });
         builder.Configuration.Sources.Clear();
@@ -79,6 +80,7 @@ public sealed class OpenApiExportTests
         app.UseSwagger();
         app.MapSanfiqoAuthEndpoints();
         await app.StartAsync();
+        routes.AddRange(RoutesOf(app.Services));
         using var client = new HttpClient { BaseAddress = new Uri(app.Urls.Single()) };
         var response = await client.GetAsync("/swagger/v1/swagger.json");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -105,8 +107,9 @@ public sealed class OpenApiExportTests
     [Fact]
     public async Task OpenApi_document_matches_the_endpoints_and_is_exported_on_requestAsync()
     {
-        var spec = await MarketplaceSpecAsync();
-        Merge(spec, await AuthSpecAsync());
+        var routes = new List<RouteInfo>();
+        var spec = await MarketplaceSpecAsync(routes);
+        Merge(spec, await AuthSpecAsync(routes));
         var paths = spec["paths"]!.AsObject();
         Assert.True(paths.Count > 60, "Expected the full marketplace route table.");
         foreach (var required in new[] { "/api/v1/checkout", "/api/v1/cart", "/api/v1/orders", "/api/v1/seller/orders", "/api/v1/seller/products", "/api/v1/seller/payouts",
@@ -117,14 +120,76 @@ public sealed class OpenApiExportTests
         spec["info"]!["version"] = "v1";
         NameAnonymousSchemas(spec);
         var text = Canonical(spec);
+        var reference = ApiReference(spec, routes);
         var file = Path.Combine(RepoRoot(), "docs", "openapi.json");
+        var referenceFile = Path.Combine(RepoRoot(), "docs", "API_REFERENCE.md");
         if (Environment.GetEnvironmentVariable("OPENAPI_EXPORT") == "1")
         {
             File.WriteAllText(file, text);
+            File.WriteAllText(referenceFile, reference);
             return;
         }
         Assert.True(File.Exists(file), "docs/openapi.json is missing. Run this test once with OPENAPI_EXPORT=1.");
         Assert.True(File.ReadAllText(file).Replace("\r\n", "\n") == text, "docs/openapi.json is out of date. Run this test with OPENAPI_EXPORT=1 and commit the file.");
+        Assert.True(File.Exists(referenceFile) && File.ReadAllText(referenceFile).Replace("\r\n", "\n") == reference, "docs/API_REFERENCE.md is out of date. Run this test with OPENAPI_EXPORT=1 and commit the file.");
+    }
+
+    // ------------------------------------------------------------------ docs/API_REFERENCE.md
+
+    private sealed record RouteInfo(string Method, string Path, string Access, string RateLimit);
+
+    /// <summary>Every route of the host with who may call it and which rate limit applies, read from the endpoint metadata.</summary>
+    private static IEnumerable<RouteInfo> RoutesOf(IServiceProvider services)
+    {
+        foreach (var endpoint in services.GetRequiredService<Microsoft.AspNetCore.Routing.EndpointDataSource>().Endpoints.OfType<Microsoft.AspNetCore.Routing.RouteEndpoint>())
+        {
+            var raw = endpoint.RoutePattern.RawText ?? string.Empty;
+            if (!raw.StartsWith("/api/v1", StringComparison.Ordinal) || raw.StartsWith("/api/v1/test", StringComparison.Ordinal)) continue;
+            var path = System.Text.RegularExpressions.Regex.Replace(raw, @"\{([A-Za-z0-9_]+)[^}]*\}", "{$1}").TrimEnd('/');
+            var roles = endpoint.Metadata.GetOrderedMetadata<Microsoft.AspNetCore.Authorization.AuthorizationPolicy>()
+                .SelectMany(x => x.Requirements.OfType<Microsoft.AspNetCore.Authorization.Infrastructure.RolesAuthorizationRequirement>()).SelectMany(x => x.AllowedRoles).Distinct().ToList();
+            var authorize = endpoint.Metadata.GetOrderedMetadata<Microsoft.AspNetCore.Authorization.IAuthorizeData>();
+            var anonymous = endpoint.Metadata.GetMetadata<Microsoft.AspNetCore.Authorization.IAllowAnonymous>() is not null;
+            var approved = authorize.Any(x => x.Policy == "ApprovedBusiness");
+            var access = anonymous || authorize.Count == 0 ? "public"
+                : (roles.Count > 0 ? string.Join(" or ", roles) : "any signed-in user") + (approved ? ", approved business" : string.Empty);
+            var limit = endpoint.Metadata.GetMetadata<Microsoft.AspNetCore.RateLimiting.EnableRateLimitingAttribute>()?.PolicyName ?? string.Empty;
+            foreach (var method in endpoint.Metadata.GetMetadata<Microsoft.AspNetCore.Routing.HttpMethodMetadata>()?.HttpMethods ?? ["GET"])
+                yield return new RouteInfo(method, path, access, limit);
+        }
+    }
+
+    private static string SchemaName(JsonNode? schema)
+    {
+        if (schema is null) return string.Empty;
+        if (schema["$ref"]?.GetValue<string>() is { } reference) return reference[(reference.LastIndexOf('/') + 1)..];
+        if (schema["type"]?.GetValue<string>() == "array") return SchemaName(schema["items"]) is { Length: > 0 } item ? item + "[]" : "list";
+        return schema["type"]?.GetValue<string>() ?? string.Empty;
+    }
+
+    /// <summary>The table of docs/API_REFERENCE.md: one row per route, grouped by area. Made from the endpoint metadata and docs/openapi.json, so it cannot drift from the code.</summary>
+    private static string ApiReference(JsonNode spec, List<RouteInfo> routes)
+    {
+        var text = new System.Text.StringBuilder();
+        text.Append("# API reference\n\n");
+        text.Append("Generated by `OpenApiExportTests` from the real routes and `docs/openapi.json`; do not edit by hand. Run that test with `OPENAPI_EXPORT=1` after a change.\n");
+        text.Append("All routes are under `/api/v1`. Who may call: *public* needs no sign-in; otherwise the role (and an approved business where it says so). `limit` is the rate limit group (`auth`, `search`); every client address is also held to a general limit.\n");
+        text.Append("Errors are always `{ \"code\": \"...\", \"message\": \"...\", \"fields\": { ... } }`. Request and response shapes are the schemas named here, in `docs/openapi.json`. Empty means the route has no typed body or returns plain data.\n");
+        var groups = routes.DistinctBy(r => (r.Method, r.Path)).OrderBy(r => r.Path, StringComparer.Ordinal).ThenBy(r => r.Method, StringComparer.Ordinal)
+            .GroupBy(r => r.Path.Split('/', StringSplitOptions.RemoveEmptyEntries).Skip(2).FirstOrDefault() ?? "root");
+        foreach (var group in groups.OrderBy(g => g.Key, StringComparer.Ordinal))
+        {
+            text.Append($"\n## {group.Key}\n\n| Method | Path | Who may call | Limit | Body | Returns |\n| --- | --- | --- | --- | --- | --- |\n");
+            foreach (var route in group)
+            {
+                var operation = spec["paths"]?[route.Path]?[route.Method.ToLowerInvariant()];
+                var content = operation?["requestBody"]?["content"]?.AsObject();
+                var body = content is null ? string.Empty : content.ContainsKey("multipart/form-data") ? "file upload" : SchemaName(content.FirstOrDefault().Value?["schema"]);
+                var success = operation?["responses"]?.AsObject().FirstOrDefault(x => x.Key.StartsWith('2')).Value?["content"]?.AsObject().FirstOrDefault().Value?["schema"];
+                text.Append($"| {route.Method} | `{route.Path}` | {route.Access} | {route.RateLimit} | {body} | {SchemaName(success)} |\n");
+            }
+        }
+        return text.ToString();
     }
 
     /// <summary>

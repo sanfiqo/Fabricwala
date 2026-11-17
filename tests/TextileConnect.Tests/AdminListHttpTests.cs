@@ -76,14 +76,14 @@ public sealed class AdminListHttpTests
         var firstClaim = (await (await retailer.PostAsJsonAsync($"/api/v1/seller-orders/{first.SellerOrderId}/claims", new { reason = "Damaged", pieces = 3, note = "Torn" })).Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt64();
         var secondClaim = (await (await retailer.PostAsJsonAsync($"/api/v1/seller-orders/{second.SellerOrderId}/claims", new { reason = "WrongItem", pieces = 1 })).Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt64();
 
-        var png = new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 1, 2, 3 };
+        var png = ImageVariantMakerTests.Image(SkiaSharp.SKEncodedImageFormat.Png, 40, 30, SkiaSharp.SKColors.Red);
         async Task<HttpResponseMessage> Upload(byte[] bytes)
         {
             var file = new ByteArrayContent(bytes); file.Headers.ContentType = new MediaTypeHeaderValue("image/png");
             return await retailer.PostAsync($"/api/v1/seller-orders/{first.SellerOrderId}/claims/{firstClaim}/photos", new MultipartFormDataContent { { file, "file", "p.png" } });
         }
         Assert.Equal(HttpStatusCode.OK, (await Upload(png)).StatusCode);
-        Assert.Equal(HttpStatusCode.OK, (await Upload(new byte[16])).StatusCode); // content type claims PNG but the bytes are not an image
+        Assert.Equal(HttpStatusCode.BadRequest, (await Upload(new byte[16])).StatusCode); // content type claims PNG but the bytes are not an image: refused at upload
 
         var open = await GetAsync(admin, "/api/v1/admin/claims?status=open");
         Assert.Equal(2, open.GetProperty("total").GetInt32());
@@ -91,7 +91,7 @@ public sealed class AdminListHttpTests
         Assert.Equal("Damaged", row.GetProperty("reason").GetString());
         Assert.Equal("Retailer", row.GetProperty("retailerName").GetString());
         Assert.Equal("Kapoor Knits", row.GetProperty("sellerName").GetString());
-        Assert.Equal(2, row.GetProperty("photoCount").GetInt32());
+        Assert.Equal(1, row.GetProperty("photoCount").GetInt32());
 
         var detail = await GetAsync(admin, $"/api/v1/admin/claims/{firstClaim}");
         Assert.Equal(31440m, detail.GetProperty("orderTotal").GetDecimal());
@@ -101,7 +101,7 @@ public sealed class AdminListHttpTests
         Assert.Equal(HttpStatusCode.OK, image.StatusCode);
         Assert.Equal("image/png", image.Content.Headers.ContentType!.MediaType);
         Assert.Contains("nosniff", image.Headers.GetValues("X-Content-Type-Options"));
-        Assert.Equal(HttpStatusCode.NotFound, (await admin.GetAsync(photos[1].GetProperty("url").GetString())).StatusCode); // not a recognised image: never served
+        Assert.Single(photos);
         Assert.Equal(HttpStatusCode.NotFound, (await admin.GetAsync($"/api/v1/admin/claims/{secondClaim}/photos/{photos[0].GetProperty("id").GetInt64()}")).StatusCode); // photo of another claim
         Assert.Equal(HttpStatusCode.Forbidden, (await retailer.GetAsync(photos[0].GetProperty("url").GetString())).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await admin.GetAsync("/api/v1/admin/claims/99999")).StatusCode);

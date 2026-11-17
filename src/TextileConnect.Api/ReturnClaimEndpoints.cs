@@ -1,3 +1,4 @@
+using TextileConnect.Domain;
 using Microsoft.EntityFrameworkCore;
 using TextileConnect.Application.Businesses;
 using TextileConnect.Application.Common;
@@ -27,7 +28,7 @@ public static class ReturnClaimEndpoints
             var ordered = sellerOrder.Items.Sum(x => x.Quantity);
             if (!Enum.IsDefined(request.Reason) || request.Pieces < 1 || request.Pieces > ordered || note.Length > 1000 || (request.Reason == ClaimReason.Other && note.Length == 0))
                 return Results.BadRequest();
-            if (sellerOrder.Status is not ("Dispatched" or "Delivered"))
+            if (sellerOrder.Status is not (SellerOrderStatus.Dispatched or SellerOrderStatus.Delivered))
                 throw new RuleViolationException("claim_not_allowed", "A problem can be reported once the order is shipped.");
             if (await db.ReturnClaims.AnyAsync(x => x.SellerOrderId == sellerOrderId && x.ResolvedAtUtc == null, ct))
                 throw new RuleViolationException("claim_already_open", "A problem report is already open for this order.");
@@ -52,6 +53,7 @@ public static class ReturnClaimEndpoints
                 .SingleOrDefaultAsync(x => x.Id == claimId && x.SellerOrderId == sellerOrderId && x.SellerOrder!.Order!.RetailerBusinessId == current.RequireBusinessId(), ct);
             if (claim is null) return Results.NotFound();
             if (file.Length is 0 or > MaxPhotoBytes || !PhotoTypes.Contains(file.ContentType, StringComparer.OrdinalIgnoreCase)) return Results.BadRequest();
+            if (UploadRules.IdentifyImage(await UploadRules.ReadHeadAsync(file, ct)).ContentType is null) throw new RuleViolationException("photo_invalid_type", "Upload a JPEG, PNG or WebP photo.", 400);
             if (claim.ResolvedAtUtc is not null) throw new RuleViolationException("claim_closed", "This problem report is already resolved.");
             if (claim.Photos.Count >= MaxPhotos) throw new RuleViolationException("claim_photo_limit", "You can add up to 3 photos.");
             await using var stream = file.OpenReadStream();
@@ -75,7 +77,7 @@ public static class ReturnClaimEndpoints
         });
 
         var admin = app.MapGroup("/api/v1/admin/claims").RequireAuthorization(p => p.RequireRole("Admin"));
-        admin.MapPost("/{claimId:long}/decide", async (long claimId, AdminDecision request, MarketplaceDbContext db, TimeProvider clock, CancellationToken ct) =>
+        admin.MapPost("/{claimId:long}/decide", async (long claimId, AdminDecision request, MarketplaceDbContext db, TimeProvider clock, IAuditTrail audit, CancellationToken ct) =>
         {
             var claim = await db.ReturnClaims.Include(x => x.Photos).Include(x => x.SellerOrder).ThenInclude(x => x!.Order).SingleOrDefaultAsync(x => x.Id == claimId, ct);
             if (claim is null) return Results.NotFound();
@@ -85,13 +87,14 @@ public static class ReturnClaimEndpoints
                 || (request.Decision != "Rejected" && refund == 0) || string.IsNullOrWhiteSpace(request.Note) || request.Note.Length > 1000) return Results.BadRequest();
             if (claim.ResolvedAtUtc is not null) throw new RuleViolationException("claim_not_open", "This problem report is already resolved.");
             var now = clock.GetUtcNow().UtcDateTime;
+            audit.Record("claim.decided", nameof(ReturnClaim), claim.Id, $"{request.Decision}, refund {AuditText.Money(refund)}");
             claim.Status = request.Decision; claim.AdminDecision = request.Note.Trim(); claim.ApprovedRefundAmount = refund; claim.ResolvedAtUtc = now;
             if (refund > 0)
             {
-                var payment = await db.Payments.Where(x => x.OrderId == sellerOrder.OrderId && x.Status == "Paid").OrderBy(x => x.Id).FirstOrDefaultAsync(ct);
+                var payment = await db.Payments.Where(x => x.OrderId == sellerOrder.OrderId && x.Status == PaymentStatus.Paid).OrderBy(x => x.Id).FirstOrDefaultAsync(ct);
                 if (payment is not null) db.Refunds.Add(new Refund { PaymentId = payment.Id, SellerOrderId = claim.SellerOrderId, Amount = refund, Reason = $"Claim {claim.Id}", CreatedAtUtc = now });
                 // The refund comes out of the held seller payout; a payout that was already released is not clawed back here.
-                var held = await db.Settlements.SingleOrDefaultAsync(x => x.SellerOrderId == claim.SellerOrderId && x.Status == "Pending", ct);
+                var held = await db.Settlements.SingleOrDefaultAsync(x => x.SellerOrderId == claim.SellerOrderId && x.Status == SettlementStatus.Pending, ct);
                 if (held is not null) held.Amount = Math.Max(0m, held.Amount - refund);
             }
             var users = await db.BusinessUsers.AsNoTracking().Where(x => x.BusinessId == sellerOrder.ManufacturerBusinessId || x.BusinessId == sellerOrder.Order!.RetailerBusinessId).Select(x => x.UserId).ToListAsync(ct);

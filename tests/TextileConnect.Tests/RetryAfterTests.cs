@@ -52,7 +52,7 @@ public sealed class RetryAfterTests
         app.MapGet("/ping", () => "ok").RequireRateLimiting("auth");
         await app.StartAsync();
         using var client = new HttpClient { BaseAddress = new Uri(app.Urls.Single()) };
-        for (var i = 0; i < 10; i++) Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/ping")).StatusCode);
+        for (var i = 0; i < ApiRateLimiting.AuthPerMinute; i++) Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/ping")).StatusCode);
         var rejected = await client.GetAsync("/ping");
         Assert.Equal(HttpStatusCode.TooManyRequests, rejected.StatusCode);
         var seconds = int.Parse(rejected.Headers.GetValues("Retry-After").Single());

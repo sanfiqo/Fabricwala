@@ -47,7 +47,7 @@ public sealed class BusinessOwnerAndDocumentHttpTests
         var id = (await (await owner.PostAsJsonAsync("/api/v1/businesses", new { businessType = "Retailer", legalName = "Shop", displayName = "Shop" }))
             .Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt64();
 
-        static MultipartFormDataContent Form() => new() { { new ByteArrayContent(Encoding.UTF8.GetBytes("gst certificate")), "file", "gst.pdf" } };
+        static MultipartFormDataContent Form() => new() { { new ByteArrayContent(Encoding.UTF8.GetBytes("%PDF-1.4 gst certificate")), "file", "gst.pdf" } };
 
         Assert.Equal(HttpStatusCode.BadRequest, (await owner.PostAsync("/api/v1/businesses/me/documents?docType=Passport", Form())).StatusCode);
         var ok = await owner.PostAsync("/api/v1/businesses/me/documents?docType=gst", Form());
@@ -56,6 +56,6 @@ public sealed class BusinessOwnerAndDocumentHttpTests
         var review = await admin.GetFromJsonAsync<JsonElement>($"/api/v1/admin/businesses/{id}");
         var document = Assert.Single(review.GetProperty("documents").EnumerateArray());
         Assert.Equal("Gst", document.GetProperty("documentType").GetString());
-        Assert.Equal("gst certificate", await admin.GetStringAsync(document.GetProperty("url").GetString()!));
+        Assert.Equal("%PDF-1.4 gst certificate", await admin.GetStringAsync(document.GetProperty("url").GetString()!));
     }
 }

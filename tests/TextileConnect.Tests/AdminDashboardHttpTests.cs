@@ -1,3 +1,4 @@
+using TextileConnect.Domain;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -41,7 +42,7 @@ public sealed class AdminDashboardHttpTests
             var now = fixture.Clock.GetUtcNow().UtcDateTime;
             db.Businesses.Add(new Business { Id = 77, BusinessType = BusinessType.Retailer, LegalName = "New Shop", DisplayName = "New Shop", Phone = "+919000000077", CreatedAtUtc = now }); // Pending by default
             db.ReturnClaims.Add(new ReturnClaim { SellerOrderId = today.SellerOrderId, Reason = "Damaged" });
-            db.Refunds.Add(new Refund { PaymentId = 1, SellerOrderId = today.SellerOrderId, Amount = 1, Reason = "Stuck", Status = "Requested" });
+            db.Refunds.Add(new Refund { PaymentId = 1, SellerOrderId = today.SellerOrderId, Amount = 1, Reason = "Stuck", Status = RefundStatus.Requested });
             await db.SaveChangesAsync();
         }
 

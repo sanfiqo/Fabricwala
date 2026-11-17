@@ -21,18 +21,29 @@ public static class BulkProductEndpoints
             var products = parsed.Rows.Select(row => new Product { SellerBusinessId = current.RequireBusinessId(), CategoryId = row.CategoryId, Title = row.Title, Slug = row.Slug, Description = row.Description, GstRate = row.GstRate, Moq = row.Moq, Unit = row.Unit, Status = row.Status }).ToList();
             db.Products.AddRange(products); await db.SaveChangesAsync(ct); return Results.Ok(new { imported = products.Count, products = products.Select(ApiResponseMappings.Product).ToList() });
         });
-        group.MapPost("/images", async (IFormFileCollection files, ICurrentBusiness current, MarketplaceDbContext db, IFileStorage storage, CancellationToken ct) =>
+        group.MapPost("/images", async (IFormFileCollection files, ICurrentBusiness current, MarketplaceDbContext db, IFileStorage storage, IImageVariantMaker maker, CancellationToken ct) =>
         {
             var variants = await db.ProductVariants.Join(db.Products, variant => variant.ProductId, product => product.Id, (variant, product) => new { variant, product }).Where(x => x.product.SellerBusinessId == current.RequireBusinessId()).ToDictionaryAsync(x => x.variant.Sku, ct);
-            var uploaded = 0; var missing = new List<string>();
+            if (files.Count > 100) throw new TextileConnect.Application.Common.RuleViolationException("too_many_files", "Upload up to 100 photos at a time.", 400);
+            var uploaded = 0; var missing = new List<string>(); var rejected = new List<string>();
             foreach (var file in files)
             {
                 var sku = Path.GetFileNameWithoutExtension(file.FileName);
                 if (!variants.ContainsKey(sku)) { missing.Add(sku); continue; }
-                await using var stream = file.OpenReadStream(); var key = await storage.SavePrivateAsync(stream, file.FileName, ct);
-                db.ProductMedia.Add(new ProductMedia { ProductId = variants[sku].variant.ProductId, FileKey = key, MediaType = file.ContentType, SortOrder = 0 }); uploaded++;
+                // the file must really be a photo of at most 5 MB (the first bytes decide, not the name or the type the browser sent)
+                var (type, extension) = UploadRules.IdentifyImage(await UploadRules.ReadHeadAsync(file, ct));
+                if (file.Length is 0 or > UploadRules.MaxImageBytes || type is null) { rejected.Add(Path.GetFileName(file.FileName)); continue; }
+                await using var stream = file.OpenReadStream(); var key = await storage.SavePrivateAsync(stream, "photo" + extension, ct);
+                var media = new ProductMedia { ProductId = variants[sku].variant.ProductId, FileKey = key, MediaType = type, SortOrder = 0 };
+                stream.Position = 0;
+                if (maker.Create(stream) is { } copies) // a photo that cannot be read keeps only its original, as before
+                {
+                    async Task<string> SaveAsync(byte[] bytes, string name) { await using var copy = new MemoryStream(bytes); return await storage.SavePrivateAsync(copy, name, ct); }
+                    media.MainKey = await SaveAsync(copies.Main, "main.webp"); media.CardKey = await SaveAsync(copies.Card, "card.webp"); media.ThumbKey = await SaveAsync(copies.Thumb, "thumb.webp"); media.Lqip = copies.Lqip;
+                }
+                db.ProductMedia.Add(media); uploaded++;
             }
-            await db.SaveChangesAsync(ct); return Results.Ok(new { uploaded, missing });
+            await db.SaveChangesAsync(ct); return Results.Ok(new { uploaded, missing, rejected });
         });
     }
 }

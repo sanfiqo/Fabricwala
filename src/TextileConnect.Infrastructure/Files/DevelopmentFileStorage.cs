@@ -14,6 +14,11 @@ public sealed class DevelopmentFileStorage(IHostEnvironment environment) : IFile
         await content.CopyToAsync(output, cancellationToken);
         return key;
     }
+    public Task<bool> IsHealthyAsync(CancellationToken cancellationToken = default)
+    {
+        try { Directory.CreateDirectory(Root); var probe = Path.Combine(Root, ".health"); File.WriteAllText(probe, "ok"); File.Delete(probe); return Task.FromResult(true); }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException) { return Task.FromResult(false); }
+    }
     public Task<Stream> OpenPrivateAsync(string fileKey, CancellationToken cancellationToken = default)
     {
         var safeKey = Path.GetFileName(fileKey);

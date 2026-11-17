@@ -100,11 +100,14 @@ public static class AccountEndpoints
 
     private static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
-    /// <summary>Returns the city id for the pincode from the exact postal directory, or null when the request is invalid or the pincode is unknown.</summary>
+    /// <summary>
+    /// Returns the city id for the pincode from the postal directory, or null when the street line is bad.
+    /// A pincode that is not six digits, or not in the directory, throws pincode_invalid or pincode_unknown (400) so the screen can say what is wrong.
+    /// </summary>
     private static async Task<long?> ValidateAsync(AddressRequest request, MarketplaceDbContext db, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(request.Line1) || request.Line1.Trim().Length > 200 || request.Line2?.Length > 200 || !BusinessInputRules.IsPincode(request.Pincode)) return null;
-        return await db.PostalCodes.AsNoTracking().Where(x => x.Pincode == request.Pincode).Select(x => (long?)x.CityId).SingleOrDefaultAsync(ct);
+        if (string.IsNullOrWhiteSpace(request.Line1) || request.Line1.Trim().Length > 200 || request.Line2?.Length > 200) return null;
+        return await PostalDirectory.RequireCityIdAsync(db, request.Pincode, ct);
     }
 
     private static async Task<List<AddressResponse>> ListAsync(MarketplaceDbContext db, long businessId, AddressType type, CancellationToken ct)

@@ -1,0 +1,74 @@
+# A local MySQL and the API, for trying the whole thing without installing MySQL:
+#   1. copy .env.example to .env and fill in the values (it is git-ignored)
+#   2. docker compose up -d mysql
+#   3. docker compose run --rm migrate            (creates the tables; the API never does this itself)
+#   4. docker compose up -d api                   (http://localhost:5075, readiness at /api/v1/health/ready)
+# This file has not been run on the machine where it was written (no Docker there).
+# The api service runs as Development on purpose: it needs the fake OTP code (123456), the fake payment gateway and the demo data.
+# A real deployment is different, see docs/DEPLOY.md.
+
+services:
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?set it in .env}
+      MYSQL_DATABASE: textileconnect
+    ports:
+      - "3307:3306"        # 3307 on your machine, so it does not clash with a MySQL you already run
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # Applies the migrations of both databases (marketplace and identity) and stops. Run it again after every update that has a new migration.
+  migrate:
+    build:
+      context: .
+      target: build
+    profiles: ["tools"]
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      ConnectionStrings__TextileConnect: "Server=mysql;Port=3306;Database=textileconnect;Uid=root;Pwd=${MYSQL_ROOT_PASSWORD};SslMode=Disabled"
+      UserContacts__LookupHmacKey: ${LOOKUP_HMAC_KEY:?set it in .env}
+      Otp__StorageHmacKey: ${OTP_HMAC_KEY:?set it in .env}
+      ASPNETCORE_ENVIRONMENT: Development
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        dotnet tool install --global dotnet-ef --version 10.0.* >/dev/null 2>&1 || true
+        export PATH="$$PATH:/root/.dotnet/tools"
+        dotnet ef database update --project src/TextileConnect.Infrastructure --startup-project src/TextileConnect.Api --context MarketplaceDbContext &&
+        dotnet ef database update --project src/Sanfiqo.Identity --startup-project src/TextileConnect.Api --context ApplicationIdentityDbContext
+
+  api:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__TextileConnect: "Server=mysql;Port=3306;Database=textileconnect;Uid=root;Pwd=${MYSQL_ROOT_PASSWORD};SslMode=Disabled"
+      UserContacts__LookupHmacKey: ${LOOKUP_HMAC_KEY:?set it in .env}
+      Otp__StorageHmacKey: ${OTP_HMAC_KEY:?set it in .env}
+      Cors__FrontendOrigin: ${FRONTEND_ORIGIN:-http://localhost:5173}
+    ports:
+      - "5075:8080"
+    volumes:
+      - api-files:/app/App_Data
+    healthcheck:
+      # the image has no curl; open the port with bash
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080'"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  mysql-data:
+  api-files:

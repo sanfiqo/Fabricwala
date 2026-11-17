@@ -33,7 +33,11 @@ public static class PaymentEndpoints
             var payload = await reader.ReadToEndAsync(ct);
             if (!gateway.VerifyWebhookSignature(payload, request.Headers["X-Razorpay-Signature"].ToString())) return Results.Unauthorized();
             using var json = JsonDocument.Parse(payload);
-            var eventName = json.RootElement.TryGetProperty("event", out var e) ? e.GetString() : "payment.captured";
+            var eventName = json.RootElement.TryGetProperty("event", out var e) ? e.GetString() ?? "payment.captured" : "payment.captured";
+            // Razorpay sends a unique id per event in this header and repeats it when it retries. Without it, the hash of the body identifies the delivery.
+            var eventId = request.Headers["X-Razorpay-Event-Id"].ToString();
+            if (string.IsNullOrWhiteSpace(eventId) || eventId.Length > 100) eventId = "sha256:" + Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(payload))).ToLowerInvariant();
+            if (!await payments.BeginWebhookEventAsync("Razorpay", eventId, eventName.Length > 64 ? eventName[..64] : eventName, ct)) return Results.Ok(); // already handled
             var entity = json.RootElement.GetProperty("payload").GetProperty("payment").GetProperty("entity");
             var gatewayOrderId = entity.GetProperty("order_id").GetString() ?? string.Empty;
             bool known;
@@ -43,8 +47,10 @@ public static class PaymentEndpoints
                 var paise = entity.TryGetProperty("amount", out var amount) && amount.TryGetInt64(out var value) ? value : (long?)null;
                 known = await payments.ConfirmAsync(gatewayOrderId, entity.GetProperty("id").GetString() ?? string.Empty, paise / 100m, ct);
             }
-            else return Results.Ok(); // other events are acknowledged and ignored
-            return known ? Results.Ok() : Results.NotFound();
+            else { await payments.CompleteWebhookEventAsync("Razorpay", eventId, ct); return Results.Ok(); } // other events are acknowledged and ignored
+            if (!known) return Results.NotFound();
+            await payments.CompleteWebhookEventAsync("Razorpay", eventId, ct);
+            return Results.Ok();
         });
     }
 

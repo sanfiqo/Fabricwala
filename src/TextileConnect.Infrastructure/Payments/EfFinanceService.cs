@@ -1,3 +1,4 @@
+using TextileConnect.Domain;
 using Microsoft.EntityFrameworkCore;
 using TextileConnect.Application.Payments;
 using TextileConnect.Application.Files;
@@ -16,17 +17,6 @@ public sealed class EfFinanceService(MarketplaceDbContext db, IFileStorage stora
         await db.SaveChangesAsync(cancellationToken);
         return account;
     }
-
-    public async Task<IReadOnlyList<Settlement>> ReleaseDueSettlementsAsync(DateTime now, CancellationToken cancellationToken = default)
-    {
-        var due = await db.Settlements.Where(x => x.Status == "Pending" && x.ReleaseAfter <= now && !db.ReturnClaims.Any(c => c.SellerOrderId == x.SellerOrderId && c.ResolvedAtUtc == null)).ToListAsync(cancellationToken);
-        foreach (var settlement in due) { settlement.Status = "Released"; settlement.SettledAt = now; }
-        await db.SaveChangesAsync(cancellationToken);
-        return due;
-    }
-
-    public async Task<Refund> CreateRefundAsync(long paymentId, long sellerOrderId, decimal amount, string reason, CancellationToken cancellationToken = default)
-    { var refund = new Refund { PaymentId = paymentId, SellerOrderId = sellerOrderId, Amount = amount, Reason = reason }; db.Refunds.Add(refund); await db.SaveChangesAsync(cancellationToken); return refund; }
 
     public async Task<Invoice> CreateInvoiceAsync(long sellerOrderId, string type, CancellationToken cancellationToken = default)
     {

@@ -16,12 +16,12 @@ This is a SEPARATE project. Do NOT use the GoalOrbit development skill or any Go
 - Do not touch any other folder under `D:\2026 projects`.
 
 ## Stack (decided, do not change without asking)
-- .NET 10, ASP.NET Core Web API with controllers, solution file `TextileConnect.slnx`
+- .NET 10, ASP.NET Core minimal APIs (endpoint files, no controllers), solution file `TextileConnect.slnx`
 - EF Core with MySQL using `MySql.EntityFrameworkCore` (same provider as the old project)
 - Auth: ASP.NET Core Identity + mobile OTP + secure HttpOnly cookie + antiforgery (`X-CSRF-TOKEN`). NO JWT for now.
 - Frontend (later): React + Vite + TypeScript PWA in `client/`, Tailwind + shadcn/ui, TanStack Query
-- Background jobs: Hangfire. Logging: Serilog.
-- SMS OTP: MSG91 (behind `IOtpSender`; fake sender in Development)
+- Background jobs: `BackgroundService` (Hangfire is not used). Logging: Serilog.
+- SMS OTP: MSG91 (behind `IOtpDelivery`; fake sender in Development; the real MSG91 sender is not built yet)
 - WhatsApp: Meta WhatsApp Cloud API (behind `INotificationSender`)
 - Payments: Razorpay Route (split settlement). Platform never holds a wallet balance.
 - Files: Cloudflare R2 (behind `IFileStorage`)
@@ -33,7 +33,7 @@ src/Sanfiqo.Identity/              reusable identity library (users, roles, OTP,
 src/TextileConnect.Domain/         entities, enums, business rules (no EF, no ASP.NET)
 src/TextileConnect.Application/    services, DTOs, validators (FluentValidation), interfaces
 src/TextileConnect.Infrastructure/ DbContext, EF configs, migrations, gateway/SMS/WhatsApp/storage clients
-src/TextileConnect.Api/            controllers, middleware, DI composition, Swagger
+src/TextileConnect.Api/            endpoint files, middleware, DI composition, Swagger
 tests/TextileConnect.Tests/        xUnit tests
 docs/                              PHASES.md (task list), ARCHITECTURE.md (data model, flows, API)
 ```

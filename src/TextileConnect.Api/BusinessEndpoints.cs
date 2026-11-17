@@ -1,3 +1,4 @@
+using TextileConnect.Application.Common;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -29,20 +30,27 @@ public static class BusinessEndpoints
             directory.UpdateForUser(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "", b =>
             { b.DisplayName = request.DisplayName; b.Email = request.Email; }) is { } business
                 ? Results.Ok(Profile(business, db)) : Results.NotFound());
-        group.MapPost("/me/addresses", (BusinessAddress address, ClaimsPrincipal principal, IBusinessDirectory directory) =>
-            Results.Ok(directory.AddAddress(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "", address)));
+        group.MapPost("/me/addresses", async (BusinessAddressRequest request, ClaimsPrincipal principal, IBusinessDirectory directory, MarketplaceDbContext db, CancellationToken ct) =>
+        {
+            if (string.IsNullOrWhiteSpace(request.Line1) || request.Line1.Length > 200 || request.Line2?.Length > 200) return Results.BadRequest();
+            var cityId = await PostalDirectory.RequireCityIdAsync(db, request.Pincode, ct);
+            return Results.Ok(BusinessAddressResponse.From(directory.AddAddress(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "", request.ToEntity(cityId))));
+        });
         group.MapGet("/me/addresses", (ClaimsPrincipal principal, IBusinessDirectory directory) =>
-            Results.Ok(directory.ListAddresses(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "")));
+            Results.Ok(directory.ListAddresses(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "").Select(BusinessAddressResponse.From).ToList()));
         group.MapPut("/me/addresses/{id:long}/default", (long id, ClaimsPrincipal principal, IBusinessDirectory directory) =>
             directory.SetDefaultAddress(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "", id) is { } address
-                ? Results.Ok(address) : Results.NotFound());
+                ? Results.Ok(BusinessAddressResponse.From(address)) : Results.NotFound());
         group.MapPost("/me/documents", async (IFormFile file, string docType, ClaimsPrincipal principal, IBusinessDirectory directory, IFileStorage storage, MarketplaceDbContext db, CancellationToken ct) =>
         {
             var business = directory.GetForUser(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "");
             if (business is null || file.Length == 0) return Results.BadRequest();
             if (!Enum.TryParse<BusinessDocumentType>(docType, true, out var type)) return Results.BadRequest();
+            if (file.Length > UploadRules.MaxDocumentBytes) throw new RuleViolationException("document_too_large", "The document must be 10 MB or smaller.", 413);
+            var (kind, extension) = UploadRules.IdentifyDocument(await UploadRules.ReadHeadAsync(file, ct));
+            if (kind is null) throw new RuleViolationException("document_invalid_type", "Upload a PDF, JPEG or PNG file.", 400);
             await using var stream = file.OpenReadStream();
-            var key = await storage.SavePrivateAsync(stream, file.FileName, ct);
+            var key = await storage.SavePrivateAsync(stream, "document" + extension, ct);
             var document = new BusinessDocument { BusinessId = business.Id, DocumentType = type, FileKey = key };
             db.BusinessDocuments.Add(document); await db.SaveChangesAsync(ct);
             return Results.Ok(new { document.Id, document.BusinessId, document.DocumentType, document.Status, url = $"/api/v1/businesses/me/documents/{document.Id}" });
@@ -55,7 +63,7 @@ public static class BusinessEndpoints
             return Results.File(stream, "application/octet-stream", Path.GetFileName(document.FileKey));
         });
         group.MapPost("/me/users", (StaffRequest request, ClaimsPrincipal principal, IBusinessDirectory directory) =>
-            Results.Ok(directory.AddStaff(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "", request.UserId)));
+            Results.Ok(StaffMemberResponse.From(directory.AddStaff(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "", request.UserId))));
 
         app.MapBusinessApprovalEndpoints();
     }

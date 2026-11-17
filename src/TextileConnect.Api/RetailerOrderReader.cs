@@ -1,3 +1,4 @@
+using TextileConnect.Domain;
 using Microsoft.EntityFrameworkCore;
 using TextileConnect.Application.Common;
 using TextileConnect.Domain.Orders;
@@ -22,14 +23,14 @@ public sealed class RetailerOrderReader(MarketplaceDbContext db)
         // problems: a seller order was rejected/cancelled or a claim is open. delivered: paid and every seller order delivered (and no problem). active: the rest.
         orders = group switch
         {
-            OrderStatusRules.Problems => orders.Where(o => o.SellerOrders.Any(s => s.Status == "Rejected" || s.Status == "Cancelled")
+            OrderStatusRules.Problems => orders.Where(o => o.SellerOrders.Any(s => s.Status == SellerOrderStatus.Rejected || s.Status == SellerOrderStatus.Cancelled)
                 || db.ReturnClaims.Any(c => c.ResolvedAtUtc == null && c.SellerOrder!.OrderId == o.Id)),
-            OrderStatusRules.Delivered => orders.Where(o => !o.SellerOrders.Any(s => s.Status == "Rejected" || s.Status == "Cancelled")
+            OrderStatusRules.Delivered => orders.Where(o => !o.SellerOrders.Any(s => s.Status == SellerOrderStatus.Rejected || s.Status == SellerOrderStatus.Cancelled)
                 && !db.ReturnClaims.Any(c => c.ResolvedAtUtc == null && c.SellerOrder!.OrderId == o.Id)
-                && o.PaymentStatus == "Paid" && o.SellerOrders.Any() && o.SellerOrders.All(s => s.Status == "Delivered")),
-            OrderStatusRules.Active => orders.Where(o => !o.SellerOrders.Any(s => s.Status == "Rejected" || s.Status == "Cancelled")
+                && o.PaymentStatus == PaymentStatus.Paid && o.SellerOrders.Any() && o.SellerOrders.All(s => s.Status == SellerOrderStatus.Delivered)),
+            OrderStatusRules.Active => orders.Where(o => !o.SellerOrders.Any(s => s.Status == SellerOrderStatus.Rejected || s.Status == SellerOrderStatus.Cancelled)
                 && !db.ReturnClaims.Any(c => c.ResolvedAtUtc == null && c.SellerOrder!.OrderId == o.Id)
-                && !(o.PaymentStatus == "Paid" && o.SellerOrders.Any() && o.SellerOrders.All(s => s.Status == "Delivered"))),
+                && !(o.PaymentStatus == PaymentStatus.Paid && o.SellerOrders.Any() && o.SellerOrders.All(s => s.Status == SellerOrderStatus.Delivered))),
             _ => orders
         };
         var total = await orders.CountAsync(ct);

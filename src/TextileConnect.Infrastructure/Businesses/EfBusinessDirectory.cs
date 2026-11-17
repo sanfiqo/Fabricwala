@@ -21,8 +21,8 @@ public sealed class EfBusinessDirectory(MarketplaceDbContext db) : IBusinessDire
         BusinessInputRules.ValidateRegistration(business, pincode);
         if (db.BusinessUsers.Any(x => x.UserId == userId)
             || business.Gstin != null && db.Businesses.Any(x => x.Gstin == business.Gstin)) throw new BusinessConflictException();
-        var postal = pincode is null ? null : db.PostalCodes.SingleOrDefault(x => x.Pincode == pincode)
-            ?? throw new KeyNotFoundException();
+        var postal = pincode is null ? null : db.PostalCodes.FirstOrDefault(x => x.Pincode == pincode)
+            ?? throw PostalDirectory.Unknown(pincode);
         using var transaction = db.Database.IsRelational() ? db.Database.BeginTransaction() : null;
         db.Businesses.Add(business);
         db.SaveChanges();

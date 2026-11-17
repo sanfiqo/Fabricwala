@@ -1,3 +1,4 @@
+using TextileConnect.Domain;
 using Microsoft.EntityFrameworkCore;
 using TextileConnect.Domain.Businesses;
 using TextileConnect.Domain.Catalogue;
@@ -9,15 +10,12 @@ namespace TextileConnect.Tests;
 
 public sealed class MySqlFlowIntegrationTests
 {
-    [Fact]
-    public async Task MySql_product_cart_checkout_payment_and_delivery_flow()
-    {
-        var connectionString = Environment.GetEnvironmentVariable("TEXTILECONNECT_TEST_MYSQL");
-        if (string.IsNullOrWhiteSpace(connectionString))
-            return;
-        if (connectionString.Contains("textileconnect_dev", StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException("TEXTILECONNECT_TEST_MYSQL must target a separate test database.");
+    [MySqlFact]
+    public Task MySql_product_cart_checkout_payment_and_delivery_flow()
+        => MySqlStore.RunAsync(() => FlowAsync(MySqlStore.CurrentConnectionString!));
 
+    private static async Task FlowAsync(string connectionString)
+    {
         var options = new DbContextOptionsBuilder<MarketplaceDbContext>()
             .UseMySQL(connectionString)
             .Options;
@@ -53,7 +51,7 @@ public sealed class MySqlFlowIntegrationTests
         await cart.AddAsync(retailer.Id, "integration-retailer", variant.Id, 10);
         var order = (await checkout.CheckoutAsync(retailer.Id, "integration-retailer", address.Id, "integration-key-1")).Order;
         Assert.NotNull(order);
-        order!.PaymentStatus = "Paid";
+        order!.PaymentStatus = PaymentStatus.Paid;
         await db.SaveChangesAsync();
         var sellerOrder = order.SellerOrders.Single();
         Assert.Equal("Accepted", (await orders.UpdateSellerOrderAsync(manufacturer.Id, sellerOrder.Id, "Accepted", null, null))!.Status);

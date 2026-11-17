@@ -1,3 +1,4 @@
+using TextileConnect.Domain;
 using System.Globalization;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
@@ -26,12 +27,12 @@ public sealed class SellerPayoutReader(MarketplaceDbContext db, TimeProvider clo
         var now = clock.GetUtcNow().UtcDateTime;
         var monthStart = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
         var mine = db.Settlements.AsNoTracking().Where(x => sellerId == null || x.ManufacturerBusinessId == sellerId);
-        var pending = mine.Where(x => x.Status == "Pending");
+        var pending = mine.Where(x => x.Status == SettlementStatus.Pending);
         var scheduled = pending.Where(x => x.ReleaseAfter < Settlements.NoReleaseDate).Where(x => !db.ReturnClaims.Any(c => c.SellerOrderId == x.SellerOrderId && c.ResolvedAtUtc == null));
         var nextAmount = await scheduled.SumAsync(x => (decimal?)x.Amount, ct) ?? 0m;
         var nextDate = await scheduled.MinAsync(x => (DateTime?)x.ReleaseAfter, ct);
         var onHold = await pending.Where(x => x.ReleaseAfter >= Settlements.NoReleaseDate || db.ReturnClaims.Any(c => c.SellerOrderId == x.SellerOrderId && c.ResolvedAtUtc == null)).SumAsync(x => (decimal?)x.Amount, ct) ?? 0m;
-        var paid = await mine.Where(x => x.Status == "Released" && x.SettledAt >= monthStart).SumAsync(x => (decimal?)x.Amount, ct) ?? 0m;
+        var paid = await mine.Where(x => x.Status == SettlementStatus.Released && x.SettledAt >= monthStart).SumAsync(x => (decimal?)x.Amount, ct) ?? 0m;
 
         var filtered = ApplyStatus(mine, status);
         var total = await filtered.CountAsync(ct);
@@ -53,10 +54,10 @@ public sealed class SellerPayoutReader(MarketplaceDbContext db, TimeProvider clo
 
     private IQueryable<Settlement> ApplyStatus(IQueryable<Settlement> query, string? status) => status switch
     {
-        "paid" => query.Where(x => x.Status == "Released"),
-        "scheduled" => query.Where(x => x.Status == "Pending" && x.ReleaseAfter < Settlements.NoReleaseDate && !db.ReturnClaims.Any(c => c.SellerOrderId == x.SellerOrderId && c.ResolvedAtUtc == null)),
-        "cancelled" => query.Where(x => x.Status == "Cancelled"),
-        "on_hold" => query.Where(x => x.Status == "Pending" && (x.ReleaseAfter >= Settlements.NoReleaseDate || db.ReturnClaims.Any(c => c.SellerOrderId == x.SellerOrderId && c.ResolvedAtUtc == null))),
+        "paid" => query.Where(x => x.Status == SettlementStatus.Released),
+        "scheduled" => query.Where(x => x.Status == SettlementStatus.Pending && x.ReleaseAfter < Settlements.NoReleaseDate && !db.ReturnClaims.Any(c => c.SellerOrderId == x.SellerOrderId && c.ResolvedAtUtc == null)),
+        "cancelled" => query.Where(x => x.Status == SettlementStatus.Cancelled),
+        "on_hold" => query.Where(x => x.Status == SettlementStatus.Pending && (x.ReleaseAfter >= Settlements.NoReleaseDate || db.ReturnClaims.Any(c => c.SellerOrderId == x.SellerOrderId && c.ResolvedAtUtc == null))),
         _ => query
     };
 
@@ -73,13 +74,13 @@ public sealed class SellerPayoutReader(MarketplaceDbContext db, TimeProvider clo
             var hasDate = Settlements.HasReleaseDate(x.ReleaseAfter);
             var status = x.Status switch
             {
-                "Released" => "Paid",
-                "Cancelled" => "Cancelled",
+                SettlementStatus.Released => "Paid",
+                SettlementStatus.Cancelled => "Cancelled",
                 _ => hasDate && !claims.Contains(x.SellerOrderId) ? "Scheduled" : "OnHold"
             };
             orders.TryGetValue(x.SellerOrderId, out var order);
             return new SellerPayoutRow(x.SellerOrderId, order?.OrderNumber ?? string.Empty, order?.Total ?? 0m, x.CommissionAmount, x.Amount, status,
-                x.Status == "Pending" && hasDate ? x.ReleaseAfter : null, x.SettledAt) { SellerName = sellerNames.GetValueOrDefault(x.ManufacturerBusinessId) ?? string.Empty };
+                x.Status == SettlementStatus.Pending && hasDate ? x.ReleaseAfter : null, x.SettledAt) { SellerName = sellerNames.GetValueOrDefault(x.ManufacturerBusinessId) ?? string.Empty };
         }).ToList();
     }
 }

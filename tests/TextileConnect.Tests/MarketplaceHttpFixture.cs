@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Http.Json;
@@ -54,6 +55,7 @@ public sealed class MarketplaceHttpFixture(WebApplication app) : IAsyncDisposabl
         builder.Services.AddSingleton<IAuthorizationHandler, ApprovedBusinessHandler>();
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddScoped<ICurrentBusiness, CurrentBusiness>();
+        builder.Services.AddScoped<TextileConnect.Application.Common.IAuditTrail, HttpAuditTrail>();
         builder.Services.AddScoped<IBusinessDirectory, EfBusinessDirectory>();
         builder.Services.AddScoped<IProductPricing, EfProductPricing>();
         builder.Services.AddScoped<ISellerProductService, EfSellerProductService>();
@@ -67,6 +69,7 @@ public sealed class MarketplaceHttpFixture(WebApplication app) : IAsyncDisposabl
         builder.Services.AddSingleton<TextileConnect.Application.Payments.IPaymentGateway, TextileConnect.Application.Payments.DevelopmentPaymentGateway>();
         builder.Services.AddScoped<TextileConnect.Application.Payments.IPaymentService, TextileConnect.Infrastructure.Payments.EfPaymentService>();
         builder.Services.AddSingleton<IFileStorage, MemoryFileStorage>();
+        builder.Services.AddSingleton<IImageVariantMaker, TextileConnect.Infrastructure.Files.SkiaImageVariantMaker>();
         builder.Services.AddDataProtection().UseEphemeralDataProtectionProvider();
         builder.Services.AddAntiforgery(options => options.HeaderName = "X-CSRF-TOKEN");
         builder.Services.AddRateLimiter(options =>
@@ -74,6 +77,13 @@ public sealed class MarketplaceHttpFixture(WebApplication app) : IAsyncDisposabl
             options.RejectionStatusCode = 429;
             options.AddFixedWindowLimiter("search", limiter => { limiter.PermitLimit = 60; limiter.Window = TimeSpan.FromMinutes(1); });
         });
+        if (MySqlStore.CurrentConnectionString is { } mysql)
+        {
+            // Inside MySqlStore.RunAsync the marketplace data lives in a real, migrated MySQL database (identity stays in memory: the tests sign in with test headers).
+            builder.Services.RemoveAll<DbContextOptions<MarketplaceDbContext>>();
+            builder.Services.RemoveAll<Microsoft.EntityFrameworkCore.Infrastructure.IDbContextOptionsConfiguration<MarketplaceDbContext>>();
+            builder.Services.AddDbContext<MarketplaceDbContext>(options => options.UseMySQL(mysql));
+        }
         configure?.Invoke(builder);
         var app = builder.Build();
         app.UseMiddleware<ApiErrorMiddleware>();
@@ -81,6 +91,7 @@ public sealed class MarketplaceHttpFixture(WebApplication app) : IAsyncDisposabl
         app.UseAuthentication();
         app.UseAuthorization();
         app.UseMiddleware<ApiCsrfMiddleware>();
+        app.UseMiddleware<AdminAuditMiddleware>();
         app.UseAntiforgery();
         app.MapGet("/api/v1/test/csrf", (Microsoft.AspNetCore.Antiforgery.IAntiforgery antiforgery, Microsoft.AspNetCore.Http.HttpContext context) => new { token = antiforgery.GetAndStoreTokens(context).RequestToken });
         app.MapBusinessEndpoints();

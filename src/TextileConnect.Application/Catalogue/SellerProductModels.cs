@@ -27,4 +27,8 @@ public sealed record SellerProductDetail(long Id, string Title, string Slug, str
     IReadOnlyList<SellerMediaResponse> Media);
 
 /// <summary>A photo of the product for the edit screen. The first one (IsMain) is the main image.</summary>
-public sealed record SellerMediaResponse(long Id, string Url, string MediaType, int SortOrder, bool IsMain);
+public sealed record SellerMediaResponse(long Id, string Url, string MediaType, int SortOrder, bool IsMain)
+{
+    public string? SrcSet { get; init; }
+    public string? Lqip { get; init; }
+}

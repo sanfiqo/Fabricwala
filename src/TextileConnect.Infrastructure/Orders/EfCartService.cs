@@ -71,7 +71,8 @@ public sealed class EfCartService(MarketplaceDbContext db) : ICartService
                 new CartLine(item.Id, item.VariantId, item.Quantity, price, ProductQuote.Money(price * product.GstRate / 100m), null, subTotal + gst)
                 {
                     ProductId = product.Id, Slug = product.Slug, Title = product.Title, Size = variant.Size, Colour = variant.Colour, Moq = product.Moq, Unit = product.Unit,
-                    ImageUrl = image is null ? null : MediaUrl(product.Slug, image),
+                    ImageUrl = image is null ? null : ProductMediaLinks.Url(product.Slug, image, ProductMediaLinks.Thumb),
+                    ImageLqip = image is null ? null : ProductMediaLinks.Lqip(image),
                     GstRate = product.GstRate, ProductQuantity = qty, LineSubTotal = subTotal, LineGst = gst, AvailableStock = variant.StockQty, Issues = issues,
                     NextTier = next is null ? null : new CartNextTier(next.MinQty, next.PricePerUnit, next.MinQty - qty, price - next.PricePerUnit,
                         ProductQuote.Money((price - next.PricePerUnit) * next.MinQty)),
@@ -86,10 +87,6 @@ public sealed class EfCartService(MarketplaceDbContext db) : ICartService
         }).OrderBy(x => x.SellerBusinessId).ToList();
         return new CartView(groups);
     }
-
-    private static string MediaUrl(string slug, ProductMedia media)
-        => Uri.TryCreate(media.FileKey, UriKind.Absolute, out var uri) && uri.Scheme is "https" or "http"
-            ? uri.AbsoluteUri : $"/api/v1/products/{Uri.EscapeDataString(slug)}/media/{media.Id}";
 
     public async Task<CartItem> AddItemAsync(long businessId, string userId, long variantId, int quantity, CancellationToken cancellationToken = default)
     {
