@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Http.Json;
@@ -74,6 +75,13 @@ public sealed class MarketplaceHttpFixture(WebApplication app) : IAsyncDisposabl
             options.RejectionStatusCode = 429;
             options.AddFixedWindowLimiter("search", limiter => { limiter.PermitLimit = 60; limiter.Window = TimeSpan.FromMinutes(1); });
         });
+        if (MySqlStore.CurrentConnectionString is { } mysql)
+        {
+            // Inside MySqlStore.RunAsync the marketplace data lives in a real, migrated MySQL database (identity stays in memory: the tests sign in with test headers).
+            builder.Services.RemoveAll<DbContextOptions<MarketplaceDbContext>>();
+            builder.Services.RemoveAll<Microsoft.EntityFrameworkCore.Infrastructure.IDbContextOptionsConfiguration<MarketplaceDbContext>>();
+            builder.Services.AddDbContext<MarketplaceDbContext>(options => options.UseMySQL(mysql));
+        }
         configure?.Invoke(builder);
         var app = builder.Build();
         app.UseMiddleware<ApiErrorMiddleware>();
