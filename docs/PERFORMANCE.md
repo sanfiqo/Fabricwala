@@ -34,13 +34,21 @@ These are reasoned from the queries, not measured:
 - The indexes are in `docs/INDEXES.md`. Check a slow request with `EXPLAIN` on the SQL from the MySQL slow log.
 
 ## Measured on 17-18 Nov 2026 (20,000 products, 40 sellers, MySQL 8 on the same laptop, one client)
-The benchmark (, run with  and ) was run for the first time. **It does not pass the 300 ms bar at 20,000 products.** Numbers below are in milliseconds; the laptop was doing other work, so treat them as an order of magnitude, not a promise.
+The benchmark (`CataloguePerformanceTests`, run with `TEXTILECONNECT_PERF=1` and `TEXTILECONNECT_TEST_MYSQL`) was run for the first time. **It does not pass the 300 ms bar at 20,000 products.** Numbers are milliseconds; the laptop was doing other work at the same time, so treat them as an order of magnitude, not as a promise.
 
-First run, before any change: a list page took **1,250 ms** (newest first) because MySQL looked at every product and asked about the seller and the price tiers of each one before cutting the first 20; the filter counts took **4.7 s** (nine SQL queries, each reading the whole catalogue).
+First run, before any change: a list page took **1,250 ms** (newest first), because MySQL looked at every product and asked about the seller and the price tiers of each one before it cut the first 20; the filter counts took **4.7 s** (nine SQL queries, each reading the whole catalogue).
 
-What was changed (, ): the page asks the seller and the price tiers one product at a time so MySQL can walk the products in order and stop after the first page; cheap tests on the product row are written first; the city of a seller is worked out once per request instead of per product; the count of products is a separate query in the shape that is fastest for counting; the sort and the page are cut on narrow rows and the products of the page are read afterwards; a sort or filter by price joins the grouped price tiers; the filter counts are worked out in memory from one copy of the catalogue that is kept for 30 seconds (; a cold copy takes 0.7 to 1.4 s). The new filter counts were checked against the old SQL ones on MySQL with 27 filter combinations ().
+What was changed (`CatalogueReader`, `CatalogueFacetSnapshot`):
+- the page asks the seller and the price tiers one product at a time, so MySQL can walk the products in order and stop after the first page;
+- the cheap tests on the product row are written first, and the questions about other tables last;
+- the city of a seller is worked out once per request instead of once per product;
+- the count of products is its own query, in the shape that is fastest for counting;
+- the sort and the page are cut on narrow rows, and the products of the page are read afterwards;
+- a sort or a filter by price joins the grouped price tiers;
+- the filter counts are worked out in memory from one copy of the catalogue that is kept for 30 seconds (`CatalogueReader.SnapshotLifetime`; making a cold copy takes 0.7 to 1.4 s). They were checked against the old SQL counts on MySQL with 27 filter combinations (`FacetSnapshotTests`).
 
-Benchmark table after the first group of changes (100 requests each, in-process API, the memory cache on as in the real app):
+Benchmark table after the first group of changes (100 requests each, in-process API, memory cache on as in the real app):
+
 | Request | p50 ms | p95 ms | max ms | requests | failed |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | List, newest first | 157 | 311 | 438 | 100 | 0 |
@@ -57,13 +65,14 @@ Benchmark table after the first group of changes (100 requests each, in-process 
 | List, 8 requests at a time | 506 | 745 | 972 | 160 | 0 |
 
 Reading it:
-- **Fine at 20,000:** a plain list (157 ms p50), full-text search (48 to 100 ms), filter counts while the copy is warm (121 ms).
-- **Not fine:** a sort by price (1.6 s), a search for a short word such as "xl" that has to scan (0.7 s), a search combined with a price sort (1 s), page 50 (0.75 s), eight list requests at the same moment (0.5 s median).
-- A profile taken after the "narrow page" change shows the price sort page at about 0.5 s and the count at about 0.6 s on a busy machine, so it is better but not under 300 ms.
+- **Fine at 20,000:** a plain list (157 ms median), full-text search (48 to 100 ms), filter counts while the copy is warm (121 ms).
+- **Not fine:** a sort by price (1.6 s), a search for a short word such as "xl" that has to scan (0.7 s), a search with a price sort (1 s), page 50 (0.75 s), eight list requests at the same moment (0.5 s median).
+- A profile taken after the "narrow page" change shows the price sort page at about 0.5 s and its count at about 0.6 s on a busy machine: better, not yet under 300 ms.
 
-What would bring these under 300 ms (not done, because each needs a schema or a design decision):
-1. Store the lowest and highest price on the product row (, ), kept in step in , with an index on (Status, IsDeleted, PriceFrom, Id). Then a price sort and a price filter are an index range, and the price tiers are not joined at all.
-2. An index on (Status, IsDeleted, Id) so that the newest-first order and the count can use an index that already is in that order.
-3. For a short-word search: a trigram or n-gram full-text parser () instead of .
-4. Keep the total count for a few seconds in the memory cache per filter set, or stop sending the exact total beyond page 5.
-At 5,000 products none of this is needed in practice; the table is what a catalogue four times that size does. The benchmark stays red at 20,000 on purpose until one of the steps above is done: run it with  for a quick check.
+What would bring these under 300 ms (not done, because each needs a schema change or a design decision):
+1. Store the lowest and highest price on the product row (`Products.PriceFrom`, `PriceTo`), kept in step inside `MarketplaceDbContext.SaveChanges`, with an index on (Status, IsDeleted, PriceFrom, Id). A price sort and a price filter are then an index range and the price tiers are not joined at all.
+2. An index on (Status, IsDeleted, Id), so that newest first and the count can use an index that is already in that order.
+3. For a short-word search: a full-text index with the ngram parser (`WITH PARSER ngram`) instead of `LIKE '%xl%'`.
+4. Keep the total for a few seconds in the memory cache per filter set, or stop sending the exact total beyond page 5.
+
+At 5,000 products none of this matters in practice; the table is what a catalogue four times that size does. The benchmark stays red at 20,000 until one of the steps above is done; run it with `TEXTILECONNECT_PERF_PRODUCTS=5000` for a quick check.
