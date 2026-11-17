@@ -21,3 +21,6 @@ Decided by the owner: Sentry for errors and Better Stack for logs. Needs an acco
 
 ## 17 Nov 2026 - Pincode source
 Decided by the owner: the India Post all-India pincode directory from data.gov.in. The owner downloads the CSV; then `import-pincodes <csv>` loads it and the counts are pinned (F7.1).
+
+## 17 Nov 2026 - Brand
+Decided by the owner: the public name is **Fabricwala**. The domain is still to be bought by the owner. Code and project names (TextileConnect) stay as they are.
