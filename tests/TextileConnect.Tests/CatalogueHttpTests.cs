@@ -100,7 +100,7 @@ public sealed class CatalogueHttpTests
         db.BusinessAddresses.Add(new BusinessAddress { BusinessId = 10, AddressType = AddressType.Pickup, Line1 = "Test pickup", CityId = city.Id, Pincode = "141001", IsDefault = true });
         db.Products.AddRange(
             new Product { Id = 1, SellerBusinessId = 10, CategoryId = category.Id, Title = "Quilted puffer jacket", Slug = "puffer", Material = "Polyester", FabricSpec = "quilted", WeightPerUnitGrams = 800, Moq = 50, Status = ProductStatus.Active, GstRate = 5 },
-            new Product { Id = 2, SellerBusinessId = 10, CategoryId = category.Id, Title = "Fleece hoodie", Slug = "fleece-hoodie", Material = "Fleece", Moq = 20, Status = ProductStatus.Active, GstRate = 5 },
+            new Product { Id = 2, UnitsSold = 100, SellerBusinessId = 10, CategoryId = category.Id, Title = "Fleece hoodie", Slug = "fleece-hoodie", Material = "Fleece", Moq = 20, Status = ProductStatus.Active, GstRate = 5 },
             new Product { Id = 3, SellerBusinessId = 10, CategoryId = category.Id, Title = "Draft", Slug = "draft", Moq = 20, Status = ProductStatus.Draft },
             new Product { Id = 4, SellerBusinessId = 20, CategoryId = category.Id, Title = "Unapproved", Slug = "unapproved", Moq = 20, Status = ProductStatus.Active });
         db.ProductVariants.AddRange(new ProductVariant { Id = 1, ProductId = 1, Sku = "PUFFER-L", Size = "L", Colour = "Black", StockQty = 1000 },

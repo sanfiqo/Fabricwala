@@ -501,6 +501,9 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                     b.Property<int>("Unit")
                         .HasColumnType("int");
 
+                    b.Property<int>("UnitsSold")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("UpdatedAtUtc")
                         .HasColumnType("datetime(6)");
 
@@ -518,6 +521,8 @@ namespace TextileConnect.Infrastructure.Persistence.Migrations
                     b.HasIndex("SellerBusinessId", "IsDeleted", "UpdatedAtUtc");
 
                     b.HasIndex("Status", "IsDeleted", "CategoryId", "Id");
+
+                    b.HasIndex("Status", "IsDeleted", "UnitsSold", "Id");
 
                     b.ToTable("Products");
                 });

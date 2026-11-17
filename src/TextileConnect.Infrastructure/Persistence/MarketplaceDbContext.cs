@@ -312,5 +312,6 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
         builder.Entity<Settlement>().HasIndex(x => new { x.ManufacturerBusinessId, x.Status });
         builder.Entity<Refund>().HasIndex(x => new { x.Status, x.Id });
         builder.Entity<Product>().HasIndex(x => new { x.SellerBusinessId, x.IsDeleted, x.UpdatedAtUtc });
+        builder.Entity<Product>().HasIndex(x => new { x.Status, x.IsDeleted, x.UnitsSold, x.Id });
     }
 }

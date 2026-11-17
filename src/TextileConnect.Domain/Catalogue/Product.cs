@@ -16,6 +16,8 @@ public sealed class Product
     public string? Season { get; set; }
     public string? HsnCode { get; set; }
     public decimal WeightPerUnitGrams { get; set; }
+    /// <summary>Pieces of this product in seller orders that were delivered. Raised when the retailer confirms delivery; cancelled, rejected and reported orders never raise it. Used to sort by popularity.</summary>
+    public int UnitsSold { get; set; }
     public int DispatchDays { get; set; }
     public string? ReturnPolicy { get; set; }
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;

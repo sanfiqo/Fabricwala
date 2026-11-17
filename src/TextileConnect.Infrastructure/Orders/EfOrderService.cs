@@ -25,7 +25,7 @@ public sealed class EfOrderService(MarketplaceDbContext db, IPaymentGateway? gat
     {
         var order = await GetForRetailerAsync(businessId, orderId, cancellationToken);
         if (order is null) return null;
-        var sellerOrders = await db.SellerOrders.Where(x => x.OrderId == orderId).ToListAsync(cancellationToken);
+        var sellerOrders = await db.SellerOrders.Include(x => x.Items).Where(x => x.OrderId == orderId).ToListAsync(cancellationToken);
         var shipped = sellerOrders.Where(x => SellerOrderTransitions.CanMove(x.Status, SellerOrderStatus.Delivered)).ToList();
         if (shipped.Count == 0)
         {
@@ -34,6 +34,11 @@ public sealed class EfOrderService(MarketplaceDbContext db, IPaymentGateway? gat
         }
         var now = Now;
         var shippedIds = shipped.Select(x => x.Id).ToArray();
+        // Popularity counts pieces that really arrived. A concurrent delivery of the same product can lose one increment; for a sort order that is acceptable.
+        var soldByProduct = shipped.SelectMany(x => x.Items).GroupBy(x => x.ProductId).ToDictionary(x => x.Key, x => x.Sum(i => i.Quantity));
+        var soldProductIds = soldByProduct.Keys.ToArray();
+        foreach (var product in await db.Products.Where(x => soldProductIds.Contains(x.Id)).ToListAsync(cancellationToken))
+            product.UnitsSold += soldByProduct[product.Id];
         foreach (var sellerOrder in shipped)
         {
             sellerOrder.Status = SellerOrderStatus.Delivered;
