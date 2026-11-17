@@ -99,7 +99,13 @@ public sealed class EfFinanceService(MarketplaceDbContext db, IFileStorage stora
             {
                 var model = await build(sellerOrder, number, now, cancellationToken);
                 await using var content = new MemoryStream(GstInvoicePdf.Render(model));
-                invoice = new Invoice { SellerOrderId = sellerOrder.Id, InvoiceNumber = number, InvoiceType = type, RefundId = refundId, IssuedAt = now };
+                invoice = new Invoice
+                {
+                    SellerOrderId = sellerOrder.Id, InvoiceNumber = number, InvoiceType = type, RefundId = refundId, IssuedAt = now,
+                    // The figures as printed, for the registers of the accountant (IInvoiceRegister). The other party of a platform fee invoice is the seller.
+                    Taxable = model.Taxable, Shipping = model.Shipping, Cgst = model.Cgst, Sgst = model.Sgst, Igst = model.Igst, Total = model.Total,
+                    CounterpartyName = model.Buyer.Name, CounterpartyGstin = model.Buyer.Gstin, IssuerGstin = model.Seller.Gstin, PlaceOfSupplyCode = model.PlaceOfSupplyCode
+                };
                 invoice.FileKey = await storage.SavePrivateAsync(content, $"{number.Replace('/', '-')}.pdf", cancellationToken);
             }
             catch

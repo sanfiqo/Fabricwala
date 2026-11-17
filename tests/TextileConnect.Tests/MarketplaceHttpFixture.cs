@@ -71,6 +71,9 @@ public sealed class MarketplaceHttpFixture(WebApplication app) : IAsyncDisposabl
         builder.Services.AddSingleton<TimeProvider, TestClock>();
         builder.Services.AddSingleton<TextileConnect.Application.Payments.IPaymentGateway, TextileConnect.Application.Payments.DevelopmentPaymentGateway>();
         builder.Services.AddScoped<TextileConnect.Application.Payments.IPaymentService, TextileConnect.Infrastructure.Payments.EfPaymentService>();
+        builder.Services.AddScoped<TextileConnect.Application.Invoicing.IInvoiceRegister, TextileConnect.Infrastructure.Payments.EfInvoiceRegister>();
+        builder.Services.AddScoped<TextileConnect.Application.Features.IFeatureFlags, TextileConnect.Infrastructure.Features.EfFeatureFlags>();
+        builder.Services.AddScoped<TextileConnect.Application.Rfq.IRfqService, TextileConnect.Infrastructure.Rfq.EfRfqService>();
         builder.Services.AddSingleton<IFileStorage, MemoryFileStorage>();
         builder.Services.AddSingleton<IImageVariantMaker, TextileConnect.Infrastructure.Files.SkiaImageVariantMaker>();
         builder.Services.AddDataProtection().UseEphemeralDataProtectionProvider();

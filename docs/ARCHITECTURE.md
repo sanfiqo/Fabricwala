@@ -14,7 +14,7 @@ A multi-vendor B2B marketplace for textiles in India. Verified manufacturers lis
 
 **What works end to end** (shown by `FullJourneyHttpTests`, over HTTP, with data made only through the API): mobile OTP sign-in, business sign-up and admin approval, products with sizes, colours and price tiers, search and filters, landed cost with freight and GST, cart, checkout split per seller, payment (fake gateway), seller accept, reject or dispatch, retailer delivery confirmation, payout hold and release (status only), problem reports with photos and refunds, notifications, seller dashboard, admin lists and reports.
 
-**Not built:** real SMS (MSG91), WhatsApp, real file storage (R2), real money transfer to sellers (Razorpay Route), RFQ, product reviews, group buying, a logistics role. See `PHASES.md`.
+**Not built:** real SMS (MSG91), WhatsApp, real file storage (R2), real money transfer to sellers (Razorpay Route), product reviews, group buying, a logistics role. **Built but switched off until the owner turns it on** (`Feature.*` settings): requests for quotation ([RFQ.md](RFQ.md)). See `PHASES.md`.
 
 ---
 

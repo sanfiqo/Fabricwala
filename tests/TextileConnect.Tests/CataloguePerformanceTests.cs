@@ -80,7 +80,8 @@ public sealed class CataloguePerformanceTests
     {
         var products = int.TryParse(Environment.GetEnvironmentVariable("TEXTILECONNECT_PERF_PRODUCTS"), out var n) ? n : 20_000;
         MarketplaceHttpFixture.SearchLimitOverride.Value = 1_000_000;   // the benchmark sends thousands of searches from one address: the per-client limit is not what it measures
-        await using var fixture = await MarketplaceHttpFixture.StartAsync(app => app.MapProductEndpoints());
+        // The real app keeps the copy of the catalogue behind the filter counts for 30 seconds (it has a memory cache); so does this one. The cold cost is in the profile test.
+        await using var fixture = await MarketplaceHttpFixture.StartAsync(app => app.MapProductEndpoints(), builder => builder.Services.AddMemoryCache());
         var seeding = Stopwatch.StartNew();
         using (var scope = fixture.Services.CreateScope())
             await CatalogueSeeder.SeedAsync(scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>(), products);

@@ -185,7 +185,12 @@ public sealed partial class CatalogueReader(MarketplaceDbContext db, Microsoft.E
             "moq-asc" => rows.OrderBy(x => x.Product.Moq).ThenBy(x => x.Product.Id),
             _ => rows.OrderByDescending(x => x.Product.Id)
         };
-        var page = await sorted.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize).ToListAsync(ct);
+        // Sort and cut the page on narrow rows (the id and the numbers that are sorted by), then read the products of the page. Sorting 20,000 products with all their columns,
+        // descriptions included, is what made a sort by price slow.
+        var slice = await sorted.Select(x => new { x.Product.Id, x.PriceFrom, x.PriceTo, x.UnitsSold }).Skip((query.Page - 1) * query.PageSize).Take(query.PageSize).ToListAsync(ct);
+        var sliceIds = slice.Select(x => x.Id).ToArray();
+        var loaded = await db.Products.AsNoTracking().Where(x => sliceIds.Contains(x.Id)).ToDictionaryAsync(x => x.Id, ct);
+        var page = slice.Where(x => loaded.ContainsKey(x.Id)).Select(x => new CatalogueRow { Product = loaded[x.Id], PriceFrom = x.PriceFrom, PriceTo = x.PriceTo, UnitsSold = x.UnitsSold }).ToList();
         var ids = page.Select(x => x.Product.Id).ToArray();
         var sellerIds = page.Select(x => x.Product.SellerBusinessId).Distinct().ToArray();
         var sellerNames = await db.Businesses.AsNoTracking().Where(x => sellerIds.Contains(x.Id)).ToDictionaryAsync(x => x.Id, x => x.DisplayName, ct);

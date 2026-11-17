@@ -46,6 +46,8 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
     public DbSet<ReturnClaim> ReturnClaims => Set<ReturnClaim>();
     public DbSet<ReturnClaimPhoto> ReturnClaimPhotos => Set<ReturnClaimPhoto>();
     public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<Domain.Rfq.Rfq> Rfqs => Set<Domain.Rfq.Rfq>();
+    public DbSet<Domain.Rfq.RfqQuotation> RfqQuotations => Set<Domain.Rfq.RfqQuotation>();
     public DbSet<PlatformSetting> PlatformSettings => Set<PlatformSetting>();
     public DbSet<Favourite> Favourites => Set<Favourite>();
 
@@ -69,6 +71,8 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
             switch (entry.Entity)
             {
                 case SellerOrder x: RequireKnown(x.Status, SellerOrderStatus.All, "seller order"); break;
+                case Domain.Rfq.Rfq x: RequireKnown(x.Status, Domain.Rfq.RfqStatus.All, "request for quotation"); break;
+                case Domain.Rfq.RfqQuotation x: RequireKnown(x.Status, Domain.Rfq.QuotationStatus.All, "quotation"); break;
                 case OrderStatusHistory x: RequireKnown(x.Status, SellerOrderStatus.All, "order history"); break;
                 case Order x: RequireKnown(x.PaymentStatus, PaymentStatus.All, "order payment"); break;
                 case Payment x: RequireKnown(x.Status, PaymentStatus.All, "payment"); break;
@@ -102,6 +106,7 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
+        ConfigureRfq(builder);
         ConfigureRelationships(builder);
         ConfigureHotQueryIndexes(builder);
         builder.Entity<Business>(entity =>
@@ -244,6 +249,13 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
         builder.Entity<Invoice>().Property(x => x.InvoiceNumber).HasMaxLength(32);
         builder.Entity<Invoice>().Property(x => x.InvoiceType).HasMaxLength(32);
         builder.Entity<Invoice>().HasIndex(x => new { x.SellerOrderId, x.InvoiceType, x.RefundId }).IsUnique();
+        foreach (var money in new System.Linq.Expressions.Expression<Func<Invoice, decimal?>>[] { x => x.Taxable, x => x.Shipping, x => x.Cgst, x => x.Sgst, x => x.Igst, x => x.Total })
+            builder.Entity<Invoice>().Property(money).HasPrecision(18, 2);
+        builder.Entity<Invoice>().Property(x => x.CounterpartyName).HasMaxLength(200);
+        builder.Entity<Invoice>().Property(x => x.CounterpartyGstin).HasMaxLength(15);
+        builder.Entity<Invoice>().Property(x => x.IssuerGstin).HasMaxLength(15);
+        builder.Entity<Invoice>().Property(x => x.PlaceOfSupplyCode).HasMaxLength(2);
+        builder.Entity<Invoice>().HasIndex(x => x.IssuedAt);
         builder.Entity<InvoiceSequence>(entity =>
         {
             entity.HasKey(x => x.Id);
@@ -273,6 +285,33 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
     /// Notification.UserId and the user columns point to the identity database and are deliberately not foreign keys.
     /// docs/FK_ORPHAN_CHECK.sql is generated from this model; a test keeps it in step.
     /// </summary>
+    /// <summary>Requests for quotation (docs/RFQ.md).</summary>
+    private static void ConfigureRfq(ModelBuilder builder)
+    {
+        builder.Entity<Domain.Rfq.Rfq>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Title).HasMaxLength(120).IsRequired();
+            entity.Property(x => x.Description).HasMaxLength(2000);
+            entity.Property(x => x.TargetPricePerUnit).HasPrecision(18, 2);
+            entity.Property(x => x.DeliveryPincode).HasMaxLength(6).IsRequired();
+            entity.Property(x => x.DeliveryCity).HasMaxLength(100).IsRequired();
+            entity.Property(x => x.DeliveryState).HasMaxLength(100).IsRequired();
+            entity.Property(x => x.Status).HasMaxLength(20).IsConcurrencyToken();
+            entity.HasIndex(x => new { x.Status, x.ExpiresAtUtc });
+            entity.HasIndex(x => new { x.RetailerBusinessId, x.Status });
+        });
+        builder.Entity<Domain.Rfq.RfqQuotation>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.PricePerUnit).HasPrecision(18, 2);
+            entity.Property(x => x.Note).HasMaxLength(1000);
+            entity.Property(x => x.Status).HasMaxLength(20);
+            entity.HasIndex(x => new { x.RfqId, x.SellerBusinessId }).IsUnique();
+            entity.HasIndex(x => new { x.SellerBusinessId, x.Status });
+        });
+    }
+
     private static void ConfigureRelationships(ModelBuilder builder)
     {
         void Link<TDependent, TPrincipal>(System.Linq.Expressions.Expression<Func<TDependent, object?>> foreignKey)
@@ -316,6 +355,11 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
         Link<Refund, Payment>(x => x.PaymentId);
         Link<Refund, SellerOrder>(x => x.SellerOrderId);
         Link<Invoice, SellerOrder>(x => x.SellerOrderId);
+        // Requests for quotation
+        Link<Domain.Rfq.Rfq, Business>(x => x.RetailerBusinessId);
+        Link<Domain.Rfq.Rfq, Category>(x => x.CategoryId);
+        Link<Domain.Rfq.RfqQuotation, Domain.Rfq.Rfq>(x => x.RfqId);
+        Link<Domain.Rfq.RfqQuotation, Business>(x => x.SellerBusinessId);
         // Saved products
         Link<Favourite, Business>(x => x.RetailerBusinessId);
         Link<Favourite, Product>(x => x.ProductId);
