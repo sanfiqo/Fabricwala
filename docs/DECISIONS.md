@@ -18,3 +18,6 @@ Decided by the owner: QuestPDF for the GST invoice (Community license, free belo
 
 ## 17 Nov 2026 - Log sink and error tracker
 Decided by the owner: Sentry for errors and Better Stack for logs. Needs an account and a DSN or source token from the owner, to be kept in secrets; not wired yet.
+
+## 17 Nov 2026 - Pincode source
+Decided by the owner: the India Post all-India pincode directory from data.gov.in. The owner downloads the CSV; then `import-pincodes <csv>` loads it and the counts are pinned (F7.1).
