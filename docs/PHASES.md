@@ -239,3 +239,8 @@ Owner decisions (17 Nov 2026): delete RFQ, delete product reviews, delete group 
 - [ ] F9.6 Structured logs with a correlation id and no secrets are done and tested; **the log sink and the error tracker are not chosen** (owner decision).
 - [ ] F9.7 **[PROVE]** k6 script `ops/load/catalogue-and-checkout.js` written, never run.
 - [x] F9.8 Root `README.md`.
+
+### Phase F3 - Real adapters
+Owner has only Razorpay test keys (17 Nov 2026); MSG91, R2, WhatsApp and Route are not started because each needs an account.
+- [ ] F3.4 Razorpay in test mode: the client now sends per-call credentials (the shared header was a race), cuts receipts to Razorpay's 40 characters, returns Razorpay's own reason on refusal (`PaymentGatewayException`, no key in it), turns a gateway failure at payment start into `payment_gateway_unavailable`, and the key id sent to the client now follows the documented `Payments:Razorpay:KeyId` name (it used to fall back to `dev_key`). 11 tests against a fake server. **One real test-mode order was created** (`RAZORPAY_LIVE_TEST=1`). Not yet tried against the real service: a refund, a webhook delivery (needs the webhook secret and a public URL), the checkout popup with the frontend.
+- [ ] F3.1 R2 storage, F3.2 MSG91, F3.3 WhatsApp, F3.5 Route payouts, F3.6 key encryption: waiting for accounts.

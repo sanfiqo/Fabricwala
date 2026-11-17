@@ -39,7 +39,9 @@ public sealed partial class EfPaymentService(MarketplaceDbContext db, IPaymentGa
         var payment = await db.Payments.Where(x => x.OrderId == order.Id && x.Status == PaymentStatus.Pending).OrderBy(x => x.Id).FirstOrDefaultAsync(cancellationToken);
         if (payment is null)
         {
-            var created = await gateway.CreateOrderAsync(order.GrandTotal, order.OrderNumber, cancellationToken);
+            PaymentOrder created;
+            try { created = await gateway.CreateOrderAsync(order.GrandTotal, order.OrderNumber, cancellationToken); }
+            catch (PaymentGatewayException) { throw new RuleViolationException("payment_gateway_unavailable", "The payment service is not available right now. Please try again in a moment."); }
             payment = new Payment { OrderId = order.Id, GatewayOrderId = created.GatewayOrderId, Amount = created.Amount, Status = PaymentStatus.Pending };
             db.Payments.Add(payment);
         }
