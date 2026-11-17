@@ -32,6 +32,10 @@ dotnet test TextileConnect.slnx --filter "FullyQualifiedName~MySqlSuiteTests|Ful
 
 How it works: `MySqlStore.RunAsync` creates the database and, for the time of the test, makes `MarketplaceHttpFixture` use it instead of the in-memory store. `MySqlSuiteTests` simply calls existing tests inside it, so a rule is written once and checked on both stores. To add one, add a line to `MySqlSuiteTests`.
 
+Two more MySQL tests:
+- `ProductSearchMySqlTests` checks the full-text word search (it is also in the CI filter above).
+- `CataloguePerformanceTests` is the benchmark with 20,000 products. It is skipped unless `TEXTILECONNECT_PERF=1` is set too, and is not in CI. See `docs/PERFORMANCE.md`.
+
 ## 3. Contract tests that rewrite a file
 
 | Test | Rewrites | When it fails |
