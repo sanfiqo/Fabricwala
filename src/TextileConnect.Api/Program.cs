@@ -31,12 +31,14 @@ ProductionSecretGuard.Validate(builder.Configuration, builder.Environment.Enviro
 // (so "Now listening" and the Startup lines are visible), and keep framework and per-query SQL logging quiet.
 builder.Host.UseSerilog((context, configuration) =>
 {
-    configuration.ReadFrom.Configuration(context.Configuration).Enrich.FromLogContext();
+    configuration.ReadFrom.Configuration(context.Configuration).Enrich.FromLogContext().KeepSecretsOut();
     if (!context.Configuration.GetSection("Serilog:WriteTo").Exists())
-        configuration.MinimumLevel.Information()
-            .MinimumLevel.Override("Microsoft.AspNetCore", Serilog.Events.LogEventLevel.Warning)
-            .MinimumLevel.Override("Microsoft.EntityFrameworkCore", Serilog.Events.LogEventLevel.Warning)
-            .WriteTo.Console();
+    {
+        // Development reads the console; anywhere else every line is one JSON object, which log tools can search by field (CorrelationId, UserId, StatusCode ...).
+        var console = configuration.MinimumLevel.Information();
+        if (context.HostingEnvironment.IsDevelopment()) console.WriteTo.Console();
+        else console.WriteTo.Console(new Serilog.Formatting.Compact.RenderedCompactJsonFormatter());
+    }
 });
 
 // Add services to the container.
@@ -113,6 +115,7 @@ if (!app.Environment.IsEnvironment("Testing"))
 }
 app.Logger.LogInformation("Startup: seeding finished, starting hosted services and the web server");
 
+app.UseApiRequestLogging(); // first, so every later line carries the correlation id
 // Behind a reverse proxy the real client address comes from X-Forwarded-For, but only from the proxies named in configuration.
 if (ForwardedHeadersSetup.Options(app.Configuration) is { } forwarded) app.UseForwardedHeaders(forwarded);
 else if (!app.Environment.IsDevelopment() && !app.Environment.IsEnvironment("Testing"))

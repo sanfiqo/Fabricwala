@@ -27,9 +27,10 @@ public sealed class ReturnClaimHttpTests
     private static Task<HttpResponseMessage> ReportAsync(HttpClient client, long sellerOrderId, object body)
         => client.PostAsJsonAsync($"/api/v1/seller-orders/{sellerOrderId}/claims", body);
 
-    private static Task<HttpResponseMessage> PhotoAsync(HttpClient client, long sellerOrderId, long claimId, string contentType = "image/png", int size = 64)
+    private static Task<HttpResponseMessage> PhotoAsync(HttpClient client, long sellerOrderId, long claimId, string contentType = "image/png", int? size = null)
     {
-        var file = new ByteArrayContent(new byte[size]);
+        // a real photo unless a size is asked for: zeros of that size are not an image, whatever the declared type says
+        var file = new ByteArrayContent(size is null ? ImageVariantMakerTests.Image(SkiaSharp.SKEncodedImageFormat.Png, 40, 30, SkiaSharp.SKColors.Red) : new byte[size.Value]);
         file.Headers.ContentType = new MediaTypeHeaderValue(contentType);
         return client.PostAsync($"/api/v1/seller-orders/{sellerOrderId}/claims/{claimId}/photos", new MultipartFormDataContent { { file, "file", "photo.png" } });
     }
@@ -85,6 +86,9 @@ public sealed class ReturnClaimHttpTests
         Assert.Equal(HttpStatusCode.BadRequest, (await PhotoAsync(retailer, id, claimId, "application/pdf")).StatusCode);
         Assert.Equal(HttpStatusCode.BadRequest, (await PhotoAsync(retailer, id, claimId, size: 0)).StatusCode);
         Assert.Equal(HttpStatusCode.BadRequest, (await PhotoAsync(retailer, id, claimId, size: 5 * 1024 * 1024 + 1)).StatusCode);
+        var notAnImage = await PhotoAsync(retailer, id, claimId, size: 64);   // the declared type is image/png but the bytes are zeros
+        Assert.Equal(HttpStatusCode.BadRequest, notAnImage.StatusCode);
+        Assert.Equal("photo_invalid_type", await CodeAsync(notAnImage));
         for (var i = 1; i <= 3; i++)
             Assert.Equal(i, (await (await PhotoAsync(retailer, id, claimId)).Content.ReadFromJsonAsync<JsonElement>()).GetProperty("photoCount").GetInt32());
         var fourth = await PhotoAsync(retailer, id, claimId);

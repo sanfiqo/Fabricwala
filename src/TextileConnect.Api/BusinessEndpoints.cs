@@ -1,3 +1,4 @@
+using TextileConnect.Application.Common;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -45,8 +46,11 @@ public static class BusinessEndpoints
             var business = directory.GetForUser(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "");
             if (business is null || file.Length == 0) return Results.BadRequest();
             if (!Enum.TryParse<BusinessDocumentType>(docType, true, out var type)) return Results.BadRequest();
+            if (file.Length > UploadRules.MaxDocumentBytes) throw new RuleViolationException("document_too_large", "The document must be 10 MB or smaller.", 413);
+            var (kind, extension) = UploadRules.IdentifyDocument(await UploadRules.ReadHeadAsync(file, ct));
+            if (kind is null) throw new RuleViolationException("document_invalid_type", "Upload a PDF, JPEG or PNG file.", 400);
             await using var stream = file.OpenReadStream();
-            var key = await storage.SavePrivateAsync(stream, file.FileName, ct);
+            var key = await storage.SavePrivateAsync(stream, "document" + extension, ct);
             var document = new BusinessDocument { BusinessId = business.Id, DocumentType = type, FileKey = key };
             db.BusinessDocuments.Add(document); await db.SaveChangesAsync(ct);
             return Results.Ok(new { document.Id, document.BusinessId, document.DocumentType, document.Status, url = $"/api/v1/businesses/me/documents/{document.Id}" });

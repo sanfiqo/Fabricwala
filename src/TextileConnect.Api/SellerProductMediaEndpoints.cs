@@ -11,7 +11,7 @@ namespace TextileConnect.Api;
 /// <summary>Photos for one product, for the Add/Edit product screen. The first photo (lowest sort order) is the main image.</summary>
 public static class SellerProductMediaEndpoints
 {
-    public const int MaxBytes = 5 * 1024 * 1024;
+    public const int MaxBytes = UploadRules.MaxImageBytes;
     public const int MaxPhotosPerProduct = 8;
 
     public static void MapSellerProductMediaEndpoints(this WebApplication app)
@@ -26,16 +26,7 @@ public static class SellerProductMediaEndpoints
             if (file.Length == 0) throw new RuleViolationException("photo_empty", "Choose a photo to upload.", 400);
             if (file.Length > MaxBytes) throw new RuleViolationException("photo_too_large", "The photo must be 5 MB or smaller.", 413);
 
-            var header = new byte[12];
-            var read = 0;
-            await using (var probe = file.OpenReadStream())
-                while (read < header.Length)
-                {
-                    var count = await probe.ReadAsync(header.AsMemory(read), ct);
-                    if (count == 0) break;
-                    read += count;
-                }
-            var (contentType, extension) = Detect(header, read);
+            var (contentType, extension) = UploadRules.IdentifyImage(await UploadRules.ReadHeadAsync(file, ct));
             if (contentType is null) throw new RuleViolationException("photo_invalid_type", "Upload a JPEG, PNG or WebP photo.", 400);
 
             var existing = await db.ProductMedia.Where(x => x.ProductId == id).Select(x => x.SortOrder).ToListAsync(ct);
@@ -72,14 +63,6 @@ public static class SellerProductMediaEndpoints
             await db.SaveChangesAsync(ct);
             return Results.NoContent();
         });
-    }
-
-    private static (string? ContentType, string Extension) Detect(byte[] b, int length)
-    {
-        if (length >= 3 && b[0] == 0xFF && b[1] == 0xD8 && b[2] == 0xFF) return ("image/jpeg", ".jpg");
-        if (length >= 8 && b[0] == 0x89 && b[1] == 0x50 && b[2] == 0x4E && b[3] == 0x47 && b[4] == 0x0D && b[5] == 0x0A && b[6] == 0x1A && b[7] == 0x0A) return ("image/png", ".png");
-        if (length >= 12 && b[0] == 'R' && b[1] == 'I' && b[2] == 'F' && b[3] == 'F' && b[8] == 'W' && b[9] == 'E' && b[10] == 'B' && b[11] == 'P') return ("image/webp", ".webp");
-        return (null, string.Empty);
     }
 }
 

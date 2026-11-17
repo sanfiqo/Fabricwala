@@ -53,6 +53,7 @@ public static class ReturnClaimEndpoints
                 .SingleOrDefaultAsync(x => x.Id == claimId && x.SellerOrderId == sellerOrderId && x.SellerOrder!.Order!.RetailerBusinessId == current.RequireBusinessId(), ct);
             if (claim is null) return Results.NotFound();
             if (file.Length is 0 or > MaxPhotoBytes || !PhotoTypes.Contains(file.ContentType, StringComparer.OrdinalIgnoreCase)) return Results.BadRequest();
+            if (UploadRules.IdentifyImage(await UploadRules.ReadHeadAsync(file, ct)).ContentType is null) throw new RuleViolationException("photo_invalid_type", "Upload a JPEG, PNG or WebP photo.", 400);
             if (claim.ResolvedAtUtc is not null) throw new RuleViolationException("claim_closed", "This problem report is already resolved.");
             if (claim.Photos.Count >= MaxPhotos) throw new RuleViolationException("claim_photo_limit", "You can add up to 3 photos.");
             await using var stream = file.OpenReadStream();
