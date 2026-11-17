@@ -122,6 +122,13 @@ Conventions:
 10. Every query for business data is filtered by the signed-in business; `IdorWalkTests` calls every route that takes an id as a business that owns nothing.
 11. Every money, approval, moderation and configuration action is written to the audit log (AUDIT.md).
 
+### 4b. Added on 17-18 Nov 2026
+12. **Feature switches.** Optional parts are off until the owner switches them on (`Feature.<name>` platform settings, `GET /api/v1/features`, admin `PUT /api/v1/admin/features/{name}`). A route of a switched-off part answers 404 `feature_off`. Today the only switch is `Rfq`.
+13. **Requests for quotation** ([RFQ.md](RFQ.md)): a retailer asks, manufacturers quote, the retailer accepts one; the two are then shown each other's contact. No payable order comes out of it yet.
+14. **GST documents** ([INVOICING.md](INVOICING.md)): tax invoice per seller order after dispatch, credit note per processed refund, platform fee tax invoice (when the platform company is set up), a register for the accountant (CSV and JSON). Each document keeps the figures that were printed.
+15. **Stored prices on the product.** `Product.PriceFrom` and `PriceTo` are the lowest and highest price of the price tiers and are set by `MarketplaceDbContext` on every save, never by hand. A product without a tier has no price and is not listed. The list and the filter counts read these columns.
+16. **Filter counts** come from one in-memory copy of the listed products, kept for 30 seconds when the host has a memory cache (`CatalogueFacetSnapshot.cs`); a catalogue above 50,000 products is counted by SQL as before. Measured numbers and what is still slow are in [PERFORMANCE.md](PERFORMANCE.md).
+
 ## 5. Landed cost
 Price a retailer sees for a pincode: tier price + GST on it + freight. Freight comes from the rate between the pincode zones (first digit of the pincode) or, failing that, between the two cities; per piece or per kg with a minimum charge. No rate means "shipping on request" and checkout says "We cannot deliver to this address yet." Example: 200 pieces at 300, freight 20 a piece, GST 5% (15) gives 335 a piece.
 

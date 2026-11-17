@@ -65,7 +65,7 @@ Probes are exempt from rate limits and are logged at the lowest level.
 - Uploaded files are not in the database dump; back them up with the storage provider's own versioning once R2 exists.
 
 ## 7. Updating
-Build the new image, apply new migrations (steps 2 to 4) **before** starting it, then roll the containers one at a time using the readiness probe. Take a backup first. There are 10 migrations from the completion work that are not yet applied on the owner's development database (see PROGRESS.md).
+Build the new image, apply new migrations (steps 2 to 4) **before** starting it, then roll the containers one at a time using the readiness probe. Take a backup first. The development database `textileconnect_dev` has every migration up to `AddCreditNotes`. Three newer ones are **not applied anywhere**: `AddRfq` (two new tables), `AddInvoiceRegister` (new columns on `Invoices`, empty for old rows) and `AddProductPriceColumns` (two new columns on `Products`, **filled by the migration itself** from the price tiers, plus two indexes; on 20,000 products the fill took 0.4 s and the column add 11 s). All three only add; none drops or rewrites data.
 
 ## 8. Load test
 `k6 run ops/load/catalogue-and-checkout.js` with `BASE_URL` set to a staging address (never production). It browses the catalogue and runs checkouts. Not run yet; the 20,000 product benchmark of [PERFORMANCE.md](PERFORMANCE.md) is also not run.

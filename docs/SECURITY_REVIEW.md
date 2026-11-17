@@ -45,6 +45,12 @@ Proof: `UploadHardeningHttpTests`. Gaps: no virus scan; private files are served
 ## 7. CSV export injection
 The admin business report and commission report write names that a business typed. A name starting with `=`, `+`, `-` or `@` would run as a formula when opened in Excel, and a comma or line break would break the columns. `CsvCell.Text` prefixes such cells with `'` and quotes them. Found and fixed in this review; proof `CsvInjectionTests`.
 
+## 7b. Requests for quotation and registers (17-18 Nov 2026)
+- A buyer's name and phone are shown **only** to the manufacturer whose quotation the buyer accepted, and the manufacturer's to that buyer (`RfqHttpTests`). Before that manufacturers see the city and state of delivery only, and never the quotations of their competitors. The two businesses can then contact each other outside the platform: this is by design, and it also means the platform cannot stop spam or a side deal after the contact is shown.
+- Abuse limits: 10 open requests per retailer, one quotation per manufacturer per request, text lengths, and everything behind the feature switch. There is no daily limit and no report button yet.
+- The invoice register reads stored figures of the caller's own documents only (a seller sees their own rows, the admin route is admin only); CSV cells that a user typed are made safe against formulas (`CsvCell`).
+- A switched-off feature answers 404 after the sign-in and role checks, so it does not reveal itself to anonymous callers.
+
 ## 8. Not done (in order of importance)
 1. Switch the admin second step on (`Auth:AdminMfa=Required`) after enrolling every admin; a client screen for it.
 2. Outside penetration test.

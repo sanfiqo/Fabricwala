@@ -254,3 +254,6 @@ Owner has only Razorpay test keys (17 Nov 2026); MSG91, R2, WhatsApp and Route a
 ### Phase C - new features, built one by one (autonomous, 18 Nov 2026)
 - [x] C.0 Feature switches (`Feature.*` platform settings, `GET /api/v1/features`, `PUT /api/v1/admin/features/{name}`, 404 `feature_off` while off). Needed by every channel in `FABRICWALA_B2B_B2C_C2C_OPTIONS.md`.
 - [x] C.1 B2B-2 Requests for quotation (`docs/RFQ.md`): retailer asks, manufacturers quote, retailer accepts; 18 tests incl. a MySQL race. Migration `AddRfq`. **Open:** an accepted quotation does not become a payable order (owner decision on commission), no attachments.
+- [x] C.2 B2B-16 Invoice register for the accountant (`docs/INVOICING.md`): CSV and JSON for sellers and the platform; credit notes in minus; GST split; migration `AddInvoiceRegister`.
+- [x] C.3 Category alerts for new requests (in-app, at most 50 manufacturers).
+- [x] F5.4 performance: benchmark run at 20,000 products and the catalogue queries rebuilt (see `docs/PERFORMANCE.md`); stored lowest and highest price on the product (`AddProductPriceColumns`).
