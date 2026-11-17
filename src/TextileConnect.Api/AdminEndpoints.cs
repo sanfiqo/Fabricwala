@@ -19,19 +19,19 @@ public static class AdminEndpoints
             await db.SaveChangesAsync(ct);
             return Results.Ok(await SettingsAsync(db, ct));
         });
-        admin.MapGet("/shipping-rates", async (MarketplaceDbContext db, CancellationToken ct) => Results.Ok(await db.ShippingRates.AsNoTracking().ToListAsync(ct)));
+        admin.MapGet("/shipping-rates", async (MarketplaceDbContext db, CancellationToken ct) => Results.Ok((await db.ShippingRates.AsNoTracking().ToListAsync(ct)).Select(ShippingRateResponse.From).ToList()));
         admin.MapPost("/shipping-rates", async (ShippingRateRequest request, MarketplaceDbContext db, CancellationToken ct) =>
         {
             if (!await CitiesExistAsync(db, request.FromCityId, request.ToCityId, ct)) return Results.BadRequest("Both cities must exist.");
             var rate = request.ToEntity();
-            db.ShippingRates.Add(rate); await db.SaveChangesAsync(ct); return Results.Ok(rate);
+            db.ShippingRates.Add(rate); await db.SaveChangesAsync(ct); return Results.Ok(ShippingRateResponse.From(rate));
         });
         admin.MapPut("/shipping-rates/{fromCityId:long}/{toCityId:long}/{rateType}", async (long fromCityId, long toCityId, ShippingRateType rateType, ShippingRateRequest request, MarketplaceDbContext db, CancellationToken ct) =>
         {
             var existing = await db.ShippingRates.SingleOrDefaultAsync(x => x.FromCityId == fromCityId && x.ToCityId == toCityId && x.RateType == rateType, ct);
             if (existing is null) return Results.NotFound();
             existing.Rate = request.Rate; existing.MinCharge = request.MinCharge; existing.TransitDays = request.TransitDays; existing.IsActive = request.IsActive;
-            await db.SaveChangesAsync(ct); return Results.Ok(existing);
+            await db.SaveChangesAsync(ct); return Results.Ok(ShippingRateResponse.From(existing));
         });
         admin.MapDelete("/shipping-rates/{fromCityId:long}/{toCityId:long}/{rateType}", async (long fromCityId, long toCityId, ShippingRateType rateType, MarketplaceDbContext db, CancellationToken ct) =>
         {

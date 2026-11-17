@@ -43,8 +43,8 @@ an input gap, not evidence that those screens have working endpoints.
 | Retailer | Payment success/failed | `POST /api/v1/payments`; payment webhook | `PaymentRequest(OrderId)`; webhook payload | Anonymous payment result; webhook response | partly |
 | Retailer | Order detail | `GET /api/v1/orders/{id}` | Order id | `OrderResponse` | partly |
 | Retailer | Reorder | No endpoint found | None | No response contract | missing |
-| Retailer | Saved products | `POST /api/v1/favourites/{productId}` | Product id | `{ favourite }` | partly |
-| Retailer | Rate order | `POST /api/v1/reviews` | `ReviewRequest(ProductId, Rating, Comment?)` | Community service result | partly |
+| Retailer | Saved products | `GET /api/v1/saved-products`; `PUT` or `DELETE /api/v1/saved-products/{productId}` | Product id | paged product cards; the old `POST /favourites/{productId}` toggle was removed (F6.3) | exists |
+| Retailer | Rate order | `POST /api/v1/orders/{id}/rating`; `GET` the same route | `{ stars 1-5, comment? }` | the rating; the seller rating on the dashboard and storefront is built from these. The old `POST /reviews`, `/enquiries` and `/group-buys` stubs were removed (F6) | exists |
 | Retailer | GST invoice list | Download only: `GET /api/v1/invoices/seller-orders/{sellerOrderId}/download` | Seller-order id and invoice type | File download; no invoice-list response | missing |
 | Seller | Ship order | `POST /api/v1/seller/orders/{id}/dispatch`; shipment/status routes | `SellerDispatch`; `ShipmentStatus` | `SellerOrderResponse`; `ShipmentResponse` | exists |
 | Seller | Edit product | No update endpoint; only create/get/delete product routes | None | No update response contract | missing |

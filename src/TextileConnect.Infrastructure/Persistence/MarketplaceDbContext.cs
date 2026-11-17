@@ -46,7 +46,7 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
     public DbSet<ReturnClaimPhoto> ReturnClaimPhotos => Set<ReturnClaimPhoto>();
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<PlatformSetting> PlatformSettings => Set<PlatformSetting>();
-    public DbSet<Enquiry> Enquiries => Set<Enquiry>(); public DbSet<Quotation> Quotations => Set<Quotation>(); public DbSet<Dispute> Disputes => Set<Dispute>(); public DbSet<Review> Reviews => Set<Review>(); public DbSet<Favourite> Favourites => Set<Favourite>(); public DbSet<GroupBuy> GroupBuys => Set<GroupBuy>(); public DbSet<GroupBuyParticipant> GroupBuyParticipants => Set<GroupBuyParticipant>(); public DbSet<LogisticsAssignment> LogisticsAssignments => Set<LogisticsAssignment>();
+    public DbSet<Favourite> Favourites => Set<Favourite>();
 
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
@@ -249,7 +249,8 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
         builder.Entity<PlatformSetting>().HasKey(x => x.Key);
         builder.Entity<PlatformSetting>().Property(x => x.Key).HasMaxLength(200);
         builder.Entity<PlatformSetting>().Property(x => x.Value).HasMaxLength(4000).IsRequired();
-        builder.Entity<Enquiry>().HasKey(x => x.Id); builder.Entity<Quotation>().HasKey(x => x.Id); builder.Entity<Dispute>().HasKey(x => x.Id); builder.Entity<Review>().HasKey(x => x.Id); builder.Entity<Favourite>().HasKey(x => x.Id); builder.Entity<Favourite>().HasIndex(x => new { x.RetailerBusinessId, x.ProductId }).IsUnique(); builder.Entity<GroupBuy>().HasKey(x => x.Id); builder.Entity<GroupBuyParticipant>().HasKey(x => x.Id); builder.Entity<LogisticsAssignment>().HasKey(x => x.Id);
+        builder.Entity<Favourite>().HasKey(x => x.Id);
+        builder.Entity<Favourite>().HasIndex(x => new { x.RetailerBusinessId, x.ProductId }).IsUnique();
     }
 
     /// <summary>
@@ -300,6 +301,9 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
         Link<Refund, Payment>(x => x.PaymentId);
         Link<Refund, SellerOrder>(x => x.SellerOrderId);
         Link<Invoice, SellerOrder>(x => x.SellerOrderId);
+        // Saved products
+        Link<Favourite, Business>(x => x.RetailerBusinessId);
+        Link<Favourite, Product>(x => x.ProductId);
     }
 
     /// <summary>

@@ -1,9 +1,0 @@
-using Microsoft.EntityFrameworkCore; using TextileConnect.Application.Community; using TextileConnect.Domain.Community; using TextileConnect.Infrastructure.Persistence;
-namespace TextileConnect.Infrastructure.Community;
-public sealed class EfCommunityService(MarketplaceDbContext db) : ICommunityService
-{
-    public async Task<Enquiry> CreateEnquiryAsync(long businessId, long? productId, string description, CancellationToken ct = default) { var row = new Enquiry { RetailerBusinessId = businessId, ProductId = productId, Description = description }; db.Enquiries.Add(row); await db.SaveChangesAsync(ct); return row; }
-    public async Task<Review> AddReviewAsync(long businessId, long productId, int rating, string? comment, CancellationToken ct = default) { if (rating is < 1 or > 5) throw new ArgumentOutOfRangeException(nameof(rating)); var row = new Review { RetailerBusinessId = businessId, ProductId = productId, Rating = rating, Comment = comment }; db.Reviews.Add(row); await db.SaveChangesAsync(ct); return row; }
-    public async Task<bool> ToggleFavouriteAsync(long businessId, long productId, CancellationToken ct = default) { var row = await db.Favourites.SingleOrDefaultAsync(x => x.RetailerBusinessId == businessId && x.ProductId == productId, ct); if (row is null) { db.Favourites.Add(new Favourite { RetailerBusinessId = businessId, ProductId = productId }); await db.SaveChangesAsync(ct); return true; } db.Favourites.Remove(row); await db.SaveChangesAsync(ct); return false; }
-    public async Task<GroupBuy> CreateGroupBuyAsync(long businessId, long productId, int targetQuantity, DateTime closesAtUtc, CancellationToken ct = default) { var row = new GroupBuy { OwnerBusinessId = businessId, ProductId = productId, TargetQuantity = targetQuantity, ClosesAtUtc = closesAtUtc }; db.GroupBuys.Add(row); await db.SaveChangesAsync(ct); return row; }
-}

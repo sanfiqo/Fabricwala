@@ -21,6 +21,10 @@ SELECT relation, orphans FROM (
   UNION ALL
   SELECT 'DeliveryZoneRates.ToZoneId -> DeliveryZones.Id' AS relation, COUNT(*) AS orphans FROM `DeliveryZoneRates` c LEFT JOIN `DeliveryZones` p ON p.`Id` = c.`ToZoneId` WHERE p.`Id` IS NULL
   UNION ALL
+  SELECT 'Favourites.ProductId -> Products.Id' AS relation, COUNT(*) AS orphans FROM `Favourites` c LEFT JOIN `Products` p ON p.`Id` = c.`ProductId` WHERE p.`Id` IS NULL
+  UNION ALL
+  SELECT 'Favourites.RetailerBusinessId -> Businesses.Id' AS relation, COUNT(*) AS orphans FROM `Favourites` c LEFT JOIN `Businesses` p ON p.`Id` = c.`RetailerBusinessId` WHERE p.`Id` IS NULL
+  UNION ALL
   SELECT 'Invoices.SellerOrderId -> SellerOrders.Id' AS relation, COUNT(*) AS orphans FROM `Invoices` c LEFT JOIN `SellerOrders` p ON p.`Id` = c.`SellerOrderId` WHERE p.`Id` IS NULL
   UNION ALL
   SELECT 'OrderItems.ProductId -> Products.Id' AS relation, COUNT(*) AS orphans FROM `OrderItems` c LEFT JOIN `Products` p ON p.`Id` = c.`ProductId` WHERE p.`Id` IS NULL

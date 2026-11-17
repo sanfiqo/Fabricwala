@@ -52,14 +52,14 @@ public static class SellerDashboardEndpoints
             var bestIds = best.Select(x => x.ProductId).ToArray();
             var products = await db.Products.AsNoTracking().Where(p => bestIds.Contains(p.Id)).ToDictionaryAsync(p => p.Id, ct);
 
-            var stars = await db.OrderRatings.AsNoTracking().Where(r => db.SellerOrders.Any(s => s.OrderId == r.OrderId && s.ManufacturerBusinessId == sellerId)).Select(r => r.Stars).ToListAsync(ct);
+            var (rating, ratingCount) = await SellerRating.ForAsync(db, sellerId, ct);
             var payouts = await new SellerPayoutReader(db, clock).SummaryAsync(sellerId, null, 1, 1, ct);
             return Results.Ok(new SellerDashboardResponse(
                 await paid.CountAsync(x => x.Status == SellerOrderStatus.Pending, ct), await paid.CountAsync(x => x.Status == SellerOrderStatus.Accepted, ct),
                 chart[^1].Sales, payouts.NextPayoutAmount, payouts.NextPayoutDate, payouts.OnHoldAmount, chart,
                 new SellerLowStock(LowStockThreshold, await lowQuery.CountAsync(ct), lowItems),
                 best.Select(x => new SellerBestSeller(x.ProductId, products.GetValueOrDefault(x.ProductId)?.Title ?? string.Empty, products.GetValueOrDefault(x.ProductId)?.Slug ?? string.Empty, x.Quantity, x.Revenue)).ToList(),
-                stars.Count == 0 ? null : decimal.Round((decimal)stars.Average(), 1, MidpointRounding.AwayFromZero), stars.Count));
+                rating, ratingCount));
         }).RequireAuthorization("ApprovedBusiness").RequireAuthorization(policy => policy.RequireRole("Manufacturer"));
     }
 }

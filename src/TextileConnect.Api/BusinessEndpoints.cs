@@ -29,13 +29,15 @@ public static class BusinessEndpoints
             directory.UpdateForUser(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "", b =>
             { b.DisplayName = request.DisplayName; b.Email = request.Email; }) is { } business
                 ? Results.Ok(Profile(business, db)) : Results.NotFound());
-        group.MapPost("/me/addresses", (BusinessAddress address, ClaimsPrincipal principal, IBusinessDirectory directory) =>
-            Results.Ok(directory.AddAddress(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "", address)));
+        group.MapPost("/me/addresses", (BusinessAddressRequest request, ClaimsPrincipal principal, IBusinessDirectory directory) =>
+            string.IsNullOrWhiteSpace(request.Line1) || request.Line1.Length > 200 || request.Line2?.Length > 200 || request.CityId <= 0 || !BusinessInputRules.IsPincode(request.Pincode)
+                ? Results.BadRequest()
+                : Results.Ok(BusinessAddressResponse.From(directory.AddAddress(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "", request.ToEntity()))));
         group.MapGet("/me/addresses", (ClaimsPrincipal principal, IBusinessDirectory directory) =>
-            Results.Ok(directory.ListAddresses(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "")));
+            Results.Ok(directory.ListAddresses(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "").Select(BusinessAddressResponse.From).ToList()));
         group.MapPut("/me/addresses/{id:long}/default", (long id, ClaimsPrincipal principal, IBusinessDirectory directory) =>
             directory.SetDefaultAddress(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "", id) is { } address
-                ? Results.Ok(address) : Results.NotFound());
+                ? Results.Ok(BusinessAddressResponse.From(address)) : Results.NotFound());
         group.MapPost("/me/documents", async (IFormFile file, string docType, ClaimsPrincipal principal, IBusinessDirectory directory, IFileStorage storage, MarketplaceDbContext db, CancellationToken ct) =>
         {
             var business = directory.GetForUser(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "");
@@ -55,7 +57,7 @@ public static class BusinessEndpoints
             return Results.File(stream, "application/octet-stream", Path.GetFileName(document.FileKey));
         });
         group.MapPost("/me/users", (StaffRequest request, ClaimsPrincipal principal, IBusinessDirectory directory) =>
-            Results.Ok(directory.AddStaff(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "", request.UserId)));
+            Results.Ok(StaffMemberResponse.From(directory.AddStaff(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "", request.UserId))));
 
         app.MapBusinessApprovalEndpoints();
     }

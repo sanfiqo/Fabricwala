@@ -20,7 +20,7 @@ seller business with `IsPlatformOwned = true`.
 MOQ, search/filters, Kashmir landed cost calculator, cart, checkout split per manufacturer, Razorpay Route payment with
 split settlement, order tracking, WhatsApp notifications.
 
-**Not in MVP:** RFQ/quotations, disputes, reviews, favourites, collective buying, negotiation, logistics role,
+**Not in MVP:** RFQ/quotations, disputes (problem reports on an order exist), product reviews (the order rating exists), collective buying, negotiation, logistics role,
 credit, inspections, analytics.
 
 ---
@@ -174,10 +174,11 @@ erDiagram
 | Table | Key columns | Notes |
 | --- | --- | --- |
 | Notifications | Id, UserId (FK), Channel (WhatsApp/SMS/InApp), TemplateKey, PayloadJson, Status, SentAt, ReadAt | |
-| AuditLogs | Id, UserId, Action, EntityName, EntityId, OldValuesJson, NewValuesJson, IpAddress, CreatedAt | EF SaveChanges interceptor |
+| AuditLogs | Id, UserId, Action, EntityName, EntityId, IpAddress, Details, CreatedAtUtc | Written by `AdminAuditMiddleware` and `IAuditTrail`, see AUDIT.md |
 
-### 3.8 Later (Phase 7, do not build early)
-Enquiries, Quotations, Disputes, Reviews, Favourites, GroupBuys, GroupBuyParticipants, NegotiationMessages,
+### 3.8 Later (do not build early)
+Enquiries, Quotations, Disputes, Reviews, GroupBuys and LogisticsAssignments were empty stub tables and endpoints; they were deleted on 17 Nov 2026 (task F6) and come back only as a real feature with screens.
+NegotiationMessages,
 Inspections, LogisticsQuotes, CreditLines, Subscriptions, PromotedListings.
 
 ---

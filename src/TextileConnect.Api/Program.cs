@@ -12,8 +12,6 @@ using TextileConnect.Infrastructure.Businesses;
 using TextileConnect.Infrastructure.Catalogue;
 using TextileConnect.Application.Orders;
 using TextileConnect.Infrastructure.Orders;
-using TextileConnect.Application.Community;
-using TextileConnect.Infrastructure.Community;
 using TextileConnect.Application.Payments;
 using TextileConnect.Infrastructure.Payments;
 using System.Text.Json.Serialization;
@@ -71,7 +69,6 @@ builder.Services.AddHostedService<OrderMaintenanceWorker>();
 builder.Services.AddScoped<ICheckoutService, EfCheckoutService>();
 builder.Services.AddScoped<IPaymentService, EfPaymentService>();
 builder.Services.AddScoped<IFinanceService, EfFinanceService>();
-builder.Services.AddScoped<ICommunityService, EfCommunityService>();
 builder.Services.AddScoped<IAuthBusinessProfileReader, AuthBusinessProfileReader>();
 if (builder.Environment.IsDevelopment())
     builder.Services.AddSingleton<IFileStorage, DevelopmentFileStorage>();
@@ -153,7 +150,6 @@ app.MapBusinessSuspensionEndpoints();
 app.MapCartEndpoints();
 app.MapOrderEndpoints();
 app.MapPaymentEndpoints();
-app.MapCommunityEndpoints();
 app.MapHealthChecks("/api/v1/health");
 
 app.Run();
