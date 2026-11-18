@@ -41,7 +41,7 @@ public sealed class OpenApiExportTests
         await using var fixture = await MarketplaceHttpFixture.StartAsync(app =>
         {
             app.UseSwagger();
-            app.MapAdminEndpoints(); app.MapProductEndpoints(); app.MapLandedCostEndpoints(); app.MapInvoiceEndpoints(); app.MapReturnClaimEndpoints();
+            app.MapAdminEndpoints(); app.MapFeatureEndpoints(); app.MapRfqEndpoints(); app.MapInvoiceRegisterEndpoints(); app.MapProductEndpoints(); app.MapLandedCostEndpoints(); app.MapInvoiceEndpoints(); app.MapReturnClaimEndpoints();
             app.MapNotificationEndpoints(); app.MapAccountEndpoints(); app.MapStorefrontEndpoints(); app.MapSellerDashboardEndpoints(); app.MapBulkProductEndpoints();
             app.MapStockAlertEndpoints(); app.MapPayoutEndpoints(); app.MapAdminDashboardEndpoints(); app.MapAdminReportEndpoints(); app.MapProductModerationEndpoints();
             app.MapCategoryBannerEndpoints(); app.MapBusinessSuspensionEndpoints(); app.MapAdminListEndpoints(); app.MapRetailerExtrasEndpoints(); app.MapCartEndpoints(); app.MapOrderEndpoints(); app.MapPaymentEndpoints(); app.MapHealthEndpoints();

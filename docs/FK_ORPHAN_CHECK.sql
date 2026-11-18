@@ -61,6 +61,14 @@ SELECT relation, orphans FROM (
   UNION ALL
   SELECT 'ReturnClaims.SellerOrderId -> SellerOrders.Id' AS relation, COUNT(*) AS orphans FROM `ReturnClaims` c LEFT JOIN `SellerOrders` p ON p.`Id` = c.`SellerOrderId` WHERE p.`Id` IS NULL
   UNION ALL
+  SELECT 'RfqQuotations.RfqId -> Rfqs.Id' AS relation, COUNT(*) AS orphans FROM `RfqQuotations` c LEFT JOIN `Rfqs` p ON p.`Id` = c.`RfqId` WHERE p.`Id` IS NULL
+  UNION ALL
+  SELECT 'RfqQuotations.SellerBusinessId -> Businesses.Id' AS relation, COUNT(*) AS orphans FROM `RfqQuotations` c LEFT JOIN `Businesses` p ON p.`Id` = c.`SellerBusinessId` WHERE p.`Id` IS NULL
+  UNION ALL
+  SELECT 'Rfqs.CategoryId -> Categories.Id' AS relation, COUNT(*) AS orphans FROM `Rfqs` c LEFT JOIN `Categories` p ON p.`Id` = c.`CategoryId` WHERE p.`Id` IS NULL AND c.`CategoryId` IS NOT NULL
+  UNION ALL
+  SELECT 'Rfqs.RetailerBusinessId -> Businesses.Id' AS relation, COUNT(*) AS orphans FROM `Rfqs` c LEFT JOIN `Businesses` p ON p.`Id` = c.`RetailerBusinessId` WHERE p.`Id` IS NULL
+  UNION ALL
   SELECT 'SellerOrders.ManufacturerBusinessId -> Businesses.Id' AS relation, COUNT(*) AS orphans FROM `SellerOrders` c LEFT JOIN `Businesses` p ON p.`Id` = c.`ManufacturerBusinessId` WHERE p.`Id` IS NULL
   UNION ALL
   SELECT 'SellerOrders.OrderId -> Orders.Id' AS relation, COUNT(*) AS orphans FROM `SellerOrders` c LEFT JOIN `Orders` p ON p.`Id` = c.`OrderId` WHERE p.`Id` IS NULL

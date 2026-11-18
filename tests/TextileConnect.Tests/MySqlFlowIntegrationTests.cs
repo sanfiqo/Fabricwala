@@ -56,7 +56,7 @@ public sealed class MySqlFlowIntegrationTests
         var sellerOrder = order.SellerOrders.Single();
         Assert.Equal("Accepted", (await orders.UpdateSellerOrderAsync(manufacturer.Id, sellerOrder.Id, "Accepted", null, null))!.Status);
         Assert.Equal("Dispatched", (await orders.UpdateSellerOrderAsync(manufacturer.Id, sellerOrder.Id, "Dispatched", null, "LR-INT"))!.Status);
-        Assert.Equal("Delivered", (await orders.UpdateShipmentAsync(manufacturer.Id, sellerOrder.Id, "Delivered"))!.Status);
+        Assert.Equal("InTransit", (await orders.UpdateShipmentAsync(manufacturer.Id, sellerOrder.Id, "InTransit"))!.Status);   // the seller may note progress; only the retailer confirms delivery
         Assert.Equal("Delivered", (await orders.ConfirmDeliveryAsync(retailer.Id, order.Id))!.SellerOrders.Single().Status);
 
         await transaction.RollbackAsync();

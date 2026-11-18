@@ -46,19 +46,75 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
     public DbSet<ReturnClaim> ReturnClaims => Set<ReturnClaim>();
     public DbSet<ReturnClaimPhoto> ReturnClaimPhotos => Set<ReturnClaimPhoto>();
     public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<Domain.Rfq.Rfq> Rfqs => Set<Domain.Rfq.Rfq>();
+    public DbSet<Domain.Rfq.RfqQuotation> RfqQuotations => Set<Domain.Rfq.RfqQuotation>();
     public DbSet<PlatformSetting> PlatformSettings => Set<PlatformSetting>();
     public DbSet<Favourite> Favourites => Set<Favourite>();
 
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
+        var ids = ChangedPriceProducts();
+        if (ids.Count > 0)
+        {
+            var stored = PriceSlabs.AsNoTracking().Where(s => ids.Contains(s.ProductId)).Select(s => new StoredSlab(s.Id, s.ProductId, s.PricePerUnit)).ToList();
+            var products = TrackedProducts(ids);
+            var missing = ids.Where(id => !products.ContainsKey(id)).ToList();
+            if (missing.Count > 0) foreach (var product in Products.Where(p => missing.Contains(p.Id)).ToList()) products[product.Id] = product;
+            ApplyPrices(ids, stored, products);
+        }
         BeforeSave();
         return base.SaveChanges(acceptAllChangesOnSuccess);
     }
 
-    public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+    public override async Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
     {
+        var ids = ChangedPriceProducts();
+        if (ids.Count > 0)
+        {
+            var stored = await PriceSlabs.AsNoTracking().Where(s => ids.Contains(s.ProductId)).Select(s => new StoredSlab(s.Id, s.ProductId, s.PricePerUnit)).ToListAsync(cancellationToken);
+            var products = TrackedProducts(ids);
+            var missing = ids.Where(id => !products.ContainsKey(id)).ToList();
+            if (missing.Count > 0) foreach (var product in await Products.Where(p => missing.Contains(p.Id)).ToListAsync(cancellationToken)) products[product.Id] = product;
+            ApplyPrices(ids, stored, products);
+        }
         BeforeSave();
-        return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+        return await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+    }
+
+    private sealed record StoredSlab(long Id, long ProductId, decimal Price);
+
+    private Dictionary<long, Product> TrackedProducts(List<long> ids)
+    {
+        var wanted = ids.ToHashSet();
+        return ChangeTracker.Entries<Product>().Where(e => wanted.Contains(e.Entity.Id)).Select(e => e.Entity).GroupBy(x => x.Id).ToDictionary(g => g.Key, g => g.First());
+    }
+
+    /// <summary>The products whose price tiers are being added, changed or removed by this save.</summary>
+    private List<long> ChangedPriceProducts()
+    {
+        if (ChangeTracker.AutoDetectChangesEnabled) ChangeTracker.DetectChanges();
+        return ChangeTracker.Entries<PriceSlab>().Where(e => e.State is EntityState.Added or EntityState.Modified or EntityState.Deleted).Select(e => e.Entity.ProductId).Distinct().ToList();
+    }
+
+    /// <summary>
+    /// Sets the lowest and highest price of each product from the tiers it will have after this save: the tiers being added or changed here, plus the stored ones that are neither changed nor removed here.
+    /// Done in the same save, so the product and its price columns are never out of step.
+    /// </summary>
+    private void ApplyPrices(List<long> productIds, List<StoredSlab> stored, Dictionary<long, Product> products)
+    {
+        var entries = ChangeTracker.Entries<PriceSlab>().Where(e => productIds.Contains(e.Entity.ProductId)).ToList();
+        var removed = entries.Where(e => e.State == EntityState.Deleted).Select(e => e.Entity.Id).ToHashSet();
+        var tracked = entries.Where(e => e.State is not (EntityState.Deleted or EntityState.Detached)).Select(e => e.Entity).ToList();
+        var trackedIds = tracked.Where(x => x.Id != 0).Select(x => x.Id).ToHashSet();
+        foreach (var productId in productIds)
+        {
+            var prices = tracked.Where(x => x.ProductId == productId).Select(x => x.PricePerUnit)
+                .Concat(stored.Where(x => x.ProductId == productId && !trackedIds.Contains(x.Id) && !removed.Contains(x.Id)).Select(x => x.Price)).ToList();
+            if (!products.TryGetValue(productId, out var product)) continue;
+            var entry = Entry(product);
+            entry.Property(x => x.PriceFrom).CurrentValue = prices.Count == 0 ? null : prices.Min();
+            entry.Property(x => x.PriceTo).CurrentValue = prices.Count == 0 ? null : prices.Max();
+        }
     }
 
     /// <summary>Refuses to write a status text that is not one of the known constants (a typo would otherwise be stored silently), then stamps the times.</summary>
@@ -69,6 +125,8 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
             switch (entry.Entity)
             {
                 case SellerOrder x: RequireKnown(x.Status, SellerOrderStatus.All, "seller order"); break;
+                case Domain.Rfq.Rfq x: RequireKnown(x.Status, Domain.Rfq.RfqStatus.All, "request for quotation"); break;
+                case Domain.Rfq.RfqQuotation x: RequireKnown(x.Status, Domain.Rfq.QuotationStatus.All, "quotation"); break;
                 case OrderStatusHistory x: RequireKnown(x.Status, SellerOrderStatus.All, "order history"); break;
                 case Order x: RequireKnown(x.PaymentStatus, PaymentStatus.All, "order payment"); break;
                 case Payment x: RequireKnown(x.Status, PaymentStatus.All, "payment"); break;
@@ -102,6 +160,7 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
+        ConfigureRfq(builder);
         ConfigureRelationships(builder);
         ConfigureHotQueryIndexes(builder);
         builder.Entity<Business>(entity =>
@@ -244,6 +303,13 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
         builder.Entity<Invoice>().Property(x => x.InvoiceNumber).HasMaxLength(32);
         builder.Entity<Invoice>().Property(x => x.InvoiceType).HasMaxLength(32);
         builder.Entity<Invoice>().HasIndex(x => new { x.SellerOrderId, x.InvoiceType, x.RefundId }).IsUnique();
+        foreach (var money in new System.Linq.Expressions.Expression<Func<Invoice, decimal?>>[] { x => x.Taxable, x => x.Shipping, x => x.Cgst, x => x.Sgst, x => x.Igst, x => x.Total })
+            builder.Entity<Invoice>().Property(money).HasPrecision(18, 2);
+        builder.Entity<Invoice>().Property(x => x.CounterpartyName).HasMaxLength(200);
+        builder.Entity<Invoice>().Property(x => x.CounterpartyGstin).HasMaxLength(15);
+        builder.Entity<Invoice>().Property(x => x.IssuerGstin).HasMaxLength(15);
+        builder.Entity<Invoice>().Property(x => x.PlaceOfSupplyCode).HasMaxLength(2);
+        builder.Entity<Invoice>().HasIndex(x => x.IssuedAt);
         builder.Entity<InvoiceSequence>(entity =>
         {
             entity.HasKey(x => x.Id);
@@ -273,6 +339,33 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
     /// Notification.UserId and the user columns point to the identity database and are deliberately not foreign keys.
     /// docs/FK_ORPHAN_CHECK.sql is generated from this model; a test keeps it in step.
     /// </summary>
+    /// <summary>Requests for quotation (docs/RFQ.md).</summary>
+    private static void ConfigureRfq(ModelBuilder builder)
+    {
+        builder.Entity<Domain.Rfq.Rfq>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Title).HasMaxLength(120).IsRequired();
+            entity.Property(x => x.Description).HasMaxLength(2000);
+            entity.Property(x => x.TargetPricePerUnit).HasPrecision(18, 2);
+            entity.Property(x => x.DeliveryPincode).HasMaxLength(6).IsRequired();
+            entity.Property(x => x.DeliveryCity).HasMaxLength(100).IsRequired();
+            entity.Property(x => x.DeliveryState).HasMaxLength(100).IsRequired();
+            entity.Property(x => x.Status).HasMaxLength(20).IsConcurrencyToken();
+            entity.HasIndex(x => new { x.Status, x.ExpiresAtUtc });
+            entity.HasIndex(x => new { x.RetailerBusinessId, x.Status });
+        });
+        builder.Entity<Domain.Rfq.RfqQuotation>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.PricePerUnit).HasPrecision(18, 2);
+            entity.Property(x => x.Note).HasMaxLength(1000);
+            entity.Property(x => x.Status).HasMaxLength(20);
+            entity.HasIndex(x => new { x.RfqId, x.SellerBusinessId }).IsUnique();
+            entity.HasIndex(x => new { x.SellerBusinessId, x.Status });
+        });
+    }
+
     private static void ConfigureRelationships(ModelBuilder builder)
     {
         void Link<TDependent, TPrincipal>(System.Linq.Expressions.Expression<Func<TDependent, object?>> foreignKey)
@@ -316,6 +409,11 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
         Link<Refund, Payment>(x => x.PaymentId);
         Link<Refund, SellerOrder>(x => x.SellerOrderId);
         Link<Invoice, SellerOrder>(x => x.SellerOrderId);
+        // Requests for quotation
+        Link<Domain.Rfq.Rfq, Business>(x => x.RetailerBusinessId);
+        Link<Domain.Rfq.Rfq, Category>(x => x.CategoryId);
+        Link<Domain.Rfq.RfqQuotation, Domain.Rfq.Rfq>(x => x.RfqId);
+        Link<Domain.Rfq.RfqQuotation, Business>(x => x.SellerBusinessId);
         // Saved products
         Link<Favourite, Business>(x => x.RetailerBusinessId);
         Link<Favourite, Product>(x => x.ProductId);
@@ -336,5 +434,9 @@ public sealed class MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> 
         builder.Entity<Refund>().HasIndex(x => new { x.Status, x.Id });
         builder.Entity<Product>().HasIndex(x => new { x.SellerBusinessId, x.IsDeleted, x.UpdatedAtUtc });
         builder.Entity<Product>().HasIndex(x => new { x.Status, x.IsDeleted, x.UnitsSold, x.Id });
+        builder.Entity<Product>().Property(x => x.PriceFrom).HasPrecision(18, 2);
+        builder.Entity<Product>().Property(x => x.PriceTo).HasPrecision(18, 2);
+        builder.Entity<Product>().HasIndex(x => new { x.Status, x.IsDeleted, x.PriceFrom, x.Id });
+        builder.Entity<Product>().HasIndex(x => new { x.Status, x.IsDeleted, x.Id });
     }
 }

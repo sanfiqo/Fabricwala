@@ -61,3 +61,11 @@ cd client; npm run e2e:real     # browser run against the running API (script in
 `.github/workflows/ci.yml` runs on every push to `main`, `backend/**` and `frontend/**` and on every pull request:
 build, the fast suite, the MySQL suite (a `mysql:8.0` service container), the vulnerable-package check (fails when one is found), and for `client/` `npm ci`, `npm run lint`, `npm run build`.
 The workflow has not run on GitHub yet; the first push shows whether it needs a fix.
+
+## MySQL suite result (17 Nov 2026)
+Run on a local MySQL 8 with `TEXTILECONNECT_TEST_MYSQL` set: **571 passed, 1 skipped (the benchmark), 0 failed** in 5 min 25 s. Getting there needed fixes in the test setup only, no app change:
+- `SslMode=None` in the connection string is accepted (the app does the same change).
+- In MySQL mode the sign-in (identity) tables are in the same migrated database, as in production: approving a business writes both in one transaction on one connection, which cannot work with an in-memory identity store.
+- Tests that remove the seeded order first remove its lines (a real foreign key refuses to delete a parent that has children).
+- Fixed test data ids no longer collide with MySQL auto numbers; a test that still had the seller mark "Delivered" now follows the rule that only the retailer confirms delivery.
+The benchmark can raise the search limit of its own API (`MarketplaceHttpFixture.SearchLimitOverride`), because the limit of 60 searches a minute per address otherwise rejected most of its requests.

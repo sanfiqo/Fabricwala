@@ -40,6 +40,13 @@ public static class DevelopmentSeed
         var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
         log.LogInformation("Development seed: postal codes");
         await SeedPostalCodesAsync(db, ct);
+        // The optional parts are switched on in development so they can be tried; in a real database the owner switches them (docs/RFQ.md).
+        var rfqKey = TextileConnect.Application.Features.Feature.SettingKey(TextileConnect.Application.Features.Feature.Rfq);
+        if (await db.PlatformSettings.SingleOrDefaultAsync(x => x.Key == rfqKey, ct) is null)
+        {
+            db.PlatformSettings.Add(new TextileConnect.Domain.Catalogue.PlatformSetting { Key = rfqKey, Value = "on", UpdatedAtUtc = DateTime.UtcNow });
+            await db.SaveChangesAsync(ct);
+        }
         foreach (var persona in Personas)
         {
             log.LogInformation("Development seed: user and business for {Name} - begin", persona.FullName);

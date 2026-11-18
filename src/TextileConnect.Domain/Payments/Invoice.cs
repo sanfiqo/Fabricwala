@@ -11,4 +11,19 @@ public sealed class Invoice
     public long RefundId { get; set; }
     public string? FileKey { get; set; }
     public DateTime IssuedAt { get; set; } = DateTime.UtcNow;
+
+    // The figures of the document as they were printed, kept so that the registers for the accountant can be read without making every PDF again.
+    // Empty for documents issued before the register existed, and for the platform fee statement, which is not a tax invoice.
+    public decimal? Taxable { get; set; }
+    public decimal? Shipping { get; set; }
+    public decimal? Cgst { get; set; }
+    public decimal? Sgst { get; set; }
+    public decimal? Igst { get; set; }
+    public decimal? Total { get; set; }
+    /// <summary>The other party: the retailer on an invoice or credit note, the seller on a platform fee invoice.</summary>
+    public string? CounterpartyName { get; set; }
+    public string? CounterpartyGstin { get; set; }
+    /// <summary>The GSTIN of the one who issued the document.</summary>
+    public string? IssuerGstin { get; set; }
+    public string? PlaceOfSupplyCode { get; set; }
 }

@@ -33,6 +33,14 @@ Every number is copied from the order as frozen at checkout (price, GST rate, GS
 | `place_of_supply_unknown` (409) | the delivery pincode is not in the directory; load the real directory (F7.1) |
 | `platform_details_missing` (409) | fee invoice only: the platform company is not set up in the admin settings |
 
+## The register for the accountant (B2B-16)
+Every document that is issued from now on keeps the figures that were printed on it (taxable value, delivery, CGST, SGST, IGST, total, the other party and its GSTIN, the GSTIN of the issuer, the place of supply). The register reads these rows, so it never makes a PDF again and never changes with the live data.
+- Seller: `GET /api/v1/seller/invoices/register?from=2026-11-01&to=2026-11-30` - their tax invoices and credit notes (**Sale**, credit notes in minus) and the platform fee invoices they received (**Purchase**, the GST on the fee is their input tax).
+- Admin: `GET /api/v1/admin/invoices/register?from=&to=&sellerId=` - the platform fee invoices the platform issued (all **Sale**).
+- Dates are the dates in India, `yyyy-MM-dd`; default is this month so far; at most 366 days. `format=csv` gives a file (UTF-8 with a mark so that Excel reads it; names are made safe against formulas; at most 20,000 lines, else `register_too_large`); without it the answer is JSON, paged, with `sales` and `purchases` totals over the whole period.
+- Not in it: documents issued **before** this change (they have no stored figures; migration `AddInvoiceRegister` leaves them empty) and the plain platform fee statement (it is not a tax invoice).
+- Not built: a GSTR-1 style summary by rate and by state, a Tally XML voucher file (the CSV imports through Tally or Zoho import tools), e-invoicing.
+
 ## Tests
 `InvoiceTests`: amounts in words, financial year boundaries (IST), number length, state codes for every state in the master data, CGST/SGST against IGST, an odd paisa never lost, round off, a real PDF, numbering per seller and per year, same document on repeat, refusals above, no number used on failure. `RetailerExtrasHttpTests` covers the HTTP route end to end. The look was checked by rendering the page to an image once (not checked on every change).
 

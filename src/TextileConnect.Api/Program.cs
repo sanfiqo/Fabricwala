@@ -67,9 +67,13 @@ builder.Services.AddScoped<ICartService, EfCartService>();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<IOrderService, EfOrderService>();
 builder.Services.AddScoped<IOrderMaintenance, EfOrderService>();
+builder.Services.AddMemoryCache(); // the filter counts keep a copy of the catalogue for a few seconds (CatalogueFacetSnapshot.cs)
 builder.Services.AddHostedService<OrderMaintenanceWorker>();
 builder.Services.AddScoped<ICheckoutService, EfCheckoutService>();
 builder.Services.AddScoped<IPaymentService, EfPaymentService>();
+builder.Services.AddScoped<TextileConnect.Application.Invoicing.IInvoiceRegister, TextileConnect.Infrastructure.Payments.EfInvoiceRegister>();
+builder.Services.AddScoped<TextileConnect.Application.Features.IFeatureFlags, TextileConnect.Infrastructure.Features.EfFeatureFlags>();
+builder.Services.AddScoped<TextileConnect.Application.Rfq.IRfqService, TextileConnect.Infrastructure.Rfq.EfRfqService>();
 builder.Services.AddScoped<IFinanceService, EfFinanceService>();
 builder.Services.AddScoped<IAuthBusinessProfileReader, AuthBusinessProfileReader>();
 if (builder.Environment.IsDevelopment())
@@ -147,6 +151,9 @@ app.MapSanfiqoAuthEndpoints();
 app.MapBusinessEndpoints();
 app.MapPincodeEndpoints();
 app.MapAdminEndpoints();
+app.MapFeatureEndpoints();
+app.MapRfqEndpoints();
+app.MapInvoiceRegisterEndpoints();
 app.MapProductEndpoints();
 app.MapLandedCostEndpoints();
 app.MapInvoiceEndpoints();

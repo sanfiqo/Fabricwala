@@ -39,6 +39,7 @@ public sealed class RetailerOrderHttpTests
             // Drop the order the shared catalogue seed adds for popularity ranking so counts here are exact.
             var seedDb = seedScope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
             seedDb.Orders.RemoveRange(seedDb.Orders.Where(x => x.OrderNumber == "PAID-POPULARITY"));
+            seedDb.OrderItems.RemoveRange(seedDb.OrderItems.Where(x => x.SellerOrder!.Order!.OrderNumber == "PAID-POPULARITY"));   // a real database refuses to delete a parent that still has lines
             seedDb.SellerOrders.RemoveRange(seedDb.SellerOrders.Where(x => x.Order!.OrderNumber == "PAID-POPULARITY"));
             await seedDb.SaveChangesAsync();
         }

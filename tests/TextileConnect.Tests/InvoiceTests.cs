@@ -400,6 +400,24 @@ public sealed class InvoiceTests
     }
 
     [Fact]
+    public async Task Every_issued_document_keeps_the_figures_that_were_printed_for_the_register()
+    {
+        var world = await WorldAsync();
+        await SetPlatformAsync(world, Gstin("08"));
+        var order = await world.OrderAsync(commissionGst: 3.60m);
+        var invoice = await world.Service().CreateInvoiceAsync(order.Id, "SellerToRetailer");
+        var refund = await RefundAsync(world, order, 540m);
+        var note = await world.Service().CreateCreditNoteAsync(refund.Id);
+        var fee = await world.Service().CreateInvoiceAsync(order.Id, "PlatformCommission");
+
+        Assert.Equal((1000m, 30m, 25m, 25m, 0m, 1080m), (invoice.Taxable, invoice.Shipping, invoice.Cgst, invoice.Sgst, invoice.Igst, invoice.Total));
+        Assert.Equal(("Retail Shop", null, world.Seller.Gstin, "08"), (invoice.CounterpartyName, invoice.CounterpartyGstin, invoice.IssuerGstin, invoice.PlaceOfSupplyCode));
+        Assert.Equal((515m, 12.5m, 12.5m, 540m), (note.Taxable, note.Cgst, note.Sgst, note.Total));
+        Assert.Equal((20m, 1.8m, 1.8m, 23.6m), (fee.Taxable, fee.Cgst, fee.Sgst, fee.Total));
+        Assert.Equal("Seller Mills", fee.CounterpartyName);                         // on a fee invoice the other party is the seller
+    }
+
+    [Fact]
     public void The_invoice_numbers_and_types_are_pinned_in_the_model()
     {
         var invoice = new TextileConnect.Domain.Payments.Invoice { InvoiceNumber = "TC-20261113-00001", InvoiceType = "PlatformCommission", SellerOrderId = 4 };

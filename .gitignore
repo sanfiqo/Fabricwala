@@ -483,3 +483,6 @@ $RECYCLE.BIN/
 # Vim temporary swap files
 *.swp
 /src/TextileConnect.Api/App_Data/
+
+# A separate build output used when the normal one is locked by a running API
+/.tcbuild/

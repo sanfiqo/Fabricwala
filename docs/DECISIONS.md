@@ -30,3 +30,6 @@ Decided by the owner: keep the current rule, no GST on the delivery charge. Risk
 
 ## 17 Nov 2026 - GST on the platform fee
 Decided by the owner: charge 18% GST on the platform fee and issue a platform tax invoice to the seller (fee + GST taken from the payout). Needs the platform company legal name, GSTIN and address; not built yet.
+
+## 18 Nov 2026 - Requests for quotation come back (chosen by Claude, to confirm)
+The owner deleted the RFQ stub in F6 and later asked Claude to build the planned features one by one without questions. Claude therefore built B2B-2 (docs/RFQ.md) as a real feature behind the switch `Feature.Rfq`, which stays off until the owner turns it on. An accepted quotation does not become a payable order yet: the owner has to decide about commission on these deals.

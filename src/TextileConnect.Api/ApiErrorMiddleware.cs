@@ -42,7 +42,7 @@ public sealed class ApiErrorMiddleware(RequestDelegate next, ILogger<ApiErrorMid
                 _ => 500
             };
             error = exception is TextileConnect.Application.Common.RuleViolationException violation
-                ? new ApiErrorResponse(violation.Code, violation.Message)
+                ? new ApiErrorResponse(violation.Code, violation.Message, violation.Fields?.ToDictionary(x => x.Key, x => new[] { x.Value }))
                 : ApiErrorResponse.ForStatus(context.Response.StatusCode);
             if (exception is ValidationException validation)
                 error = error with { Fields = validation.Errors.GroupBy(x => x.PropertyName)

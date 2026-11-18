@@ -34,7 +34,7 @@ public sealed class IdorWalkTests
 
     private static void MapEverything(WebApplication app)
     {
-        app.MapAdminEndpoints(); app.MapInvoiceEndpoints(); app.MapStorefrontEndpoints(); app.MapBulkProductEndpoints(); app.MapStockAlertEndpoints();
+        app.MapAdminEndpoints(); app.MapFeatureEndpoints(); app.MapRfqEndpoints(); app.MapInvoiceEndpoints(); app.MapStorefrontEndpoints(); app.MapBulkProductEndpoints(); app.MapStockAlertEndpoints();
         app.MapAdminDashboardEndpoints(); app.MapAdminListEndpoints(); app.MapAdminReportEndpoints(); app.MapProductModerationEndpoints();
         app.MapCategoryBannerEndpoints(); app.MapBusinessSuspensionEndpoints();
     }

@@ -40,6 +40,8 @@ Errors are always `{ "code": "...", "message": "...", "fields": { ... } }`. Requ
 | GET | `/api/v1/admin/claims/{id}/photos/{photoId}` | Admin |  |  |  |
 | GET | `/api/v1/admin/commission` | Admin |  |  |  |
 | GET | `/api/v1/admin/dashboard` | Admin |  |  |  |
+| PUT | `/api/v1/admin/features/{name}` | Admin |  | FeatureSwitch |  |
+| GET | `/api/v1/admin/invoices/register` | Admin |  |  |  |
 | GET | `/api/v1/admin/orders` | Admin |  |  |  |
 | GET | `/api/v1/admin/orders/{id}` | Admin |  |  |  |
 | GET | `/api/v1/admin/payouts` | Admin |  |  |  |
@@ -49,6 +51,8 @@ Errors are always `{ "code": "...", "message": "...", "fields": { ... } }`. Requ
 | POST | `/api/v1/admin/products/{id}/moderate` | Admin |  | ModerationRequest |  |
 | GET | `/api/v1/admin/reports/{kind}` | Admin |  |  |  |
 | GET | `/api/v1/admin/retailers` | Admin |  |  |  |
+| GET | `/api/v1/admin/rfqs` | Admin |  |  |  |
+| POST | `/api/v1/admin/rfqs/{id}/close` | Admin |  | RfqCloseRequest |  |
 | GET | `/api/v1/admin/sellers` | Admin |  |  |  |
 | PUT | `/api/v1/admin/sellers/{id}/commission-rate` | Admin |  | CommissionRateRequest |  |
 | GET | `/api/v1/admin/settings` | Admin |  |  |  |
@@ -118,6 +122,12 @@ Errors are always `{ "code": "...", "message": "...", "fields": { ... } }`. Requ
 | Method | Path | Who may call | Limit | Body | Returns |
 | --- | --- | --- | --- | --- | --- |
 | GET | `/api/v1/cities` | public |  |  |  |
+
+## features
+
+| Method | Path | Who may call | Limit | Body | Returns |
+| --- | --- | --- | --- | --- | --- |
+| GET | `/api/v1/features` | public |  |  |  |
 
 ## health
 
@@ -191,6 +201,16 @@ Errors are always `{ "code": "...", "message": "...", "fields": { ... } }`. Requ
 | GET | `/api/v1/products/{slug}` | public |  |  |  |
 | GET | `/api/v1/products/{slug}/media/{mediaId}` | public |  |  |  |
 
+## rfqs
+
+| Method | Path | Who may call | Limit | Body | Returns |
+| --- | --- | --- | --- | --- | --- |
+| GET | `/api/v1/rfqs` | Retailer, approved business |  |  |  |
+| POST | `/api/v1/rfqs` | Retailer, approved business |  | RfqInput |  |
+| GET | `/api/v1/rfqs/{id}` | Retailer, approved business |  |  |  |
+| POST | `/api/v1/rfqs/{id}/cancel` | Retailer, approved business |  |  |  |
+| POST | `/api/v1/rfqs/{id}/quotations/{quotationId}/accept` | Retailer, approved business |  |  |  |
+
 ## saved-products
 
 | Method | Path | Who may call | Limit | Body | Returns |
@@ -207,6 +227,7 @@ Errors are always `{ "code": "...", "message": "...", "fields": { ... } }`. Requ
 | GET | `/api/v1/seller/dashboard` | Manufacturer, approved business |  |  |  |
 | GET | `/api/v1/seller/inventory/alerts` | any signed-in user, approved business |  |  |  |
 | GET | `/api/v1/seller/inventory/duplicates` | any signed-in user, approved business |  |  |  |
+| GET | `/api/v1/seller/invoices/register` | Manufacturer, approved business |  |  |  |
 | GET | `/api/v1/seller/orders` | Manufacturer, approved business |  |  |  |
 | GET | `/api/v1/seller/orders/{id}` | Manufacturer, approved business |  |  |  |
 | POST | `/api/v1/seller/orders/{id}/accept` | Manufacturer, approved business |  |  |  |
@@ -227,6 +248,11 @@ Errors are always `{ "code": "...", "message": "...", "fields": { ... } }`. Requ
 | PUT | `/api/v1/seller/products/{id}/active` | Manufacturer, approved business |  | ActiveRequest |  |
 | POST | `/api/v1/seller/products/{id}/media` | Manufacturer, approved business |  | file upload |  |
 | DELETE | `/api/v1/seller/products/{id}/media/{mediaId}` | Manufacturer, approved business |  |  |  |
+| GET | `/api/v1/seller/quotations` | Manufacturer, approved business |  |  |  |
+| GET | `/api/v1/seller/rfqs` | Manufacturer, approved business |  |  |  |
+| GET | `/api/v1/seller/rfqs/{id}` | Manufacturer, approved business |  |  |  |
+| DELETE | `/api/v1/seller/rfqs/{id}/quotation` | Manufacturer, approved business |  |  |  |
+| PUT | `/api/v1/seller/rfqs/{id}/quotation` | Manufacturer, approved business |  | QuotationInput |  |
 
 ## seller-orders
 
