@@ -1,7 +1,38 @@
 import type { Claim, NotificationItem,
   BusinessAddress, BusinessDetail, Category, City, Order, PlatformSettings, PriceSlab, ProductDetail,
-  SellerOrder, ShippingRate, State, Unit, Variant,
+  SellerOrder, ShippingRate, State, Unit, Variant, QuotationStatus, RfqStatus,
 } from '../types'
+
+/** A quotation in the sample data. */
+export interface DbQuotation {
+  id: number
+  sellerBusinessId: number
+  pricePerUnit: number
+  quantity: number
+  leadTimeDays: number
+  note?: string
+  status: QuotationStatus
+  createdAt: string
+}
+/** A request for quotation in the sample data (`status` is the stored one; Expired is worked out from `expiresAt`). */
+export interface DbRfq {
+  id: number
+  retailerId: number
+  title: string
+  description?: string
+  categoryId?: number
+  quantity: number
+  unit: string
+  targetPricePerUnit?: number
+  pincode: string
+  city: string
+  state: string
+  neededBy?: string
+  expiresAt: string
+  status: Exclude<RfqStatus, 'Expired'>
+  quotes: DbQuotation[]
+  createdAt: string
+}
 
 /** Fabric-like placeholder image (no network needed, works offline). */
 export function swatch(a: string, b: string, angle = 45): string {
@@ -53,6 +84,7 @@ export interface Db {
   claims?: Array<Claim & { note?: string }>
   /** Saved product ids per retailer business id. */
   saved?: Record<number, number[]>
+  rfqs?: DbRfq[]
 }
 
 const STORAGE_KEY = 'tc_mock_db_v2'

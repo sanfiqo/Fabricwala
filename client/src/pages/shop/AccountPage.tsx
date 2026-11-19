@@ -1,13 +1,14 @@
 import type { ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
-import { Bell, ChevronRight, FileText, Heart, LogOut, MapPin, MessageCircle, Store } from 'lucide-react'
+import { Bell, ChevronRight, FileQuestion, FileSpreadsheet, FileText, Heart, LogOut, MapPin, MessageCircle, Store } from 'lucide-react'
 import { authApi } from '@/api/endpoints'
 import { setUseMocks, USE_MOCKS } from '@/api/client'
 import { useMe } from '@/auth'
 import { Badge, Segmented } from '@/components/ui/misc'
 import { useMyBusiness, useUnreadCount } from '@/hooks'
 import { clearSavedData } from '@/queryClient'
+import { useFeature } from '@/lib/useFeature'
 import { fmt, label, LANGS, S, setLang, useLang } from '@/i18n'
 import { waLink } from '@/lib/whatsapp'
 
@@ -34,6 +35,7 @@ export default function AccountPage() {
   const { data: me } = useMe()
   const biz = useMyBusiness()
   const unread = useUnreadCount()
+  const rfqOn = useFeature('Rfq')
   const lang = useLang()
   const qc = useQueryClient()
   const nav = useNavigate()
@@ -94,6 +96,26 @@ export default function AccountPage() {
             <span className="min-w-0 flex-1">
               <span className="block text-[15px] font-medium">{S.saved.title}</span>
               <span className="block text-[13px] text-mute">{S.saved.rowSub}</span>
+            </span>
+            <ChevronRight className="size-4 text-mute" aria-hidden />
+          </Link>
+        )}
+        {rfqOn && (
+          <Link to={isSeller ? '/seller/rfq' : '/shop/rfq'} viewTransition className={rowCls}>
+            <span className={iconCls} aria-hidden><FileQuestion className="size-5" /></span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-[15px] font-medium">{isSeller ? S.rfq.sTitle : S.rfq.title}</span>
+              <span className="block text-[13px] text-mute">{isSeller ? S.rfq.sRowSub : S.rfq.rowSub}</span>
+            </span>
+            <ChevronRight className="size-4 text-mute" aria-hidden />
+          </Link>
+        )}
+        {isSeller && (
+          <Link to="/seller/products/bulk" viewTransition className={rowCls}>
+            <span className={iconCls} aria-hidden><FileSpreadsheet className="size-5" /></span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-[15px] font-medium">{S.bulk.open}</span>
+              <span className="block text-[13px] text-mute">{S.bulk.sub}</span>
             </span>
             <ChevronRight className="size-4 text-mute" aria-hidden />
           </Link>

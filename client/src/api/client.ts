@@ -21,13 +21,14 @@ function readUseMocks(): boolean {
 export const USE_MOCKS = readUseMocks()
 
 // ---- Per area switch. Areas are the adapter files in ./areas (one file each).
-export type ApiArea = 'auth' | 'business' | 'catalog' | 'cart' | 'orders' | 'seller' | 'payouts' | 'notifications' | 'account' | 'admin'
+export type ApiArea = 'auth' | 'business' | 'catalog' | 'cart' | 'orders' | 'seller' | 'payouts' | 'notifications' | 'account' | 'admin' | 'rfq'
 const AREA_PREFIXES: Array<[RegExp, ApiArea]> = [
   [/^auth\//, 'auth'],
   [/^(businesses|pincodes)/, 'business'],
   [/^(categories|states|cities|products|landed-cost|banners|storefronts)/, 'catalog'],
   [/^cart/, 'cart'],
   [/^(checkout|payments|orders)/, 'orders'],
+  [/^(rfqs|features|seller\/rfqs|seller\/quotations)/, 'rfq'],
   [/^seller\/payouts/, 'payouts'],
   [/^seller/, 'seller'],
   [/^notifications/, 'notifications'],

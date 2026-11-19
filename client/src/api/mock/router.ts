@@ -2,9 +2,10 @@ import { ApiError } from '../errors'
 import type {
   Claim, NotificationItem, AdminBusiness, AddressInput, Cart, CartGroup, CartItem, CreateBusinessInput, LandedCost, Me, Order, PaymentIntent, PriceSlab,
   ProductDetail, ProductInput, ProductQuery, ProductSummary, SellerOrder, ShippingRateInput, VerificationStatus,
+  MyQuotationRow, Quotation, QuotationInput, RfqDetail, RfqInput, RfqStatus, RfqSummary,
 } from '../types'
 import {
-  type Db, type DbBusiness, type DbOrder, type DbProduct, type DbSellerOrder, type DbUser, getDb, getSession, makeAddress, nextId, saveDb, setSession, swatch,
+  type Db, type DbBusiness, type DbOrder, type DbProduct, type DbQuotation, type DbRfq, type DbSellerOrder, type DbUser, getDb, getSession, makeAddress, nextId, saveDb, setSession, swatch,
 } from './db'
 
 interface Ctx {
@@ -660,6 +661,174 @@ on('GET', 'storefronts/:id', ({ db, params }) => {
   const seller = db.businesses.find((x) => x.id === Number(params[0]) && x.type === 'Manufacturer' && x.verificationStatus === 'Approved') ?? fail(404, 'Seller not found', 'NOT_FOUND')
   const products = db.products.filter((p) => p.sellerBusinessId === seller.id && p.status === 'Active').map(summary)
   return { business: { id: seller.id, displayName: seller.displayName, email: null, city: seller.addresses[0]?.cityName ?? null }, rating: 0, reviewCount: 0, products }
+})
+
+// ---------- RFQ and bulk upload (mock; real shapes are in docs/RFQ.md and BulkProductEndpoints.cs)
+on('GET', 'features', () => ({ Rfq: true }))
+
+const DAY = 86_400_000
+function rfqsOf(db: Db): DbRfq[] {
+  db.rfqs ??= [
+    {
+      id: nextId(), retailerId: 201, title: 'School sweaters, navy blue', description: 'Round neck, full sleeve, sizes 28 to 40. Need the first lot before school reopens.',
+      categoryId: db.categories[0]?.id, quantity: 500, unit: 'Piece', targetPricePerUnit: 240, pincode: '190001', city: 'Srinagar', state: 'Jammu & Kashmir',
+      expiresAt: new Date(Date.now() + 9 * DAY).toISOString(), status: 'Open', createdAt: new Date(Date.now() - DAY).toISOString(),
+      quotes: [{ id: nextId(), sellerBusinessId: 101, pricePerUnit: 228, quantity: 500, leadTimeDays: 12, note: 'Acrylic wool blend. Free delivery to the transporter.', status: 'Submitted', createdAt: new Date(Date.now() - 6 * 3_600_000).toISOString() }],
+    },
+  ]
+  return db.rfqs
+}
+const rfqStatusNow = (r: DbRfq): RfqStatus => (r.status === 'Open' && new Date(r.expiresAt).getTime() < Date.now() ? 'Expired' : r.status)
+const sellerOf = (db: Db, id: number) => db.businesses.find((b) => b.id === id)
+const rfqSummary = (db: Db, r: DbRfq, viewerSellerId?: number): RfqSummary => ({
+  id: r.id, title: r.title, quantity: r.quantity, unit: r.unit, status: rfqStatusNow(r), expiresAt: r.expiresAt,
+  quotationCount: r.quotes.filter((q) => q.status !== 'Withdrawn').length, deliveryCity: r.city, deliveryState: r.state, createdAt: r.createdAt,
+  categoryId: r.categoryId ?? null, categoryName: db.categories.find((c) => c.id === r.categoryId)?.name ?? null, targetPricePerUnit: r.targetPricePerUnit ?? null,
+  iHaveQuoted: viewerSellerId ? r.quotes.some((q) => q.sellerBusinessId === viewerSellerId && q.status !== 'Withdrawn') : null,
+})
+const quotationView = (db: Db, q: DbQuotation, viewerSellerId?: number): Quotation => {
+  const s = sellerOf(db, q.sellerBusinessId)
+  return {
+    id: q.id, sellerBusinessId: q.sellerBusinessId, sellerName: s?.displayName ?? '', pricePerUnit: q.pricePerUnit, quantity: q.quantity, total: q.pricePerUnit * q.quantity,
+    leadTimeDays: q.leadTimeDays, note: q.note ?? null, status: q.status, createdAt: q.createdAt, isMine: q.sellerBusinessId === viewerSellerId,
+    contact: q.status === 'Accepted' && s ? { name: s.displayName, phone: s.phone } : null,
+  }
+}
+const retailerRfqDetail = (db: Db, r: DbRfq): RfqDetail => ({
+  summary: rfqSummary(db, r), description: r.description ?? null, neededBy: r.neededBy ?? null,
+  quotations: r.quotes.filter((q) => q.status !== 'Withdrawn').sort((a, b) => a.pricePerUnit - b.pricePerUnit).map((q) => quotationView(db, q)), buyerContact: null,
+})
+const sellerRfqDetail = (db: Db, r: DbRfq, sellerId: number): RfqDetail => {
+  const mine = r.quotes.filter((q) => q.sellerBusinessId === sellerId)
+  const won = mine.some((q) => q.status === 'Accepted')
+  const buyer = db.businesses.find((b) => b.id === r.retailerId)
+  return {
+    summary: rfqSummary(db, r, sellerId), description: r.description ?? null, neededBy: r.neededBy ?? null,
+    quotations: mine.map((q) => quotationView(db, q, sellerId)), buyerContact: won && buyer ? { name: buyer.displayName, phone: buyer.phone } : null,
+  }
+}
+const paged = <T,>(items: T[]) => ({ items, total: items.length, page: 1, pageSize: 50 })
+const myRfq = (db: Db, id: number): DbRfq => {
+  const b = requireApproved(db, 'Retailer')
+  return rfqsOf(db).find((r) => r.id === id && r.retailerId === b.id) ?? fail(404, 'Request not found', 'not_found')
+}
+const openRfq = (db: Db, id: number): DbRfq => {
+  const r = rfqsOf(db).find((x) => x.id === id) ?? fail(404, 'Request not found', 'not_found')
+  if (rfqStatusNow(r) !== 'Open') fail(409, 'This request is not open any more', 'rfq_not_open')
+  return r
+}
+
+on('POST', 'rfqs', ({ db, body }) => {
+  const b = requireApproved(db, 'Retailer')
+  const input = body as RfqInput
+  const fields: Record<string, string[]> = {}
+  if (!input.title?.trim()) fields.title = ['required']
+  if (!(input.quantity > 0)) fields.quantity = ['invalid_value']
+  if (Object.keys(fields).length) throw new ApiError(400, 'Check the form', fields, 'validation_failed')
+  if (!/^\d{6}$/.test(String(input.deliveryPincode ?? ''))) fail(400, 'Enter a 6 digit pincode', 'pincode_invalid')
+  const place = db.businesses.flatMap((x) => x.addresses).find((a) => a.pincode === input.deliveryPincode)
+  if (!place) fail(400, 'We do not know this pincode', 'pincode_unknown')
+  if (rfqsOf(db).filter((r) => r.retailerId === b.id && rfqStatusNow(r) === 'Open').length >= 10) fail(409, 'You have 10 open requests', 'rfq_limit_reached')
+  const r: DbRfq = {
+    id: nextId(), retailerId: b.id, title: input.title.trim(), description: input.description?.trim() || undefined, categoryId: input.categoryId,
+    quantity: input.quantity, unit: input.unit || 'Piece', targetPricePerUnit: input.targetPricePerUnit, pincode: input.deliveryPincode,
+    city: place!.cityName, state: 'Jammu & Kashmir', neededBy: input.neededBy, expiresAt: new Date(Date.now() + (input.expiresInDays ?? 14) * DAY).toISOString(),
+    status: 'Open', quotes: [], createdAt: new Date().toISOString(),
+  }
+  rfqsOf(db).unshift(r)
+  return retailerRfqDetail(db, r)
+})
+on('GET', 'rfqs', ({ db, query }) => {
+  const b = requireApproved(db, 'Retailer')
+  const list = rfqsOf(db).filter((r) => r.retailerId === b.id && (!query.status || rfqStatusNow(r) === query.status)).map((r) => rfqSummary(db, r))
+  return paged(list)
+})
+on('GET', 'rfqs/:id', ({ db, params }) => retailerRfqDetail(db, myRfq(db, Number(params[0]))))
+on('POST', 'rfqs/:id/cancel', ({ db, params }) => {
+  const r = myRfq(db, Number(params[0]))
+  if (rfqStatusNow(r) !== 'Open') fail(409, 'This request is not open any more', 'rfq_not_open')
+  r.status = 'Cancelled'
+  r.quotes.forEach((q) => q.status !== 'Withdrawn' && (q.status = 'Rejected'))
+  return retailerRfqDetail(db, r)
+})
+on('POST', 'rfqs/:id/quotations/:id/accept', ({ db, params }) => {
+  const r = myRfq(db, Number(params[0]))
+  if (rfqStatusNow(r) !== 'Open') fail(409, 'This request is not open any more', 'rfq_not_open')
+  const win = r.quotes.find((q) => q.id === Number(params[1]) && q.status === 'Submitted') ?? fail(409, 'This quotation is not available', 'quotation_not_available')
+  r.quotes.forEach((q) => q.status !== 'Withdrawn' && (q.status = q === win ? 'Accepted' : 'Rejected'))
+  r.status = 'Awarded'
+  return retailerRfqDetail(db, r)
+})
+
+on('GET', 'seller/rfqs', ({ db, query }) => {
+  const b = requireApproved(db, 'Manufacturer')
+  const term = (query.q ?? '').toLowerCase()
+  const list = rfqsOf(db)
+    .filter((r) => rfqStatusNow(r) === 'Open' && (!query.categoryId || r.categoryId === Number(query.categoryId)) && (!term || r.title.toLowerCase().includes(term)))
+    .map((r) => rfqSummary(db, r, b.id))
+  return paged(list)
+})
+on('GET', 'seller/rfqs/:id', ({ db, params }) => {
+  const b = requireApproved(db, 'Manufacturer')
+  const r = rfqsOf(db).find((x) => x.id === Number(params[0])) ?? fail(404, 'Request not found', 'not_found')
+  return sellerRfqDetail(db, r, b.id)
+})
+on('PUT', 'seller/rfqs/:id/quotation', ({ db, params, body }) => {
+  const b = requireApproved(db, 'Manufacturer')
+  const r = openRfq(db, Number(params[0]))
+  const input = body as QuotationInput
+  const fields: Record<string, string[]> = {}
+  if (!(input.pricePerUnit > 0)) fields.pricePerUnit = ['invalid_value']
+  if (!(input.quantity > 0) || input.quantity > r.quantity) fields.quantity = ['invalid_value']
+  if (!(input.leadTimeDays >= 1 && input.leadTimeDays <= 365)) fields.leadTimeDays = ['invalid_value']
+  if (Object.keys(fields).length) throw new ApiError(400, 'Check the form', fields, 'validation_failed')
+  const mine = r.quotes.find((q) => q.sellerBusinessId === b.id)
+  if (mine && (mine.status === 'Accepted' || mine.status === 'Rejected')) fail(409, 'This quotation is final', 'quotation_final')
+  if (mine) Object.assign(mine, { pricePerUnit: input.pricePerUnit, quantity: input.quantity, leadTimeDays: input.leadTimeDays, note: input.note?.trim() || undefined, status: 'Submitted' })
+  else r.quotes.push({ id: nextId(), sellerBusinessId: b.id, pricePerUnit: input.pricePerUnit, quantity: input.quantity, leadTimeDays: input.leadTimeDays, note: input.note?.trim() || undefined, status: 'Submitted', createdAt: new Date().toISOString() })
+  return sellerRfqDetail(db, r, b.id)
+})
+on('DELETE', 'seller/rfqs/:id/quotation', ({ db, params }) => {
+  const b = requireApproved(db, 'Manufacturer')
+  const r = openRfq(db, Number(params[0]))
+  const mine = r.quotes.find((q) => q.sellerBusinessId === b.id && q.status === 'Submitted') ?? fail(409, 'There is no quotation to withdraw', 'quotation_not_available')
+  mine.status = 'Withdrawn'
+  return sellerRfqDetail(db, r, b.id)
+})
+on('GET', 'seller/quotations', ({ db, query }) => {
+  const b = requireApproved(db, 'Manufacturer')
+  const rows: MyQuotationRow[] = rfqsOf(db)
+    .flatMap((r) => r.quotes.filter((q) => q.sellerBusinessId === b.id && q.status !== 'Withdrawn' && (!query.status || q.status === query.status)).map((q) => ({ rfq: rfqSummary(db, r, b.id), quotation: quotationView(db, q, b.id) })))
+  return paged(rows)
+})
+
+// Bulk product upload: reads the CSV text and checks each row the way the server does (columns in docs: categoryId,title,slug,description,gstRate,moq,unit,status).
+async function bulkParse(db: Db, form?: FormData) {
+  const file = form?.get('file')
+  if (!(file instanceof File)) fail(400, 'Choose a CSV file', 'validation_failed')
+  const lines = (await (file as File).text()).split(/\r?\n/).filter((l) => l.trim())
+  const rows: Array<{ categoryId: number; title: string; slug: string; description: string | null; gstRate: number; moq: number; unit: string; status: string }> = []
+  const errors: string[] = []
+  lines.slice(1).forEach((line, i) => {
+    const [categoryId, title, slug, description, gstRate, moq, unit, status] = line.split(',').map((c) => c.trim())
+    const n = i + 2
+    if (!db.categories.some((c) => c.id === Number(categoryId))) errors.push(`Row ${n}: category ${categoryId || '(empty)'} does not exist`)
+    if (!title) errors.push(`Row ${n}: title is empty`)
+    if (!(Number(moq) >= 1)) errors.push(`Row ${n}: minimum order must be 1 or more`)
+    rows.push({ categoryId: Number(categoryId), title, slug: slug || title.toLowerCase().replace(/[^a-z0-9]+/g, '-'), description: description || null, gstRate: Number(gstRate) || 0, moq: Number(moq) || 0, unit: unit || 'Piece', status: status || 'Draft' })
+  })
+  if (rows.length === 0) errors.push('The file has no product rows')
+  return { rows, errors }
+}
+on('POST', 'seller/products/bulk/preview', ({ db, form }) => {
+  requireApproved(db, 'Manufacturer')
+  return bulkParse(db, form)
+})
+on('POST', 'seller/products/bulk/import', async ({ db, form }) => {
+  requireApproved(db, 'Manufacturer')
+  const parsed = await bulkParse(db, form)
+  if (parsed.errors.length) fail(400, parsed.errors[0], 'validation_failed')
+  return { imported: parsed.rows.length }
 })
 
 // ---------- entry

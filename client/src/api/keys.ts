@@ -23,6 +23,12 @@ export const qk = {
   adminBusinesses: (status?: string) => (status ? (['admin-businesses', status] as const) : (['admin-businesses'] as const)),
   adminDashboard: ['admin-dashboard'] as const,
   saved: ['saved'] as const,
+  features: ['features'] as const,
+  rfqs: (status?: string) => (status ? (['rfqs', status] as const) : (['rfqs'] as const)),
+  rfq: (id: number) => ['rfqs', 'detail', id] as const,
+  sellerRfqs: (q?: string) => (q ? (['seller-rfqs', q] as const) : (['seller-rfqs'] as const)),
+  sellerRfq: (id: number) => ['seller-rfqs', 'detail', id] as const,
+  sellerQuotes: ['seller-quotes'] as const,
   storefront: (businessId: number) => ['storefront', businessId] as const,
 }
 

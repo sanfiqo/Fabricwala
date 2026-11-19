@@ -174,7 +174,7 @@ export function Segmented<T extends string>({ value, onChange, options }: { valu
 
 export function LinkButton({ to, children, className }: { to: string; children: ReactNode; className?: string }) {
   return (
-    <Link to={to} viewTransition className={cn('press inline-flex min-h-12 items-center justify-center rounded-pill bg-ink px-6 font-medium text-background', className)}>
+    <Link to={to} viewTransition className={cn('press inline-flex min-h-12 items-center justify-center rounded-pill bg-brand px-6 font-medium text-white shadow-[0_8px_20px_rgb(14_90_67/0.28)]', className)}>
       {children}
     </Link>
   )

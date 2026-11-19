@@ -23,6 +23,12 @@ const AdminReviewPage = lazy(() => import('@/pages/admin/AdminReviewPage'))
 const AccountPage = lazy(() => import('@/pages/shop/AccountPage'))
 const OrdersPage = lazy(() => import('@/pages/shop/OrdersPage').then((m) => ({ default: m.OrdersPage })))
 const OrderDetailPage = lazy(() => import('@/pages/shop/OrdersPage').then((m) => ({ default: m.OrderDetailPage })))
+const RfqListPage = lazy(() => import('@/pages/shop/RfqListPage'))
+const RfqNewPage = lazy(() => import('@/pages/shop/RfqNewPage'))
+const RfqDetailPage = lazy(() => import('@/pages/shop/RfqDetailPage'))
+const SellerRfqPage = lazy(() => import('@/pages/seller/SellerRfqPage'))
+const SellerRfqDetailPage = lazy(() => import('@/pages/seller/SellerRfqDetailPage'))
+const BulkUploadPage = lazy(() => import('@/pages/seller/BulkUploadPage'))
 const SavedPage = lazy(() => import('@/pages/shop/SavedPage'))
 const StorefrontPage = lazy(() => import('@/pages/shop/StorefrontPage'))
 const LegalPage = lazy(() => import('@/pages/LegalPage'))
@@ -72,6 +78,9 @@ export default function App() {
       <Route element={<Gate area="Retailer" />}>
         <Route element={<AppShell />}>
           <Route path="/shop/saved" element={<SavedPage />} />
+          <Route path="/shop/rfq" element={<RfqListPage />} />
+          <Route path="/shop/rfq/new" element={<RfqNewPage />} />
+          <Route path="/shop/rfq/:id" element={<RfqDetailPage />} />
           <Route path="/shop/cart" element={<CartPage />} />
           <Route path="/shop/checkout" element={<CheckoutPage />} />
           <Route path="/shop/orders" element={<OrdersPage />} />
@@ -88,6 +97,9 @@ export default function App() {
           <Route path="/seller/payouts" element={<PayoutsPage />} />
           <Route path="/seller/products" element={<SellerProductsPage />} />
           <Route path="/seller/products/new" element={<ProductEditorPage />} />
+          <Route path="/seller/products/bulk" element={<BulkUploadPage />} />
+          <Route path="/seller/rfq" element={<SellerRfqPage />} />
+          <Route path="/seller/rfq/:id" element={<SellerRfqDetailPage />} />
           <Route path="/seller/products/:id" element={<ProductEditorPage />} />
           <Route path="/seller/orders" element={<SellerOrdersPage />} />
           <Route path="/seller/orders/:id" element={<SellerOrderDetailPage />} />

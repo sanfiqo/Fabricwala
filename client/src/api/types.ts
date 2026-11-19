@@ -100,6 +100,95 @@ export interface City {
   isSourcingHub: boolean
 }
 
+// ---- Bulk product upload (seller). Real shapes: BulkProductEndpoints.cs
+export interface BulkRow {
+  categoryId: number
+  title: string
+  slug: string
+  description?: string | null
+  gstRate: number
+  moq: number
+  unit: string
+  status: string
+}
+/** `POST /seller/products/bulk/preview`: the rows that would be created and one text per problem (empty `errors` means ready to import). */
+export interface BulkPreview {
+  rows: BulkRow[]
+  errors: string[]
+}
+export interface BulkImportResult {
+  imported: number
+}
+
+// ---- RFQ: requests for quotation (feature switch `Rfq`). Real shapes: src/TextileConnect.Application/Rfq/IRfqService.cs, docs/RFQ.md
+export type RfqStatus = 'Open' | 'Expired' | 'Awarded' | 'Cancelled' | 'Closed'
+export type QuotationStatus = 'Submitted' | 'Withdrawn' | 'Accepted' | 'Rejected'
+export interface RfqInput {
+  title: string
+  description?: string
+  categoryId?: number
+  quantity: number
+  unit?: string
+  targetPricePerUnit?: number
+  deliveryPincode: string
+  neededBy?: string
+  expiresInDays?: number
+}
+export interface RfqSummary {
+  id: number
+  title: string
+  quantity: number
+  unit: string
+  status: RfqStatus
+  expiresAt: string
+  quotationCount: number
+  deliveryCity: string
+  deliveryState: string
+  createdAt: string
+  categoryId?: number | null
+  categoryName?: string | null
+  targetPricePerUnit?: number | null
+  /** Only filled for a manufacturer. */
+  iHaveQuoted?: boolean | null
+}
+export interface RfqContact {
+  name: string
+  phone: string
+}
+export interface Quotation {
+  id: number
+  sellerBusinessId: number
+  sellerName: string
+  pricePerUnit: number
+  quantity: number
+  total: number
+  leadTimeDays: number
+  note?: string | null
+  status: QuotationStatus
+  createdAt: string
+  isMine: boolean
+  /** Only for the accepted quotation. */
+  contact?: RfqContact | null
+}
+export interface RfqDetail {
+  summary: RfqSummary
+  description?: string | null
+  neededBy?: string | null
+  quotations: Quotation[]
+  /** Only for the winning manufacturer, after the request is awarded. */
+  buyerContact?: RfqContact | null
+}
+export interface QuotationInput {
+  pricePerUnit: number
+  quantity: number
+  leadTimeDays: number
+  note?: string
+}
+export interface MyQuotationRow {
+  rfq: RfqSummary
+  quotation: Quotation
+}
+
 // ---- Saved products and seller storefront (retailer extras)
 /** One row of `GET /saved-products`. The real row has no photo; `available` is false when the product or its seller is no longer live. */
 export interface SavedProduct {
