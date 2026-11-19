@@ -29,25 +29,31 @@
 
 @theme {
   /* ---- Design tokens (client/design-ref/tokens.json). Never hard-code colours in components. ---- */
-  --color-background: #faf9f6;
+  /* Vision Pro style (Nov 2026): warm cream canvas, emerald brand, peach accent, soft light cards. */
+  --color-background: #f7f3ec;
   --color-surface: #ffffff;
-  --color-soft: #f2f1ed;
+  --color-soft: #f0ebe2;
   --color-ink: #1c1b19;
-  --color-mute: #5c5a55;
-  --color-line: #e9e7e2;
-  --color-saving-bg: #fcebc4;
-  --color-saving: #6b4a06;
+  --color-mute: #5f5b53;
+  --color-line: #e8e1d6;
+  --color-brand: #0e5a43;
+  --color-brand-dark: #0a4533;
+  --color-brand-soft: #e2f0e9;
+  --color-peach: #f3a35a;
+  --color-peach-soft: #fde8d3;
+  --color-saving-bg: #fde8d3;
+  --color-saving: #7a3e06;
   --color-success: #1f7a4d;
   --color-error: #b3261e;
   --color-error-bg: #fbe9e7;
-  --color-dot: #f4b63f;
+  --color-dot: #f3a35a;
 
   /* shadcn semantic names, mapped onto the tokens above (used by Drawer and Dialog) */
   --color-foreground: var(--color-ink);
   --color-popover: var(--color-surface);
   --color-popover-foreground: var(--color-ink);
-  --color-primary: var(--color-ink);
-  --color-primary-foreground: var(--color-background);
+  --color-primary: var(--color-brand);
+  --color-primary-foreground: #ffffff;
   --color-secondary: var(--color-soft);
   --color-secondary-foreground: var(--color-ink);
   --color-muted: var(--color-soft);
@@ -57,7 +63,7 @@
   --color-destructive: var(--color-error);
   --color-border: var(--color-line);
   --color-input: var(--color-line);
-  --color-ring: var(--color-ink);
+  --color-ring: var(--color-brand);
 
   /* Screens that are not migrated yet still use these names. They now point at the ink palette,
      so old and new screens look like one app. Remove when the last screen is migrated. */
@@ -67,21 +73,25 @@
   --color-navy-700: #4a4843;
   --color-navy-100: #e9e7e2;
   --color-navy-50: #f2f1ed;
-  --color-leaf-700: #17633d;
-  --color-leaf-600: #1f7a4d;
-  --color-leaf-100: #e3f1e9;
+  --color-leaf-700: #0a4533;
+  --color-leaf-600: #0e5a43;
+  --color-leaf-100: #e2f0e9;
   --color-leaf-50: #f0f7f3;
-  --color-warn: #6b4a06;
-  --color-warn-bg: #fcebc4;
+  --color-warn: #7a3e06;
+  --color-warn-bg: #fde8d3;
   --color-bad: #b3261e;
   --color-bad-bg: #fbe9e7;
 
-  --radius-pill: 28px;
-  --radius-card: 22px;
-  --radius-chip: 21px;
+  --radius-pill: 999px;
+  --radius-card: 28px;
+  --radius-chip: 22px;
 
   --shadow-nav: 0 14px 40px rgb(28 27 25 / 0.22);
   --shadow-bar: 0 -6px 24px rgb(28 27 25 / 0.06);
+  /* Three depth levels: resting card, hovered/raised card, floating element */
+  --shadow-card: 0 1px 2px rgb(60 40 20 / 0.04), 0 8px 24px rgb(60 40 20 / 0.07);
+  --shadow-raised: 0 2px 4px rgb(60 40 20 / 0.05), 0 16px 36px rgb(60 40 20 / 0.12);
+  --shadow-float: 0 24px 60px rgb(60 40 20 / 0.18);
 
   --font-sans: "Inter Variable", "Noto Sans Devanagari Variable", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
@@ -103,7 +113,12 @@ body,
 body {
   position: relative; /* iOS Safari needs this for bottom sheets */
   margin: 0;
-  background: var(--color-background);
+  /* Warm peach glow from the top right and a soft one on the left, over the cream canvas */
+  background:
+    radial-gradient(720px 420px at 100% -6%, rgb(255 205 150 / 0.5), transparent 65%),
+    radial-gradient(640px 460px at -12% 34%, rgb(255 224 190 / 0.4), transparent 65%),
+    var(--color-background);
+  background-repeat: no-repeat;
   color: var(--color-ink);
   font-family: var(--font-sans);
   font-size: 16px;
@@ -122,9 +137,47 @@ body {
 }
 @layer base {
   :focus-visible {
-    outline: 2px solid var(--color-ink);
+    outline: 2px solid var(--color-brand);
     outline-offset: 2px;
   }
+}
+
+/* White cards get a soft resting shadow everywhere (every `bg-surface rounded-card` in the app). */
+.bg-surface.rounded-card {
+  box-shadow: var(--shadow-card);
+}
+a.bg-surface.rounded-card,
+button.bg-surface.rounded-card,
+.press.bg-surface.rounded-card {
+  transition: box-shadow var(--duration-small) ease-out, transform var(--duration-tap) ease-out;
+}
+a.bg-surface.rounded-card:hover,
+.press.bg-surface.rounded-card:hover {
+  box-shadow: var(--shadow-raised);
+}
+
+/* Feature cards: gradient surfaces from the reference design. Use with rounded-card and text colours of your choice. */
+.card-peach {
+  background: linear-gradient(160deg, #fbd2a2 0%, #f3a35a 62%, #ee8a3a 100%);
+  color: #3d2106;
+  box-shadow: var(--shadow-card);
+}
+.card-emerald {
+  background:
+    radial-gradient(120% 80% at 90% 100%, rgb(52 211 153 / 0.35), transparent 60%),
+    linear-gradient(160deg, #0e5a43 0%, #0a4533 70%, #06301f 100%);
+  color: #ffffff;
+  box-shadow: var(--shadow-card);
+}
+
+/* Slow float for decorative 3D bits (leaf, stone, sphere). Stops for reduced-motion users (rule at the end of this file). */
+@keyframes float-slow {
+  50% {
+    transform: translateY(-10px) rotate(2deg);
+  }
+}
+.float-slow {
+  animation: float-slow 7s ease-in-out infinite;
 }
 .safe-b {
   padding-bottom: env(safe-area-inset-bottom);
@@ -196,9 +249,10 @@ body {
 }
 @supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
   .glass {
-    background: rgb(255 255 255 / 0.82);
-    -webkit-backdrop-filter: blur(18px);
-    backdrop-filter: blur(18px);
+    background: rgb(255 255 255 / 0.66);
+    border: 1px solid rgb(255 255 255 / 0.7);
+    -webkit-backdrop-filter: blur(22px) saturate(160%);
+    backdrop-filter: blur(22px) saturate(160%);
   }
 }
 
@@ -271,6 +325,12 @@ body {
 }
 
 /* Light profile for weak phones (set in src/motion/profile.ts): no blur, no shimmer, short transitions. */
+html[data-perf="lite"] body {
+  background: var(--color-background); /* weak phones: flat canvas, no gradients */
+}
+html[data-perf="lite"] .float-slow {
+  animation: none;
+}
 html[data-perf="lite"] .glass {
   background: rgb(255 255 255 / 0.98);
   -webkit-backdrop-filter: none;

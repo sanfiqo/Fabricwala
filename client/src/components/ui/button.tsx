@@ -3,16 +3,16 @@ import { forwardRef, type ButtonHTMLAttributes } from 'react'
 import { Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-/** One charcoal pill per screen (primary). Everything else is soft, outline or ghost. */
+/** One emerald pill per screen (primary). Everything else is soft, outline or ghost. */
 export const buttonVariants = cva(
   'press inline-flex select-none items-center justify-center gap-2 rounded-pill font-medium disabled:pointer-events-none disabled:opacity-45',
   {
     variants: {
       variant: {
-        primary: 'bg-ink text-background hover:bg-ink/90',
+        primary: 'bg-brand text-white shadow-[0_8px_20px_rgb(14_90_67/0.28)] hover:bg-brand-dark',
         /** Same as primary. Kept so screens that are not migrated yet keep working. */
-        accent: 'bg-ink text-background hover:bg-ink/90',
-        soft: 'bg-soft text-ink hover:bg-line',
+        accent: 'bg-brand text-white shadow-[0_8px_20px_rgb(14_90_67/0.28)] hover:bg-brand-dark',
+        soft: 'bg-surface text-ink shadow-[0_2px_10px_rgb(60_40_20/0.08)] hover:bg-peach-soft',
         outline: 'border border-line bg-surface text-ink hover:bg-soft',
         ghost: 'text-ink hover:bg-soft',
         danger: 'bg-error text-white hover:opacity-90',
