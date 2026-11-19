@@ -6,10 +6,11 @@ import { orderApi } from '@/api/endpoints'
 import { qk } from '@/api/keys'
 import type { Order, SellerOrder } from '@/api/types'
 import { InvoiceRow } from '@/components/InvoiceRow'
+import { RateOrderRow } from '@/components/RateOrder'
 import { canConfirm, PaymentBadge, StatusTimeline, StepBar } from '@/components/OrderParts'
 import { StickyActionBar } from '@/components/StickyActionBar'
 import { Button } from '@/components/ui/button'
-import { BackButton, Chip, EmptyState, ErrorState, LinkButton, Skeleton } from '@/components/ui/misc'
+import { BackButton, EmptyState, ErrorState, LinkButton, Skeleton } from '@/components/ui/misc'
 import { useToast } from '@/components/ui/toast'
 import { fmt, S } from '@/i18n'
 import { haptic } from '@/motion'
@@ -29,7 +30,7 @@ const reachedAt = (so: SellerOrder) => so.history.find((h) => h.status === 'Reac
 function OrderRow({ so, showStatus }: { so: SellerOrder; showStatus?: boolean }) {
   return (
     <div className="flex items-center gap-3 px-4 py-3">
-      <span className="flex size-[52px] shrink-0 items-center justify-center rounded-[14px] bg-soft text-mute" aria-hidden>
+      <span className="flex size-[52px] shrink-0 items-center justify-center rounded-[18px] bg-brand-soft text-brand" aria-hidden>
         <Package className="size-6" />
       </span>
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
@@ -85,7 +86,7 @@ function ConfirmCard({ o }: { o: Order }) {
 
 function OrderCard({ o }: { o: Order }) {
   return (
-    <Link to={`/shop/orders/${o.id}`} viewTransition className="press block overflow-hidden rounded-card border border-line bg-surface">
+    <Link to={`/shop/orders/${o.id}`} viewTransition className="press block overflow-hidden rounded-card border border-line bg-surface shadow-card">
       <div className="flex items-baseline justify-between gap-2 border-b border-line px-4 py-3.5">
         <span className="text-[15px] font-semibold">{fmt(S.orders.orderedOn, { d: formatShortDate(o.placedAt) })} · {money(o.grandTotal)}</span>
         <span className="shrink-0 text-[13px] text-mute">{o.orderNumber}</span>
@@ -93,9 +94,11 @@ function OrderCard({ o }: { o: Order }) {
       <div className="divide-y divide-line">
         {o.sellerOrders.map((so) => <OrderRow key={so.id} so={so} showStatus />)}
       </div>
-      <div className="flex items-center justify-between border-t border-line px-4 py-3 text-sm font-medium">
-        <span>{S.orders.whereIs}</span>
-        <ChevronRight className="size-4" aria-hidden />
+      <div className="flex justify-end border-t border-line px-4 py-3">
+        <span className="inline-flex min-h-10 items-center gap-1.5 rounded-pill bg-brand px-4 text-sm font-medium text-white">
+          {S.orders.whereIs}
+          <ChevronRight className="size-4" aria-hidden />
+        </span>
       </div>
     </Link>
   )
@@ -122,10 +125,18 @@ export function OrdersPage() {
   return (
     <div className="pb-4">
       <h1 className="mx-5 mt-7 text-[30px] font-semibold tracking-[-0.02em]">{S.orders.title}</h1>
-      <nav aria-label={S.orders.title} className="mx-5 mt-4 flex gap-2 overflow-x-auto [scrollbar-width:none]">
-        <Chip active={filter === 'active'} onClick={() => setFilter('active')} className="shrink-0">{S.orders.filterActive}{activeCount > 0 && ` · ${activeCount}`}</Chip>
-        <Chip active={filter === 'delivered'} onClick={() => setFilter('delivered')} className="shrink-0">{S.orders.filterDelivered}</Chip>
-        <Chip active={filter === 'problems'} onClick={() => setFilter('problems')} className="shrink-0">{S.orders.filterProblems}</Chip>
+      <nav aria-label={S.orders.title} className="mx-5 mt-4 flex gap-1 rounded-pill bg-soft p-1">
+        {([['active', S.orders.filterActive + (activeCount > 0 ? ` · ${activeCount}` : '')], ['delivered', S.orders.filterDelivered], ['problems', S.orders.filterProblems]] as const).map(([k, text]) => (
+          <button
+            key={k}
+            type="button"
+            aria-pressed={filter === k}
+            onClick={() => setFilter(k)}
+            className={cn('press min-h-10 flex-1 truncate rounded-pill px-3 text-sm font-medium transition-colors', filter === k ? 'bg-brand text-white shadow-card' : 'text-mute')}
+          >
+            {text}
+          </button>
+        ))}
       </nav>
 
       <div className="pt-4">
@@ -276,6 +287,7 @@ export function OrderDetailPage() {
           <ChevronRight className="size-4" aria-hidden />
         </a>
         {(o.paymentStatus === 'Paid' || o.paymentStatus === 'PartiallyRefunded') && !failed && <InvoiceRow sellerOrderId={so.id} label={S.invoice.download} />}
+        {o.sellerOrders.some((s) => s.status === 'Delivered') && <RateOrderRow orderId={o.id} />}
         {canReport && (
           <Link to={`/shop/orders/${o.id}/report`} className="press flex min-h-[52px] items-center gap-3 border-t border-line px-4 text-sm">
             <span className="flex-1">{S.orders.reportProblem}</span>

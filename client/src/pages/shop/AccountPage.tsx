@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
-import { Bell, ChevronRight, FileQuestion, FileSpreadsheet, FileText, Heart, LogOut, MapPin, MessageCircle, Store } from 'lucide-react'
+import { Bell, ChevronRight, FileQuestion, FileSpreadsheet, FileText, Heart, HelpCircle, LogOut, MapPin, MessageCircle, Store } from 'lucide-react'
 import { authApi } from '@/api/endpoints'
 import { setUseMocks, USE_MOCKS } from '@/api/client'
 import { useMe } from '@/auth'
@@ -121,6 +121,14 @@ export default function AccountPage() {
             <ChevronRight className="size-4 text-mute" aria-hidden />
           </Link>
         )}
+        <Link to="/help" viewTransition className={rowCls}>
+          <span className={iconCls} aria-hidden><HelpCircle className="size-5" /></span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[15px] font-medium">{S.help.row}</span>
+            <span className="block text-[13px] text-mute">{S.help.rowSub}</span>
+          </span>
+          <ChevronRight className="size-4 text-mute" aria-hidden />
+        </Link>
         <Link to="/legal/privacy" viewTransition className={rowCls}>
           <span className={iconCls} aria-hidden><FileText className="size-5" /></span>
           <span className="min-w-0 flex-1 text-[15px] font-medium">{S.legal.title}</span>

@@ -33,6 +33,7 @@ const AddressesPage = lazy(() => import('@/pages/shop/AddressesPage'))
 const SavedPage = lazy(() => import('@/pages/shop/SavedPage'))
 const StorefrontPage = lazy(() => import('@/pages/shop/StorefrontPage'))
 const LegalPage = lazy(() => import('@/pages/LegalPage'))
+const HelpPage = lazy(() => import('@/pages/HelpPage'))
 const SellerProductsPage = lazy(() => import('@/pages/seller/SellerProductsPage'))
 const ProductEditorPage = lazy(() => import('@/pages/seller/ProductEditorPage'))
 const AdminBusinessesPage = lazy(() => import('@/pages/admin/AdminBusinessesPage'))
@@ -57,6 +58,7 @@ export default function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/session-expired" element={<SessionExpiredPage />} />
       <Route path="/legal/:doc" element={<LegalPage />} />
+      <Route path="/help" element={<HelpPage />} />
 
       <Route element={<Gate />}>
         <Route element={<AppShell />}>

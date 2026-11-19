@@ -489,6 +489,19 @@ on('POST', 'orders/:id/confirm-delivery', ({ db, params }) => {
   for (const so of o.sellerOrders) if (so.status === 'ReachedKashmir' || so.status === 'Dispatched') pushStatus(so, 'Delivered', 'Confirmed by shop')
   return publicOrder(o)
 })
+on('GET', 'orders/:id/rating', ({ db, params }) => {
+  const o = ownOrder(db, Number(params[0]))
+  return db.ratings?.[o.id] ?? fail(404, 'Not rated yet', 'not_found')
+})
+on('POST', 'orders/:id/rating', ({ db, params, body }) => {
+  const o = ownOrder(db, Number(params[0]))
+  const { stars, comment } = body as { stars: number; comment?: string }
+  if (!Number.isInteger(stars) || stars < 1 || stars > 5) fail(400, 'Stars must be 1 to 5', 'validation_failed')
+  if (!o.sellerOrders.some((s) => s.status === 'Delivered')) fail(409, 'You can rate an order after it is delivered.', 'order_not_delivered')
+  db.ratings ??= {}
+  db.ratings[o.id] = { orderId: o.id, stars, comment: comment?.trim() || null, updatedAt: new Date().toISOString() }
+  return db.ratings[o.id]
+})
 on('POST', 'payments', ({ db, body }) => {
   // Test switch: localStorage tc_mock_payfail=1 makes payments fail, to see the failed screen.
   if (typeof localStorage !== 'undefined' && localStorage.getItem('tc_mock_payfail') === '1') fail(402, 'Payment declined', 'PAYMENT_FAILED')

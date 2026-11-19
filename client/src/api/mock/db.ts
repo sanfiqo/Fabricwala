@@ -85,6 +85,8 @@ export interface Db {
   /** Saved product ids per retailer business id. */
   saved?: Record<number, number[]>
   rfqs?: DbRfq[]
+  /** Order ratings by order id. */
+  ratings?: Record<number, { orderId: number; stars: number; comment?: string | null; updatedAt: string }>
 }
 
 const STORAGE_KEY = 'tc_mock_db_v2'

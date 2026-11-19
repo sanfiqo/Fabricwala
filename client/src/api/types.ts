@@ -189,6 +189,14 @@ export interface MyQuotationRow {
   quotation: Quotation
 }
 
+// ---- Order rating (retailer, after delivery). `POST/GET /orders/{id}/rating`
+export interface OrderRating {
+  orderId: number
+  stars: number
+  comment?: string | null
+  updatedAt: string
+}
+
 // ---- Saved products and seller storefront (retailer extras)
 /** One row of `GET /saved-products`. The real row has no photo; `available` is false when the product or its seller is no longer live. */
 export interface SavedProduct {

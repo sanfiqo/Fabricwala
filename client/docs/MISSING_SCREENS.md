@@ -40,3 +40,9 @@ The backend could not be built or tested in the session that wrote the screens a
 | Bank / payout account link | a seller payout-account status route and an onboarding step (also needs a Razorpay account, P11.2) |
 | Admin problem reports list | a list route over claims (`GET /admin/claims`) with filters |
 | Staff users | add a staff member by mobile number (today it takes a user id) |
+
+## Added after the wireframe review
+- ✅ Order rating: "Rate this order" row on a delivered order, with a star sheet (`components/RateOrder.tsx`, uses `POST/GET /orders/{id}/rating`).
+- ✅ Help Center: `/help` with 8 questions (English and Hindi) and a WhatsApp button; linked from Account.
+- ✅ Orders page: tab bar (Active / Delivered / Problems), softer cards, green "Track order" button.
+- Skipped on purpose: wallet, PIN, saved cards (the platform holds no wallet), map address, invite friends, outfit try-on.
