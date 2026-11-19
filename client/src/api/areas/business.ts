@@ -1,4 +1,4 @@
-import { get, isReal, post, upload } from '../client'
+import { get, isReal, post, put, upload } from '../client'
 import type { AddressInput, BusinessAddress, BusinessDetail, BusinessDocument, CreateBusinessInput, DocType, PincodeInfo } from '../types'
 import { fromE164, toE164 } from './auth'
 
@@ -30,6 +30,8 @@ export const businessApi = {
   pincode: (pin: string) =>
     get<Record<string, unknown>>(`pincodes/${pin}`).then((r): PincodeInfo => ({ pincode: pin, cityId: r.cityId as number, cityName: (r.cityName ?? r.city) as string, stateId: r.stateId as number, stateName: (r.stateName ?? r.state) as string })),
   addAddress: (input: AddressInput) => post<RealAddress>('businesses/me/addresses', input).then(toAddress),
+  /** `PUT /businesses/me/addresses/{id}/default`: the others of the same kind stop being the default. There is no edit or delete route yet. */
+  setDefaultAddress: (id: number) => put<unknown>(`businesses/me/addresses/${id}/default`),
   addDocument: (docType: DocType, file: File) => {
     const form = new FormData()
     if (!isReal('businesses/me/documents')) form.append('docType', docType)

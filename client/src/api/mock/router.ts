@@ -245,6 +245,11 @@ on('POST', 'businesses/me/addresses', ({ body, db }) => {
   b.addresses.push(addr)
   return addr
 })
+on('PUT', 'businesses/me/addresses/:id/default', ({ params, db }) => {
+  const b = currentBusiness(db)
+  const target = b.addresses.find((a) => a.id === Number(params[0])) ?? fail(404, 'Address not found', 'not_found')
+  b.addresses.filter((a) => a.addressType === target.addressType).forEach((a) => (a.isDefault = a === target))
+})
 on('POST', 'businesses/me/documents', ({ form, db }) => {
   const b = currentBusiness(db)
   const d = { id: nextId(), docType: form!.get('docType') as 'GST', status: 'Pending' as const, reviewNote: null, url: null }

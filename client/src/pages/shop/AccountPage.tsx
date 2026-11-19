@@ -77,13 +77,14 @@ export default function AccountPage() {
             <span className="block break-words text-[13px] text-mute">{biz.data?.legalName ?? name}{biz.data?.gstin ? ` · ${biz.data.gstin}` : ''}</span>
           </span>
         </div>
-        <div className={rowCls.replace('press ', '')}>
+        <Link to={isSeller ? '/seller/addresses' : '/shop/addresses'} viewTransition className={rowCls}>
           <span className={iconCls} aria-hidden><MapPin className="size-5" /></span>
           <span className="min-w-0 flex-1">
             <span className="block text-[15px] font-medium">{isSeller ? S.account.pickupTitle : S.account.addressesTitle}</span>
             <span className="block text-[13px] text-mute">{addrs.length === 0 ? S.address.none : addrs.map((a) => `${a.cityName} ${a.pincode}`).join(' · ')}</span>
           </span>
-        </div>
+          <ChevronRight className="size-4 text-mute" aria-hidden />
+        </Link>
         <Link to={isSeller ? '/seller/notifications' : '/shop/notifications'} viewTransition className={rowCls}>
           <span className={iconCls} aria-hidden><Bell className="size-5" /></span>
           <span className="min-w-0 flex-1 text-[15px] font-medium">{S.account.notifications}</span>

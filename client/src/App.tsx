@@ -29,6 +29,7 @@ const RfqDetailPage = lazy(() => import('@/pages/shop/RfqDetailPage'))
 const SellerRfqPage = lazy(() => import('@/pages/seller/SellerRfqPage'))
 const SellerRfqDetailPage = lazy(() => import('@/pages/seller/SellerRfqDetailPage'))
 const BulkUploadPage = lazy(() => import('@/pages/seller/BulkUploadPage'))
+const AddressesPage = lazy(() => import('@/pages/shop/AddressesPage'))
 const SavedPage = lazy(() => import('@/pages/shop/SavedPage'))
 const StorefrontPage = lazy(() => import('@/pages/shop/StorefrontPage'))
 const LegalPage = lazy(() => import('@/pages/LegalPage'))
@@ -71,6 +72,7 @@ export default function App() {
           <Route path="/shop/p/:slug" element={<ProductPage />} />
           <Route path="/shop/store/:id" element={<StorefrontPage />} />
           <Route path="/shop/account" element={<AccountPage />} />
+          <Route path="/shop/addresses" element={<AddressesPage />} />
           <Route path="/shop/notifications" element={<NotificationsPage />} />
         </Route>
       </Route>
@@ -93,6 +95,7 @@ export default function App() {
         <Route element={<AppShell />}>
           <Route path="/seller" element={<SellerHome />} />
           <Route path="/seller/account" element={<AccountPage />} />
+          <Route path="/seller/addresses" element={<AddressesPage />} />
           <Route path="/seller/notifications" element={<NotificationsPage />} />
           <Route path="/seller/payouts" element={<PayoutsPage />} />
           <Route path="/seller/products" element={<SellerProductsPage />} />

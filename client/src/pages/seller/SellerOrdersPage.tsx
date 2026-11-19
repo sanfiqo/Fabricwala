@@ -5,6 +5,7 @@ import { Inbox, PackageCheck } from 'lucide-react'
 import { sellerCanMarkDelivery, sellerOrderApi } from '@/api/endpoints'
 import { qk } from '@/api/keys'
 import type { SellerOrder, SellerOrderStatus } from '@/api/types'
+import { InvoiceRow } from '@/components/InvoiceRow'
 import { OrderStatusBadge, PaymentBadge, StatusTimeline } from '@/components/OrderParts'
 import { StickyActionBar } from '@/components/StickyActionBar'
 import { Button } from '@/components/ui/button'
@@ -258,6 +259,12 @@ export function SellerOrderDetailPage() {
           ))}
         </ul>
         <div className="px-4 pb-3"><Money o={o} /></div>
+        {(o.paymentStatus === 'Paid' || o.paymentStatus === 'PartiallyRefunded') && o.status !== 'Rejected' && o.status !== 'Cancelled' && (
+          <>
+            <InvoiceRow sellerOrderId={o.id} label={S.invoice.download} />
+            <InvoiceRow sellerOrderId={o.id} type="PlatformCommission" label={S.invoice.fee} />
+          </>
+        )}
       </div>
 
       {o.shipment && (

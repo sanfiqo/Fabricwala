@@ -5,6 +5,7 @@ import { ChevronRight, MessageCircle, Package, PackageCheck, Truck } from 'lucid
 import { orderApi } from '@/api/endpoints'
 import { qk } from '@/api/keys'
 import type { Order, SellerOrder } from '@/api/types'
+import { InvoiceRow } from '@/components/InvoiceRow'
 import { canConfirm, PaymentBadge, StatusTimeline, StepBar } from '@/components/OrderParts'
 import { StickyActionBar } from '@/components/StickyActionBar'
 import { Button } from '@/components/ui/button'
@@ -274,6 +275,7 @@ export function OrderDetailPage() {
           <span className="flex-1">{S.orders.helpWa}</span>
           <ChevronRight className="size-4" aria-hidden />
         </a>
+        {(o.paymentStatus === 'Paid' || o.paymentStatus === 'PartiallyRefunded') && !failed && <InvoiceRow sellerOrderId={so.id} label={S.invoice.download} />}
         {canReport && (
           <Link to={`/shop/orders/${o.id}/report`} className="press flex min-h-[52px] items-center gap-3 border-t border-line px-4 text-sm">
             <span className="flex-1">{S.orders.reportProblem}</span>
