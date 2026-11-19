@@ -100,6 +100,25 @@ export interface City {
   isSourcingHub: boolean
 }
 
+// ---- Saved products and seller storefront (retailer extras)
+/** One row of `GET /saved-products`. The real row has no photo; `available` is false when the product or its seller is no longer live. */
+export interface SavedProduct {
+  id: number
+  slug: string
+  title: string
+  sellerName: string
+  moq: number
+  priceFrom: number | null
+  available: boolean
+}
+/** `GET /storefronts/{businessId}`: public seller page. `rating` is 0 until the first rating. */
+export interface Storefront {
+  business: { id: number; displayName: string; email?: string | null; city?: string | null }
+  rating: number
+  reviewCount: number
+  products: ProductSummary[]
+}
+
 // ---- Catalogue
 export interface ProductSummary {
   id: number

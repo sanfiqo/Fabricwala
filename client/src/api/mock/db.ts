@@ -51,6 +51,8 @@ export interface Db {
   rates: ShippingRate[]
   notifications?: Record<string, NotificationItem[]>
   claims?: Array<Claim & { note?: string }>
+  /** Saved product ids per retailer business id. */
+  saved?: Record<number, number[]>
 }
 
 const STORAGE_KEY = 'tc_mock_db_v2'

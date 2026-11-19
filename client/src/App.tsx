@@ -23,6 +23,9 @@ const AdminReviewPage = lazy(() => import('@/pages/admin/AdminReviewPage'))
 const AccountPage = lazy(() => import('@/pages/shop/AccountPage'))
 const OrdersPage = lazy(() => import('@/pages/shop/OrdersPage').then((m) => ({ default: m.OrdersPage })))
 const OrderDetailPage = lazy(() => import('@/pages/shop/OrdersPage').then((m) => ({ default: m.OrderDetailPage })))
+const SavedPage = lazy(() => import('@/pages/shop/SavedPage'))
+const StorefrontPage = lazy(() => import('@/pages/shop/StorefrontPage'))
+const LegalPage = lazy(() => import('@/pages/LegalPage'))
 const SellerProductsPage = lazy(() => import('@/pages/seller/SellerProductsPage'))
 const ProductEditorPage = lazy(() => import('@/pages/seller/ProductEditorPage'))
 const AdminBusinessesPage = lazy(() => import('@/pages/admin/AdminBusinessesPage'))
@@ -46,6 +49,7 @@ export default function App() {
       <Route path="/" element={<RootRedirect />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/session-expired" element={<SessionExpiredPage />} />
+      <Route path="/legal/:doc" element={<LegalPage />} />
 
       <Route element={<Gate />}>
         <Route element={<AppShell />}>
@@ -59,6 +63,7 @@ export default function App() {
           <Route path="/shop" element={<ShopHome />} />
           <Route path="/shop/products" element={<ProductListPage />} />
           <Route path="/shop/p/:slug" element={<ProductPage />} />
+          <Route path="/shop/store/:id" element={<StorefrontPage />} />
           <Route path="/shop/account" element={<AccountPage />} />
           <Route path="/shop/notifications" element={<NotificationsPage />} />
         </Route>
@@ -66,6 +71,7 @@ export default function App() {
 
       <Route element={<Gate area="Retailer" />}>
         <Route element={<AppShell />}>
+          <Route path="/shop/saved" element={<SavedPage />} />
           <Route path="/shop/cart" element={<CartPage />} />
           <Route path="/shop/checkout" element={<CheckoutPage />} />
           <Route path="/shop/orders" element={<OrdersPage />} />

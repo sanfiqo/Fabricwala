@@ -634,6 +634,34 @@ on('POST', 'seller-orders/:id/claims', ({ db, params, body }) => {
 })
 on('POST', 'claims/:id/photos', () => undefined)
 
+// ---------- Saved products and storefront (mock; real shapes are in docs/API_REFERENCE.md)
+on('GET', 'saved-products', ({ db }) => {
+  const b = requireApproved(db, 'Retailer')
+  const rows = (db.saved?.[b.id] ?? [])
+    .map((id) => db.products.find((p) => p.id === id))
+    .filter((p): p is DbProduct => !!p)
+    .map((p) => ({ id: p.id, slug: p.slug, title: p.title, sellerName: p.sellerName, moq: p.moq, priceFrom: summary(p).priceFrom || null, available: p.status === 'Active' }))
+  return { items: rows, total: rows.length, page: 1, pageSize: 50 }
+})
+on('PUT', 'saved-products/:id', ({ db, params }) => {
+  const b = requireApproved(db, 'Retailer')
+  const id = Number(params[0])
+  if (!db.products.some((p) => p.id === id)) fail(404, 'Product not found', 'PRODUCT_NOT_FOUND')
+  db.saved ??= {}
+  db.saved[b.id] = [id, ...(db.saved[b.id] ?? []).filter((x) => x !== id)]
+  return { saved: true }
+})
+on('DELETE', 'saved-products/:id', ({ db, params }) => {
+  const b = requireApproved(db, 'Retailer')
+  db.saved ??= {}
+  db.saved[b.id] = (db.saved[b.id] ?? []).filter((x) => x !== Number(params[0]))
+})
+on('GET', 'storefronts/:id', ({ db, params }) => {
+  const seller = db.businesses.find((x) => x.id === Number(params[0]) && x.type === 'Manufacturer' && x.verificationStatus === 'Approved') ?? fail(404, 'Seller not found', 'NOT_FOUND')
+  const products = db.products.filter((p) => p.sellerBusinessId === seller.id && p.status === 'Active').map(summary)
+  return { business: { id: seller.id, displayName: seller.displayName, email: null, city: seller.addresses[0]?.cityName ?? null }, rating: 0, reviewCount: 0, products }
+})
+
 // ---------- entry
 /** Same Idempotency-Key gives the same answer, like the real server: a double tap never places two orders. */
 const idem = new Map<string, unknown>()

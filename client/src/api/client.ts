@@ -31,7 +31,7 @@ const AREA_PREFIXES: Array<[RegExp, ApiArea]> = [
   [/^seller\/payouts/, 'payouts'],
   [/^seller/, 'seller'],
   [/^notifications/, 'notifications'],
-  [/^(claims|seller-orders|favourites|reviews|account)/, 'account'],
+  [/^(claims|seller-orders|favourites|reviews|account|saved-products)/, 'account'],
   [/^admin/, 'admin'],
 ]
 export function areaOfPath(path: string): ApiArea {

@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
-import { Bell, ChevronRight, LogOut, MapPin, MessageCircle, Store } from 'lucide-react'
+import { Bell, ChevronRight, FileText, Heart, LogOut, MapPin, MessageCircle, Store } from 'lucide-react'
 import { authApi } from '@/api/endpoints'
 import { setUseMocks, USE_MOCKS } from '@/api/client'
 import { useMe } from '@/auth'
@@ -86,6 +86,21 @@ export default function AccountPage() {
           <span className={iconCls} aria-hidden><Bell className="size-5" /></span>
           <span className="min-w-0 flex-1 text-[15px] font-medium">{S.account.notifications}</span>
           {unread > 0 && <Badge tone="warn">{fmt(S.notif.newCount, { n: unread })}</Badge>}
+          <ChevronRight className="size-4 text-mute" aria-hidden />
+        </Link>
+        {!isSeller && (
+          <Link to="/shop/saved" viewTransition className={rowCls}>
+            <span className={iconCls} aria-hidden><Heart className="size-5" /></span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-[15px] font-medium">{S.saved.title}</span>
+              <span className="block text-[13px] text-mute">{S.saved.rowSub}</span>
+            </span>
+            <ChevronRight className="size-4 text-mute" aria-hidden />
+          </Link>
+        )}
+        <Link to="/legal/privacy" viewTransition className={rowCls}>
+          <span className={iconCls} aria-hidden><FileText className="size-5" /></span>
+          <span className="min-w-0 flex-1 text-[15px] font-medium">{S.legal.title}</span>
           <ChevronRight className="size-4 text-mute" aria-hidden />
         </Link>
       </Card>

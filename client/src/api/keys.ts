@@ -22,6 +22,8 @@ export const qk = {
   unread: ['notifications', 'unread'] as const,
   adminBusinesses: (status?: string) => (status ? (['admin-businesses', status] as const) : (['admin-businesses'] as const)),
   adminDashboard: ['admin-dashboard'] as const,
+  saved: ['saved'] as const,
+  storefront: (businessId: number) => ['storefront', businessId] as const,
 }
 
 /** How long data counts as fresh, per area. Money and order state are always re-read. */

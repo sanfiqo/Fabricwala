@@ -13,12 +13,12 @@ Admin: Home, Businesses, Review, Settings, Shipping.
 
 | # | Screen | Who | Backend | Elements |
 |---|---|---|---|---|
-| 1 | Saved products | Shop | ready (`/saved-products`) | heart on cards, saved grid, remove, empty state |
-| 2 | Seller storefront | Shop | ready (`/storefronts/{id}`) | cover, logo, rating + count, about, city, product grid |
+| 1 | Saved products ✅ built | Shop | ready (`/saved-products`) | `/shop/saved`; heart on the product page; link in Account; remove, empty state |
+| 2 | Seller storefront ✅ built | Shop | ready (`/storefronts/{id}`) | `/shop/store/:id`; seller name on the product page links to it; rating, city, product grid |
 | 3 | Invoice download | Shop, Seller | download route only | Download GST invoice button on order detail; invoice list is missing in the API |
 | 4 | Bulk upload | Seller | ready (`/seller/products/bulk/*`) | template download, file pick, error preview table, import button, result |
 | 5 | Edit product (finish) | Seller | update route missing in API | same form as Add product, photo delete/re-upload |
-| 6 | Legal pages | All | none needed | Privacy, Terms, Seller agreement, Refund and returns (placeholders marked [LEGAL REVIEW NEEDED]) |
+| 6 | Legal pages ✅ built (outline only) | All | none needed | `/legal/privacy`, `/terms`, `/seller-agreement`, `/refund`; real text still needs a lawyer ([LEGAL REVIEW NEEDED]) |
 | 7 | Address book | Shop | edit/delete missing | list, add, edit, delete, set default |
 | 8 | RFQ: new request | Shop | ready, switch `Rfq` is off | what you need, quantity, city, end date (1 to 30 days) |
 | 9 | RFQ: my requests + quotations | Shop | ready | status tabs, quotations cheapest first, Accept, Cancel |

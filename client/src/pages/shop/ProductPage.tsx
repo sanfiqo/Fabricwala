@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Check, ChevronRight, MessageCircle } from 'lucide-react'
 import { cartApi, productApi } from '@/api/endpoints'
@@ -9,6 +9,7 @@ import { PhotoGallery } from '@/components/product/PhotoGallery'
 import { SlabPriceTable } from '@/components/product/SlabPriceTable'
 import { VariantPicker } from '@/components/product/VariantPicker'
 import { QtyStepper } from '@/components/QtyStepper'
+import { SaveButton } from '@/components/SaveButton'
 import { StickyActionBar } from '@/components/StickyActionBar'
 import { Button } from '@/components/ui/button'
 import { BackButton, EmptyState, KeyValue, SavingChip, Skeleton } from '@/components/ui/misc'
@@ -19,12 +20,15 @@ import { nextSlabHint, slabFor, totalSaving } from '@/lib/slabs'
 import { money } from '@/lib/utils'
 import { waLink } from '@/lib/whatsapp'
 
-function Header() {
+function Header({ productId }: { productId?: number }) {
   return (
     <div className="flex items-center justify-between px-4 pt-[18px]">
       <BackButton />
       <span className="text-[15px] font-medium">{S.product.detailsTitle}</span>
-      <CartLink />
+      <div className="flex items-center gap-2">
+        {productId !== undefined && <SaveButton productId={productId} />}
+        <CartLink />
+      </div>
     </div>
   )
 }
@@ -101,12 +105,14 @@ export default function ProductPage() {
 
   return (
     <div className="pb-56">
-      <Header />
+      <Header productId={p.id} />
 
       <div className="px-5 pt-2.5">
         <h1 className="text-balance break-words text-[32px] font-semibold leading-[1.1] tracking-[-0.025em]">{p.title}</h1>
         <p className="mt-2 flex flex-wrap items-center gap-x-1.5 text-sm text-mute">
-          <span className="font-medium text-ink">{p.sellerName}</span>
+          <Link to={`/shop/store/${p.sellerBusinessId}`} viewTransition aria-label={`${S.store.openStore}: ${p.sellerName}`} className="font-medium text-ink underline decoration-line decoration-2 underline-offset-4">
+            {p.sellerName}
+          </Link>
           <span>· {p.sellerCity}</span>
         </p>
       </div>

@@ -15,7 +15,7 @@ export function ProductCard({ p, index = 0 }: { p: ProductSummary; index?: numbe
   const photo = usePhoto(p.id, 1, p.imageUrl)
   return (
     <Appear index={index}>
-      <Link to={to} viewTransition className="press @container flex flex-col gap-0.5 rounded-card bg-soft px-3 pb-3.5 pt-3 text-ink">
+      <Link to={to} viewTransition className="press @container flex flex-col gap-0.5 rounded-card bg-surface px-3 pb-3.5 pt-3 text-ink">
         <span className="photo-slot mb-2 h-[138px] items-start" style={{ '--shadow-bottom': '3px', '--shadow-width': '56%' } as CSSProperties}>
           <ProductImage
             src={photo}
@@ -42,7 +42,7 @@ export function ProductCard({ p, index = 0 }: { p: ProductSummary; index?: numbe
 /** Same size and spacing as the real card, so nothing jumps when the data arrives. */
 export function ProductCardSkeleton() {
   return (
-    <div aria-hidden className="rounded-card bg-soft px-3 pb-3.5 pt-3">
+    <div aria-hidden className="rounded-card bg-surface px-3 pb-3.5 pt-3">
       <div className="skeleton mb-2 h-[122px] rounded-[18px] !bg-line/60" />
       <div className="h-4" />
       <div className="skeleton mb-1.5 h-3 w-1/2 rounded-full !bg-line/60" />
