@@ -1,0 +1,103 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FabricWala — Mill profile</title>
+<style>
+:root{--ink:#0A0A0A;--t2:#595959;--s1:#F5F5F5;--ln:#E2E2E2;--ctl:#8C8C8C}
+*{box-sizing:border-box}body{margin:0;background:#ddd;font:14px/1.45 Inter,Manrope,"Noto Sans Devanagari",system-ui,sans-serif;color:var(--ink)}
+.app{max-width:440px;margin:auto;background:#fff;min-height:100vh;padding-bottom:84px;position:relative}
+a{color:inherit;text-decoration:none}button{font:inherit;cursor:pointer;color:inherit}
+.ph{background:repeating-linear-gradient(45deg,#ECECEC 0 10px,#E4E4E4 10px 20px);display:grid;place-items:center;color:#7A7A7A;font-size:11px;font-weight:700;border-radius:12px}
+.hd{position:sticky;top:0;z-index:8;background:#fff;display:flex;align-items:center;gap:4px;padding:6px 8px;transition:box-shadow .2s}.hd.sm{box-shadow:0 1px 0 var(--ln)}
+.ib{min-width:40px;height:40px;border:0;border-radius:50%;background:none;font-size:18px}.hd h1{flex:1;margin:0;font-size:15px;opacity:0;transition:opacity .2s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.hd.sm h1{opacity:1}
+.cover{aspect-ratio:16/7;border-radius:0}.id{padding:0 14px;margin-top:-30px;position:relative}.lg{width:64px;height:64px;border:3px solid #fff;border-radius:14px}
+.id h2{margin:8px 0 2px;font-size:21px;letter-spacing:-.02em}.tg{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}.tg i,.chip{font-style:normal;font-size:11.5px;font-weight:700;border:1px solid var(--ink);border-radius:99px;padding:1px 9px}
+.meta{color:var(--t2);font-size:13px}.meta b{color:var(--ink)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--ln);border:1px solid var(--ln);border-radius:14px;overflow:hidden;margin:14px 14px 4px}.stats div{background:#fff;padding:10px 8px;text-align:center}.stats b{display:block;font-size:15px}.stats span{font-size:11.5px;color:var(--t2)}
+.tabs{position:sticky;top:52px;z-index:7;background:#fff;display:flex;gap:20px;overflow-x:auto;scrollbar-width:none;padding:0 14px;border-bottom:1px solid var(--ln)}.tabs a{padding:11px 0;font-weight:600;color:var(--t2);border-bottom:3px solid transparent;white-space:nowrap}.tabs a.on{color:var(--ink);font-weight:800;border-color:var(--ink)}
+section{padding:18px 14px 6px;scroll-margin-top:104px}section h3{margin:0 0 10px;font-size:18px;letter-spacing:-.02em;display:flex;justify-content:space-between;align-items:baseline}section h3 a{font-size:13px;color:var(--t2);font-weight:600}
+p{margin:0 0 10px}.chs{display:flex;flex-wrap:wrap;gap:8px}.chs span{border:1px solid var(--ctl);border-radius:99px;padding:5px 13px;font-weight:600;font-size:13px}
+table{width:100%;border-collapse:collapse}td{padding:9px 0;border-bottom:1px solid var(--ln);vertical-align:top}td:first-child{color:var(--t2);width:42%}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.card .ph{aspect-ratio:1}.card b{display:block;margin-top:6px;font-size:15px}.card small{display:block;color:var(--t2);font-size:12px}
+.btn{display:grid;place-items:center;min-height:46px;border-radius:99px;border:1.5px solid var(--ink);font-weight:800;background:#fff;width:100%}.btn.p{background:var(--ink);color:#fff}
+.vf{list-style:none;margin:0;padding:0}.vf li{display:grid;grid-template-columns:24px 1fr auto;gap:8px;padding:10px 0;border-bottom:1px solid var(--ln);align-items:start}.vf small{display:block;color:var(--t2);font-size:12px}.vf em{font-style:normal;font-size:11.5px;font-weight:800;border:1px solid var(--ink);border-radius:99px;padding:1px 8px;white-space:nowrap}.vf em.no{border-style:dashed;color:var(--t2);border-color:var(--ctl)}
+.gal{display:grid;grid-template-columns:2fr 1fr;grid-template-rows:90px 90px;gap:8px}.gal .ph:first-child{grid-row:1/3}
+.rt{display:grid;grid-template-columns:96px 1fr;gap:14px;align-items:center;margin-bottom:12px}.rt .n{font-size:40px;font-weight:900;line-height:1;text-align:center}.rt .n small{display:block;font-size:12px;font-weight:500;color:var(--t2);margin-top:4px}
+.bar{display:grid;grid-template-columns:96px 1fr 28px;gap:8px;align-items:center;font-size:12.5px;margin:4px 0}.bar i{height:6px;border-radius:9px;background:var(--ln);overflow:hidden}.bar i b{display:block;height:100%;background:var(--ink)}
+.rv{border-top:1px solid var(--ln);padding:12px 0}.rv .h{display:flex;justify-content:space-between;font-weight:700}.rv .v{font-size:11.5px;color:var(--t2)}.rv .re{margin-top:8px;padding:8px 10px;background:var(--s1);border-radius:10px;font-size:13px}
+.rail{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;margin:0 -14px;padding:0 14px}.rail .m{flex:0 0 170px;border:1px solid var(--ln);border-radius:14px;padding:12px}.rail .m .ph{width:40px;height:40px;margin-bottom:6px}.rail .m small{color:var(--t2);display:block}
+.mask{font-weight:800;letter-spacing:.02em}.note{color:var(--t2);font-size:12.5px}
+.gl2{border:1px solid var(--ln);border-radius:14px;overflow:hidden;margin:0 0 10px;background:radial-gradient(120% 90% at 50% 45%,#fff 45%,var(--s1))}.gl2 canvas{display:block;width:100%;height:auto;touch-action:pan-y}
+.cta{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:min(440px,100%);z-index:9;background:#fff;border-top:1px solid var(--ln);padding:10px 14px calc(10px + env(safe-area-inset-bottom));display:grid;grid-template-columns:1fr auto auto;gap:8px}.cta .btn{width:auto;padding:0 20px}
+.bk{position:fixed;inset:0;background:rgb(0 0 0/.5);z-index:20;display:none}.sheet{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:min(440px,100%);max-height:88vh;overflow:auto;background:#fff;border-radius:22px 22px 0 0;padding:8px 16px 18px;z-index:21;display:none}.sheet::before{content:"";display:block;width:38px;height:5px;border-radius:9px;background:var(--ln);margin:2px auto 10px}
+.sheet h4{margin:0 0 6px;font-size:18px;display:flex;justify-content:space-between;align-items:center}.fld{display:grid;gap:4px;margin:10px 0;font-weight:600;font-size:13px}.fld input,.fld select,.fld textarea{min-height:46px;border:1px solid var(--ctl);border-radius:12px;padding:0 12px;font:inherit;background:#fff}.fld textarea{padding:10px 12px;min-height:70px}.two{display:grid;grid-template-columns:1fr 110px;gap:8px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);top:64px;background:var(--ink);color:#fff;padding:10px 16px;border-radius:99px;font-weight:700;font-size:13px;z-index:30;display:none;white-space:nowrap}.toast.on{display:block}
+body .bk.on,body .sheet.on{display:block}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+</style></head><body><main class="app">
+<header class="hd" id="hd"><button class="ib" aria-label="Back" onclick="history.back()">←</button><h1>Surat Weaves Pvt Ltd</h1><button class="ib" id="shr" aria-label="Share on WhatsApp">↗</button><button class="ib" id="fol" aria-pressed="false" aria-label="Follow mill">♡</button></header>
+<div class="ph cover">COVER IMG</div>
+<div class="id"><div class="ph lg">LOGO</div><h2>Surat Weaves Pvt Ltd</h2>
+ <div class="tg"><i>✓ Verified</i><i>GST ✓</i><i>Manufacturer</i><i>Export ready</i><i>Top rated</i></div>
+ <div class="meta">Surat, Gujarat · Since 2015 (9 yrs) · <b>4.8 ★</b> (126 reviews)</div>
+ <div class="meta">Replies in ~2 h · Last active today</div></div>
+<div class="stats"><div><b>5 lakh m</b><span>Monthly capacity</span></div><div><b>from 20 m</b><span>Min. order</span></div><div><b>7–15 days</b><span>Lead time</span></div><div><b>120</b><span>Looms</span></div><div><b>64%</b><span>Repeat buyers</span></div><div><b>96%</b><span>Response rate</span></div></div>
+<nav class="tabs" id="tabs" aria-label="Profile sections"><a class="on" href="#ov">Overview</a><a href="#pr">Products</a><a href="#ce">Verification</a><a href="#fa">Factory</a><a href="#re">Reviews</a><a href="#co">Contact</a></nav>
+
+<section id="ov"><h3>About</h3><p>Placeholder: Family-run weaving mill making cotton, rayon and silk-blend fabrics for retailers across India. Own dyeing and finishing unit. Custom shades and widths on request.</p>
+ <div class="chs" style="margin-bottom:14px"><span>Cotton</span><span>Rayon</span><span>Silk blend</span><span>Brocade</span><span>Ikat</span></div>
+ <h3>Trade terms</h3><table><tr><td>Payment</td><td>30% advance, balance before dispatch</td></tr><tr><td>Sample</td><td>₹160 per design · 3–5 days</td></tr><tr><td>Customisation</td><td>Shade, width, GSM, packing</td></tr><tr><td>Shipping</td><td>Pan-India via transporter; buyer pays freight</td></tr><tr><td>Returns</td><td>Quality claims within 3 days of delivery</td></tr></table>
+ <h3 style="margin-top:18px">Export</h3><div class="gl2"><canvas id="gl" width="800" height="520" data-h="520" role="img" aria-label="Globe showing this mill's export destinations: UAE, Bangladesh, Sri Lanka and USA"></canvas></div><table><tr><td>Exports to</td><td>UAE, Bangladesh, Sri Lanka, Nepal, USA (12 countries)</td></tr><tr><td>Loading port</td><td>Mundra, Nhava Sheva</td></tr><tr><td>Incoterms</td><td>EXW, FOB, CIF</td></tr><tr><td>Currency</td><td>USD, INR</td></tr><tr><td>Export min. order</td><td>1,000 m per design</td></tr><tr><td>Export packing</td><td>Rolls, polybag + carton, export marking</td></tr><tr><td>IEC code</td><td>✓ Verified · AB••••••12</td></tr></table>
+ <p class="note" style="margin-top:8px">Export enquiries are connected directly; FabricWala does not handle customs or international payment.</p>
+ <p class="note" style="margin-top:8px">Terms are set by the mill. Prices exclude GST and freight.</p></section>
+
+<section id="pr"><h3>Products (86)<a href="#">See all ›</a></h3><div class="chs" style="margin-bottom:12px"><span style="background:var(--ink);color:#fff">All</span><span>Cotton</span><span>Rayon</span><span>Silk</span></div>
+ <div class="grid"><div class="card"><div class="ph">IMG 1:1</div><b>₹560–620 / m</b><small>Silk brocade · Min. 20 m</small></div><div class="card"><div class="ph">IMG 1:1</div><b>₹210–240 / m</b><small>Indigo denim · Min. 50 m</small></div><div class="card"><div class="ph">IMG 1:1</div><b>₹95–120 / m</b><small>Floral rayon · Min. 200 m</small></div><div class="card"><div class="ph">IMG 1:1</div><b>₹165–180 / m</b><small>Brick check · Min. 100 m</small></div></div></section>
+
+<section id="ce"><h3>Verification</h3><ul class="vf">
+ <li><span>✓</span><div><b>GST registration</b><small>GSTIN 24AB•••••Z5 · checked 12 Oct 2026</small></div><em>Verified</em></li>
+ <li><span>✓</span><div><b>Business address</b><small>Surat · checked 12 Oct 2026</small></div><em>Verified</em></li>
+ <li><span>✓</span><div><b>Factory video</b><small>Reviewed by FabricWala · 15 Oct 2026</small></div><em>Verified</em></li>
+ <li><span>✓</span><div><b>IEC (Import Export Code)</b><small>IEC AB••••••12 · checked 14 Oct 2026</small></div><em>Verified</em></li>
+ <li><span>✓</span><div><b>OEKO-TEX Standard 100</b><small>Cert. no. ••••• · valid till Mar 2027</small></div><em>Verified</em></li>
+ <li><span>○</span><div><b>ISO 9001</b><small>Declared by the mill, not yet checked</small></div><em class="no">Self-declared</em></li>
+ <li><span>○</span><div><b>GOTS</b><small>Not provided</small></div><em class="no">Not provided</em></li></ul>
+ <p class="note" style="margin-top:8px">"Verified" means FabricWala checked the document. Dates show when.</p></section>
+
+<section id="fa"><h3>Factory</h3><div class="gal"><div class="ph">PHOTO · Looms</div><div class="ph">PHOTO</div><div class="ph">▶ VIDEO</div></div>
+ <table style="margin-top:10px"><tr><td>Machines</td><td>120 power looms · 6 rapier · 2 dyeing lines</td></tr><tr><td>Staff</td><td>150–200</td></tr><tr><td>Quality check</td><td>4-point inspection before dispatch</td></tr><tr><td>Area</td><td>Placeholder: 40,000 sq ft</td></tr></table></section>
+
+<section id="re"><h3>Reviews (126)</h3><div class="rt"><div class="n">4.8<small>out of 5</small></div><div>
+ <div class="bar"><span>Quality</span><i><b style="width:96%"></b></i><span>4.8</span></div><div class="bar"><span>On-time</span><i><b style="width:90%"></b></i><span>4.5</span></div><div class="bar"><span>Communication</span><i><b style="width:94%"></b></i><span>4.7</span></div><div class="bar"><span>Price accuracy</span><i><b style="width:92%"></b></i><span>4.6</span></div></div></div>
+ <div class="rv"><div class="h"><span>Imran · Jaipur</span><span>5 ★</span></div><div class="v">✓ Verified order · Silk brocade · 200 m · Oct 2026</div><p>Placeholder review text. Shade matched the sample and dispatch was on time.</p><div class="re"><b>Mill reply:</b> Thank you, looking forward to your next order.</div></div>
+ <div class="rv"><div class="h"><span>Sana · Delhi</span><span>4 ★</span></div><div class="v">✓ Verified order · Floral rayon · 500 m · Sep 2026</div><p>Placeholder review text. Good quality, delivery took two days longer than quoted.</p></div>
+ <a class="btn" href="#">See all reviews</a><p class="note" style="margin-top:8px">Only buyers with a completed order can review.</p></section>
+
+<section id="co"><h3>Contact</h3><div class="ph" style="aspect-ratio:16/8;margin-bottom:10px">MAP</div>
+ <table><tr><td>Location</td><td>Surat, Gujarat</td></tr><tr><td>Full address</td><td id="ad">Sign in to view</td></tr><tr><td>Phone</td><td><span class="mask" id="ph">+91 98•••• ••210</span> <button id="rev" style="border:0;background:none;text-decoration:underline;font-weight:700">Show</button></td></tr><tr><td>Hours</td><td>Mon–Sat · 10:00–19:00</td></tr><tr><td>Languages</td><td>Hindi, Gujarati, English</td></tr></table>
+ <p class="note" style="margin-top:8px">Contact details are shown to signed-in buyers only.</p></section>
+
+<section><h3>Similar mills<a href="#">See all ›</a></h3><div class="rail"><div class="m"><div class="ph">LOGO</div><b>Varanasi Silk</b><small>Varanasi · 4.7 ★</small><i class="chip" style="font-style:normal">✓ Verified</i></div><div class="m"><div class="ph">LOGO</div><b>Ludhiana Mills</b><small>Ludhiana · 4.6 ★</small><i class="chip" style="font-style:normal">✓ Verified</i></div><div class="m"><div class="ph">LOGO</div><b>Erode Textiles</b><small>Erode · 4.5 ★</small><i class="chip" style="font-style:normal">✓ Verified</i></div></div>
+ <p style="margin-top:14px"><a href="#" style="text-decoration:underline;color:var(--t2)">Report this supplier</a></p></section>
+
+<div class="cta"><button class="btn p" id="rq">Request quote</button><a class="btn" id="wa" target="_blank" rel="noopener" href="https://wa.me/?text=Hi%2C%20I%20found%20Surat%20Weaves%20on%20FabricWala">WhatsApp</a><a class="btn" href="#">Call</a></div>
+</main><div class="bk" id="bk"></div><div class="sheet" id="sh" role="dialog" aria-modal="true" aria-labelledby="st" tabindex="-1"></div><div class="toast" id="ts" role="status"></div>
+<script src="fw-globe.js"></script>
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];let last,tt;
+const buyer=location.hash==='#buyer';
+FWGlobe.mount($('#gl'),{radius:.3,dest:[{n:'Dubai',la:25.2,lo:55.3},{n:'Dhaka',la:23.8,lo:90.4},{n:'Colombo',la:6.9,lo:79.9},{n:'New York',la:40.7,lo:-74}]});
+function toast(m){const t=$('#ts');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),2200)}
+function open_(t,h){last=document.activeElement;$('#sh').innerHTML=`<h4><span id="st">${t}</span><button class="ib" aria-label="Close" onclick="close_()">✕</button></h4>`+h;$('#bk').classList.add('on');$('#sh').classList.add('on');$('#sh').focus()}
+function close_(){$('#bk').classList.remove('on');$('#sh').classList.remove('on');last&&last.focus()}
+$('#bk').onclick=close_;addEventListener('keydown',e=>e.key==='Escape'&&close_());
+addEventListener('scroll',()=>$('#hd').classList.toggle('sm',scrollY>150),{passive:true});
+/* tabs: scroll-spy */
+const secs=$$('#tabs a').map(a=>$(a.getAttribute('href')));
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){$$('#tabs a').forEach(a=>a.classList.toggle('on',a.getAttribute('href')==='#'+e.target.id));$('#tabs a.on').scrollIntoView({inline:'center',block:'nearest'})}}),{rootMargin:'-110px 0px -65% 0px'});secs.forEach(s=>io.observe(s));
+$$('#tabs a').forEach(a=>a.onclick=e=>{e.preventDefault();$(a.getAttribute('href')).scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth'})});
+$$('a[href="#"]').forEach(a=>a.onclick=e=>e.preventDefault());
+/* follow, share, contact reveal */
+$('#fol').onclick=()=>{const b=$('#fol'),on=b.getAttribute('aria-pressed')!=='true';b.setAttribute('aria-pressed',on);b.textContent=on?'♥':'♡';toast(on?'Following · new fabric alerts on':'Unfollowed')};
+$('#shr').onclick=()=>open('https://wa.me/?text='+encodeURIComponent('Surat Weaves on FabricWala'),'_blank','noopener');
+$('#rev').onclick=()=>{if(!buyer)return toast('Sign in to view contact details');$('#ph').textContent='+91 98765 43210';$('#ad').textContent='Plot 14, GIDC, Surat (demo)';$('#rev').remove()};
+/* request quote */
+$('#rq').onclick=()=>open_('Request quote · Surat Weaves',`<label class="fld">Fabric<input value="Silk brocade"></label><div class="two"><label class="fld">Quantity<input type="number" inputmode="numeric" min="1" value="100"></label><label class="fld">Unit<select><option>metre</option><option>kg</option><option>piece</option></select></label></div><label class="fld">Delivery pincode<input inputmode="numeric" maxlength="6" placeholder="e.g. 400001"></label><label class="fld">Note (shade, width, GSM)<textarea></textarea></label><button class="btn p" onclick="close_();toast('Quote request sent (demo)')">Send request</button><p class="note" style="margin-top:8px">The mill replies in about 2 hours. Sent to this mill only. To ask many mills, post a general RFQ.</p>`);
+</script></body></html>

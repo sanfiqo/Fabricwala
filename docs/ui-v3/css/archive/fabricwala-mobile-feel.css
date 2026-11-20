@@ -1,0 +1,144 @@
+/* =====================================================================
+   FabricWala — "Mobile Feel" layer (load AFTER fabricwala-ivory-atelier.css)
+   Brings the 2026 app feel from the references:
+   1) frosted glass over soft ambient light   2) soft pillow / inset depth
+   3) blurred backdrop + bottom sheets + dark pill CTA
+   All in the Ivory Atelier palette (no blue/purple). Text always sits on
+   >=72% opaque surfaces so contrast stays AA.
+   ===================================================================== */
+
+:root {
+  --glass-bg:        rgb(255 252 248 / .72);
+  --glass-bg-strong: rgb(255 252 248 / .86);
+  --glass-border:    rgb(255 255 255 / .75);
+  --glass-blur:      22px;
+  --glass-shadow:    0 1px 0 rgb(255 255 255 / .8) inset, 0 12px 32px rgb(46 33 27 / .08);
+  --r-xl: 28px;  --r-2xl: 36px;
+  --spring: cubic-bezier(.34, 1.4, .64, 1);          /* gentle overshoot */
+  --pillow:  8px 8px 20px rgb(46 33 27 / .09), -8px -8px 20px rgb(255 255 255 / .95), inset 0 1px 0 rgb(255 255 255 / .9);
+  --inset:   inset 4px 4px 10px rgb(46 33 27 / .09), inset -4px -4px 10px rgb(255 255 255 / .9);
+}
+
+/* ---------- Ambient backdrop: soft light blobs, not a flat fill ---------- */
+.app-bg { position: relative; isolation: isolate; background: var(--c-canvas); overflow: hidden; }
+.app-bg::before, .app-bg::after { content: ""; position: absolute; z-index: -1; border-radius: 50%; filter: blur(60px); pointer-events: none; }
+.app-bg::before { inline-size: 70%; aspect-ratio: 1; inset: -15% auto auto -15%; background: #EADCC8; opacity: .9; }  /* champagne */
+.app-bg::after  { inline-size: 60%; aspect-ratio: 1; inset: auto -20% 10% auto; background: #DDE3E6; opacity: .65; } /* cool pearl for depth */
+
+/* ---------- Glass ---------- */
+.glass {
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
+          backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-xl);
+  box-shadow: var(--glass-shadow);
+}
+.glass--strong { background: var(--glass-bg-strong); }
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass { background: rgb(255 252 248 / .96); }
+}
+@media (prefers-reduced-transparency: reduce) { .glass { background: var(--c-surface); backdrop-filter: none; -webkit-backdrop-filter: none; } }
+
+/* ---------- Soft pillow / inset (selective: hero tiles, toggles, tracker) ---------- */
+.pillow { background: var(--c-surface); border-radius: var(--r-xl); box-shadow: var(--pillow); border: 0; }
+.inset  { background: var(--c-canvas);  border-radius: var(--r-control); box-shadow: var(--inset); }
+
+/* ---------- Screen scaffold ---------- */
+.screen { min-block-size: 100dvh; padding: calc(var(--sp-4) + env(safe-area-inset-top)) var(--sp-4) calc(112px + env(safe-area-inset-bottom)); display: grid; gap: var(--sp-4); align-content: start; }
+.app-header { display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; gap: var(--sp-3); }
+.app-title  { text-align: center; font: 500 1.25rem/1.2 var(--font-display); letter-spacing: .01em; } /* serif ONLY here: screen titles */
+.app-title--large { font-size: clamp(1.75rem, 1.3rem + 2vw, 2.25rem); text-align: start; }
+
+/* ---------- Round icon button (back, heart, close) ---------- */
+.icon-btn {
+  inline-size: 44px; block-size: 44px; display: inline-grid; place-items: center; padding: 0;
+  background: var(--c-surface-raised); color: var(--c-text); border: 0; border-radius: 50%;
+  box-shadow: 0 2px 10px rgb(46 33 27 / .10), inset 0 1px 0 #fff; cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease-soft), box-shadow var(--dur-base) var(--ease-soft);
+}
+.icon-btn:active { transform: scale(.92); }
+.icon-btn[aria-pressed="true"] { background: var(--c-action); color: var(--c-on-action); }
+.icon-btn svg { inline-size: 20px; block-size: 20px; }
+
+/* ---------- Floating glass tab bar (pill, inset from screen edges) ---------- */
+.tabbar {
+  position: fixed; z-index: var(--z-sticky);
+  inset-inline: var(--sp-4); inset-block-end: calc(var(--sp-3) + env(safe-area-inset-bottom));
+  display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: var(--sp-1); padding: var(--sp-2);
+  max-inline-size: 28rem; margin-inline: auto;
+  background: var(--glass-bg-strong); -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.4); backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
+  border: 1px solid var(--glass-border); border-radius: var(--r-pill); box-shadow: var(--shadow-floating);
+}
+.tabbar a, .tabbar button {
+  display: grid; justify-items: center; gap: 2px; padding: .5rem .25rem; min-block-size: 52px; border: 0; background: transparent;
+  border-radius: var(--r-pill); font-size: 11px; font-weight: 700; letter-spacing: .02em; color: var(--c-text-secondary); text-decoration: none;
+  transition: background-color var(--dur-base) var(--ease-soft), color var(--dur-base) var(--ease-soft), transform var(--dur-fast) var(--spring);
+}
+.tabbar svg { inline-size: 22px; block-size: 22px; }
+.tabbar [aria-current="page"] { background: var(--c-action); color: var(--c-on-action); }
+.tabbar :active { transform: scale(.94); }
+
+/* ---------- Sticky bottom CTA (dark capsule, like "Devam Et") ---------- */
+.cta-bar { position: fixed; inset-inline: 0; inset-block-end: 0; z-index: var(--z-sticky); padding: var(--sp-3) var(--sp-4) calc(var(--sp-3) + env(safe-area-inset-bottom)); background: linear-gradient(to top, var(--c-canvas) 55%, transparent); }
+.cta-bar .btn { inline-size: 100%; min-block-size: 56px; font-size: 1rem; box-shadow: 0 10px 24px rgb(46 33 27 / .25); }
+
+/* ---------- Bottom sheet over blurred/dimmed screen ---------- */
+.sheet-backdrop { position: fixed; inset: 0; z-index: var(--z-modal); background: rgb(46 33 27 / .38); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); animation: fade var(--dur-base) var(--ease-soft); }
+.sheet-glass {
+  position: fixed; z-index: calc(var(--z-modal) + 1); inset-inline: var(--sp-2); inset-block-end: calc(var(--sp-2) + env(safe-area-inset-bottom));
+  max-block-size: 88dvh; overflow: auto; overscroll-behavior: contain; padding: var(--sp-2) var(--sp-4) var(--sp-4);
+  background: var(--glass-bg-strong); -webkit-backdrop-filter: blur(28px) saturate(1.4); backdrop-filter: blur(28px) saturate(1.4);
+  border: 1px solid var(--glass-border); border-radius: var(--r-2xl); box-shadow: var(--shadow-floating);
+  animation: sheet-in 380ms var(--spring);
+}
+.sheet-glass::before { content: ""; display: block; inline-size: 40px; block-size: 5px; margin: var(--sp-2) auto var(--sp-4); border-radius: 9px; background: var(--c-border-control); opacity: .5; } /* grabber */
+@keyframes sheet-in { from { transform: translateY(100%); } }
+@keyframes fade { from { opacity: 0; } }
+
+/* ---------- Row item inside sheet / lists (thumbnail + title + action) ---------- */
+.row-item { display: grid; grid-template-columns: 56px 1fr auto; align-items: center; gap: var(--sp-3); padding: var(--sp-3); background: var(--c-surface-raised); border-radius: var(--r-card); box-shadow: 0 1px 0 #fff inset, 0 4px 14px rgb(46 33 27 / .06); min-block-size: 72px; }
+.row-item__thumb { inline-size: 56px; block-size: 56px; border-radius: 14px; background: var(--c-surface-subtle); overflow: hidden; }
+.row-item__thumb img { inline-size: 100%; block-size: 100%; object-fit: cover; }   /* real fabric colour */
+
+/* ---------- Segmented control + mood/choice dots ---------- */
+.segmented { display: inline-grid; grid-auto-flow: column; grid-auto-columns: 1fr; padding: 4px; border-radius: var(--r-pill); box-shadow: var(--inset); background: var(--c-canvas); }
+.segmented > * { min-block-size: 40px; padding: 0 1rem; border: 0; background: transparent; border-radius: var(--r-pill); font-weight: 700; font-size: var(--fs-small); color: var(--c-text-secondary); transition: background-color var(--dur-base), color var(--dur-base), box-shadow var(--dur-base); }
+.segmented > [aria-pressed="true"], .segmented > [aria-selected="true"] { background: var(--c-surface-raised); color: var(--c-text); box-shadow: 0 2px 8px rgb(46 33 27 / .12); }
+
+/* ---------- Horizontal snap rail (collections, swatches) ---------- */
+.rail { display: grid; grid-auto-flow: column; grid-auto-columns: min(78%, 18rem); gap: var(--sp-3); overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; padding-inline: var(--sp-4); margin-inline: calc(-1 * var(--sp-4)); scroll-padding-inline: var(--sp-4); }
+.rail::-webkit-scrollbar { display: none; }
+.rail > * { scroll-snap-align: start; }
+
+/* ---------- Stat/KPI glass strip ---------- */
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); padding: var(--sp-4) 0; }
+.stats > * { text-align: center; padding-inline: var(--sp-2); }
+.stats > * + * { border-inline-start: 1px solid var(--c-border); }
+.stats .kpi { font: 700 1.5rem/1.1 var(--font-ui); }
+
+/* ---------- Vertical bar rails (weekly / price trend) ---------- */
+.bars { display: grid; grid-auto-flow: column; gap: var(--sp-2); align-items: end; block-size: 120px; }
+.bars > i { display: block; border-radius: var(--r-pill); background: var(--c-surface-subtle); box-shadow: var(--inset); position: relative; block-size: 100%; }
+.bars > i::after { content: ""; position: absolute; inset: auto 0 0 0; block-size: var(--v, 50%); border-radius: inherit; background: var(--c-accent); }
+
+/* ---------- Press / entrance micro-motion ---------- */
+.press { transition: transform var(--dur-fast) var(--spring); }
+.press:active { transform: scale(.97); }
+.enter { animation: enter 520ms var(--ease-out) both; animation-delay: calc(var(--i, 0) * 60ms); }
+@keyframes enter { from { opacity: 0; transform: translateY(14px) scale(.98); } }
+
+@media (prefers-reduced-motion: reduce) { .sheet-glass, .enter, .sheet-backdrop { animation: none; } }
+@media (min-width: 768px) { .tabbar { inset-inline: 0; } .screen { padding-inline: var(--sp-8); } }
+
+/* ---------- Optional single accent (use <3% of a screen; pick ONE per brand) ----------
+   Olive passes as text everywhere (5.5–7.1:1). Gold fill is decorative only (2.1–2.7:1);
+   use --c-premium-text (gold-deep, 4.5–5.9:1) for any gold text. Default = none (espresso only). */
+:root { --c-premium: transparent; --c-premium-text: var(--c-text); --c-premium-soft: transparent; --c-on-premium: var(--c-on-action); }
+.accent-olive { --c-premium: #4F5B3A; --c-premium-text: #4F5B3A; --c-premium-soft: #E7EADD; --c-on-premium: #FFFFFF; }
+.accent-gold  { --c-premium: #B8975A; --c-premium-text: #7A5F2A; --c-premium-soft: #F3EAD6; --c-on-premium: #2E211B; }
+.accent-rule  { display: block; inline-size: 36px; block-size: 3px; border-radius: 3px; background: var(--c-premium, var(--c-accent)); margin-block: var(--sp-2); }
+.verified     { display: inline-flex; align-items: center; gap: .25rem; font-size: var(--fs-label); font-weight: 700; color: var(--c-premium-text); }
+.verified::before { content: "✓"; display: inline-grid; place-items: center; inline-size: 16px; block-size: 16px; border-radius: 50%; background: var(--c-premium-soft); color: var(--c-premium-text); font-size: 10px; }
+.tag-premium  { display: inline-block; padding: .125rem .625rem; border-radius: var(--r-pill); background: var(--c-premium-soft); color: var(--c-premium-text); font-size: var(--fs-label); font-weight: 700; }
+.tabbar .dot  { inline-size: 5px; block-size: 5px; border-radius: 50%; background: var(--c-premium); }

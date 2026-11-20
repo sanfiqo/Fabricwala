@@ -1,0 +1,83 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FabricWala — Import / Export</title>
+<style>
+:root{--ink:#0A0A0A;--t2:#595959;--s1:#F5F5F5;--ln:#E2E2E2;--ctl:#8C8C8C}
+*{box-sizing:border-box}body{margin:0;background:#ddd;font:14px/1.45 Inter,Manrope,system-ui,sans-serif;color:var(--ink)}
+.app{max-width:440px;margin:auto;background:#fff;min-height:100vh;padding-bottom:30px}button,select,input{font:inherit;color:inherit}button{cursor:pointer}
+.hd{display:flex;align-items:center;gap:6px;padding:8px 10px;position:sticky;top:0;background:#fff;z-index:5;border-bottom:1px solid var(--ln)}.hd h1{margin:0;font-size:17px;flex:1}.ib{min-width:40px;height:40px;border:0;background:none;border-radius:50%;font-size:18px}
+.tabs{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--ln)}.tabs button{padding:13px;border:0;background:none;font-weight:600;color:var(--t2);border-bottom:3px solid transparent}.tabs button[aria-selected=true]{color:var(--ink);font-weight:800;border-color:var(--ink)}
+.pn{padding:14px;display:none}.pn.on{display:block}h2{margin:0 0 8px;font-size:17px}.note{color:var(--t2);font-size:12.5px}
+.st{display:flex;gap:6px;margin:0 0 14px;padding:0;list-style:none;font-size:11.5px;font-weight:700;color:var(--t2)}.st li{flex:1;border-top:4px solid var(--ln);padding-top:5px}.st li.d{border-color:var(--ink);color:var(--ink)}
+.btn{display:grid;place-items:center;min-height:46px;border-radius:99px;border:1.5px solid var(--ink);font-weight:800;background:#fff;width:100%;margin-top:10px;padding:0 16px}.btn.p{background:var(--ink);color:#fff}.btn:disabled{opacity:.4;cursor:not-allowed}
+.drop{border:2px dashed var(--ctl);border-radius:14px;padding:22px 14px;text-align:center;background:var(--s1);margin-top:10px}.drop b{display:block;margin-bottom:4px}
+.sum{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--ln);border:1px solid var(--ln);border-radius:14px;overflow:hidden;margin:12px 0}.sum div{background:#fff;padding:10px 6px;text-align:center}.sum b{display:block;font-size:20px}.sum span{font-size:11.5px;color:var(--t2)}
+.err{list-style:none;margin:0;padding:0;max-height:230px;overflow:auto;border:1px solid var(--ln);border-radius:12px}.err li{padding:9px 12px;border-bottom:1px solid var(--ln);font-size:13px}.err li:last-child{border:0}.err b{border:1px solid var(--ink);border-radius:99px;font-size:11px;padding:0 7px;margin-right:6px;white-space:nowrap}
+.fld{display:grid;gap:4px;margin:12px 0;font-weight:700;font-size:13px}.fld select,.fld input{min-height:46px;border:1px solid var(--ctl);border-radius:12px;padding:0 12px;background:#fff;font-weight:500}
+.chs{display:flex;flex-wrap:wrap;gap:8px}.chs button{min-height:38px;padding:0 14px;border-radius:99px;border:1px solid var(--ctl);background:#fff;font-weight:600}.chs button[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.log{list-style:none;margin:8px 0 0;padding:0}.log li{display:flex;justify-content:space-between;gap:8px;padding:10px 0;border-bottom:1px solid var(--ln);font-size:13px}.log small{color:var(--t2);display:block}.log em{font-style:normal;font-weight:800;font-size:11.5px;border:1px solid var(--ink);border-radius:99px;padding:1px 8px;height:fit-content;white-space:nowrap}
+.toast{position:fixed;left:50%;transform:translateX(-50%);top:64px;background:var(--ink);color:#fff;padding:10px 16px;border-radius:99px;font-weight:700;font-size:13px;z-index:30;display:none;white-space:nowrap}.toast.on{display:block}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+</style></head><body><main class="app">
+<header class="hd"><button class="ib" aria-label="Back">←</button><h1>Import / Export</h1></header>
+<div class="tabs" role="tablist"><button role="tab" aria-selected="true" id="t1">Import products</button><button role="tab" aria-selected="false" id="t2">Export data</button></div>
+
+<section class="pn on" id="p1" role="tabpanel" aria-labelledby="t1">
+ <ol class="st" id="st"><li class="d">1 Template</li><li>2 Upload</li><li>3 Review</li><li>4 Publish</li></ol>
+ <div id="s12"><h2>Add many products at once</h2><p class="note">Download the template, fill one row per fabric, then upload it. Unit is required for every row (metre, kg or piece).</p>
+  <button class="btn" id="tpl">⬇ Download CSV template</button>
+  <label class="drop" style="display:block;cursor:pointer"><b>Choose your CSV file</b><span class="note">Max 2,000 rows · .csv (save Excel as CSV)</span><input type="file" id="fi" accept=".csv,text/csv" style="display:block;margin:10px auto 0;max-width:100%"></label>
+  <button class="btn" id="smp">Try with a sample file</button></div>
+ <div id="s3" hidden><h2>Review</h2><div class="sum"><div><b id="nT">0</b><span>Rows</span></div><div><b id="nOk">0</b><span>Ready</span></div><div><b id="nEr">0</b><span>Need fixing</span></div></div>
+  <ul class="err" id="er"></ul><p class="note" id="hint" style="margin-top:8px"></p>
+  <button class="btn p" id="pub">Publish</button><button class="btn" id="re">Upload a different file</button></div>
+ <h2 style="margin-top:22px">Recent imports</h2><ul class="log" id="lg"><li><div>products_oct.csv<small>14 Oct · 86 added, 3 skipped</small></div><em>✓ Done</em></li><li><div>silk_range.csv<small>2 Oct · 24 added</small></div><em>✓ Done</em></li></ul>
+</section>
+
+<section class="pn" id="p2" role="tabpanel" aria-labelledby="t2">
+ <h2>Download your data</h2><p class="note">For accounts, GST filing and your own records.</p>
+ <div class="fld">What to export<div class="chs" id="what"><button aria-pressed="true">Products</button><button aria-pressed="false">Orders</button><button aria-pressed="false">Quotes</button><button aria-pressed="false">Payouts</button></div></div>
+ <label class="fld">Period<select id="per"><option>Last 30 days</option><option>This quarter</option><option>This financial year</option><option>All time</option></select></label>
+ <label class="fld">Format<select id="fmt"><option value="csv">CSV (opens in Excel)</option><option value="pdf" disabled>PDF (coming soon)</option></select></label>
+ <button class="btn p" id="ex">⬇ Export</button><p class="note" style="margin-top:8px">You can export only your own data. Large exports run in the background and appear under Recent exports.</p>
+ <h2 style="margin-top:22px">Recent exports</h2><ul class="log" id="lx"><li><div>orders_q2.csv<small>1 Oct · 212 rows</small></div><em>✓ Ready</em></li></ul>
+</section>
+</main><div class="toast" id="ts" role="status"></div>
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];let tt,rows=[],okRows=[];
+const toast=m=>{const t=$('#ts');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),2400)};
+const COLS=['sku','name','category','unit','price_min','price_max','moq','width_in','gsm','composition','tier_prices'];
+const UNITS=['metre','kg','piece'];
+/* tabs */
+[$('#t1'),$('#t2')].forEach((b,i)=>b.onclick=()=>{[$('#t1'),$('#t2')].forEach((x,k)=>x.setAttribute('aria-selected',k===i));$('#p1').classList.toggle('on',i===0);$('#p2').classList.toggle('on',i===1)});
+/* CSV helpers: quoted fields supported; sanitise cells that start with = + - @ (CSV injection) */
+function parse(t){const r=[];let row=[],f='',q=false;for(let i=0;i<t.length;i++){const c=t[i];if(q){if(c=='"'){if(t[i+1]=='"'){f+='"';i++}else q=false}else f+=c}else if(c=='"')q=true;else if(c==','){row.push(f);f=''}else if(c=='\n'||c=='\r'){if(c=='\r'&&t[i+1]=='\n')i++;row.push(f);r.push(row);row=[];f=''}else f+=c}
+ if(f||row.length){row.push(f);r.push(row)}return r.filter(x=>x.some(v=>v.trim()))}
+const safe=v=>{v=String(v??'');return /^[=+\-@\t\r]/.test(v)?"'"+v:v};
+const csv=a=>a.map(r=>r.map(v=>'"'+safe(v).replace(/"/g,'""')+'"').join(',')).join('\r\n');
+function dl(name,text){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['﻿'+text],{type:'text/csv'}));a.download=name;document.body.appendChild(a);a.click();a.remove()}
+$('#tpl').onclick=()=>{dl('fabricwala_products_template.csv',csv([COLS,['SW-001','Silk brocade','Silk','metre','560','620','20','44','120','60% silk 40% cotton','20:620|100:590|500:560']]));toast('Template downloaded')};
+/* validate */
+function check(text){const t=parse(text),h=t[0].map(x=>x.trim().toLowerCase()),errs=[],ok=[],seen=new Set();
+ const miss=COLS.slice(0,7).filter(c=>!h.includes(c));if(miss.length)return{n:0,ok:[],errs:[{r:1,m:'Missing column(s): '+miss.join(', ')}],fatal:1};
+ t.slice(1).forEach((c,i)=>{const o={};h.forEach((k,j)=>o[k]=(c[j]||'').trim()),r=i+2;const e=[];
+  if(!o.name)e.push('name is missing');
+  if(!o.sku)e.push('sku is missing');else if(seen.has(o.sku))e.push('duplicate sku '+o.sku);else seen.add(o.sku);
+  if(!UNITS.includes(o.unit.toLowerCase()))e.push(o.unit?'unit "'+o.unit+'" is not metre, kg or piece':'unit is missing');
+  const a=+o.price_min,b=+o.price_max;if(!(a>0))e.push('price_min must be a number above 0');else if(o.price_max&&!(b>=a))e.push('price_max is lower than price_min');
+  if(!(Number.isInteger(+o.moq)&&+o.moq>0))e.push('moq must be a whole number above 0');
+  if(o.gsm&&!(+o.gsm>0))e.push('gsm must be a number');
+  e.length?errs.push({r,m:e.join('; ')}):ok.push(o)});return{n:t.length-1,ok,errs}}
+function show(res){rows=res;okRows=res.ok;$('#nT').textContent=res.n;$('#nOk').textContent=res.ok.length;$('#nEr').textContent=res.errs.length;
+ $('#er').innerHTML=res.errs.length?res.errs.slice(0,50).map(e=>`<li><b>Row ${e.r}</b>${e.m.replace(/</g,'&lt;')}</li>`).join(''):'<li>✓ No problems found</li>';
+ $('#hint').textContent=res.fatal?'Fix the column names and upload again.':res.errs.length?'Rows with problems will be skipped. Fix them in your file and upload again to add them later.':'All rows look good.';
+ $('#pub').textContent='Publish '+res.ok.length+' product'+(res.ok.length==1?'':'s');$('#pub').disabled=!res.ok.length;
+ $('#s12').hidden=true;$('#s3').hidden=false;$$('#st li').forEach((l,i)=>l.classList.toggle('d',i<3))}
+$('#fi').onchange=e=>{const f=e.target.files[0];if(!f)return;if(f.size>2e6)return toast('File too large (max 2 MB)');f.text().then(t=>{window.fname=f.name;show(check(t))}).catch(()=>toast('Could not read the file'))};
+$('#smp').onclick=()=>{window.fname='sample.csv';show(check(csv([COLS,['SW-001','Silk brocade','Silk','metre','560','620','20','44','120','60% silk 40% cotton','20:620|100:590'],['SW-002','Indigo denim','Denim','metre','210','240','50','58','240','100% cotton',''],['SW-003','Brick check','Cotton','yards','165','180','100','44','110','',''],['SW-002','Floral rayon','Rayon','metre','95','120','200','44','90','',''],['SW-005','','Cotton','metre','140','160','100','44','','',''],['SW-006','Linen plain','Linen','kg','500','450','10','','','','']]))) };
+$('#re').onclick=()=>{$('#s12').hidden=false;$('#s3').hidden=true;$('#fi').value='';$$('#st li').forEach((l,i)=>l.classList.toggle('d',i===0))};
+$('#pub').onclick=()=>{$$('#st li').forEach(l=>l.classList.add('d'));$('#lg').insertAdjacentHTML('afterbegin',`<li><div>${(window.fname||'file.csv').replace(/</g,'&lt;')}<small>Today · ${okRows.length} added, ${rows.errs.length} skipped</small></div><em>✓ Done</em></li>`);toast(okRows.length+' products published (demo)');$('#re').click()};
+/* export */
+$$('#what button').forEach(b=>b.onclick=()=>{$$('#what button').forEach(x=>x.setAttribute('aria-pressed',x===b))});
+$('#ex').onclick=()=>{const w=$('#what [aria-pressed=true]').textContent.toLowerCase(),per=$('#per').value;
+ const data={products:[['sku','name','unit','price_min','moq'],['SW-001','Silk brocade','metre',560,20],['=HYPERLINK("http://x")','Test row','metre',100,10]],orders:[['order_id','date','buyer','amount_inr','status'],['1042','2026-11-02','Imran, Jaipur',147500,'Shipped']],quotes:[['rfq_id','date','fabric','qty','rate','status'],['2041','2026-11-05','Silk',500,138,'Sent']],payouts:[['payout_id','date','amount_inr','status'],['P-88','2026-11-10',132400,'Paid']]}[w];
+ dl('fabricwala_'+w+'.csv',csv(data));$('#lx').insertAdjacentHTML('afterbegin',`<li><div>${w}.csv<small>Today · ${per} · ${data.length-1} rows</small></div><em>✓ Ready</em></li>`);toast('Export ready (demo)')};
+</script></body></html>

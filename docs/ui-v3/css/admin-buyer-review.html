@@ -1,0 +1,73 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FabricWala Admin — Buyer review</title>
+<style>
+:root{--ink:#0A0A0A;--t2:#595959;--s1:#F5F5F5;--ln:#E2E2E2;--ctl:#8C8C8C;--err:#B42318}
+*{box-sizing:border-box}body{margin:0;background:#ddd;font:14px/1.45 Inter,system-ui,sans-serif;color:var(--ink)}
+.app{max-width:1000px;margin:auto;background:#fff;min-height:100vh}button,select,input,textarea{font:inherit;color:inherit}button{cursor:pointer}
+.hd{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--ln);position:sticky;top:0;background:#fff;z-index:5}.hd b{flex:1;font-size:17px;letter-spacing:-.02em}.hd span{color:var(--t2);font-size:12.5px}
+.tabs{display:flex;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--ln);padding:0 8px}.tabs button{border:0;background:none;padding:12px 10px;font-weight:600;color:var(--t2);border-bottom:3px solid transparent;white-space:nowrap}.tabs button[aria-selected=true]{color:var(--ink);font-weight:800;border-color:var(--ink)}.tabs em{font-style:normal;font-size:11.5px;border:1px solid var(--ctl);border-radius:99px;padding:0 7px;margin-left:4px}
+.wrap{display:grid;grid-template-columns:1fr}.lst{padding:10px 12px}.dt{display:none;padding:14px}
+.srch{width:100%;min-height:44px;border:1px solid var(--ctl);border-radius:99px;padding:0 16px;margin-bottom:10px}
+.it{display:block;width:100%;text-align:left;border:1px solid var(--ln);border-radius:14px;padding:12px;margin-bottom:8px;background:#fff}.it[aria-current=true]{border:2px solid var(--ink)}.it b{display:block;font-size:15px}.it small{color:var(--t2);display:block}.it .r{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.tg{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.tg i,.pill{font-style:normal;font-size:11.5px;font-weight:700;border:1px solid var(--ink);border-radius:99px;padding:1px 9px;white-space:nowrap}.tg i.w{border-style:dashed}.tg i.x{background:var(--ink);color:#fff}
+.det h2{margin:6px 0 2px;font-size:20px;letter-spacing:-.02em}.back{border:0;background:none;font-weight:700;padding:6px 0}
+table{width:100%;border-collapse:collapse;margin:8px 0}td{padding:8px 0;border-bottom:1px solid var(--ln);vertical-align:top}td:first-child{color:var(--t2);width:38%}
+h3{margin:18px 0 6px;font-size:15px}.chk{list-style:none;margin:0;padding:0}.chk li{display:grid;grid-template-columns:22px 1fr;gap:6px;padding:6px 0;border-bottom:1px solid var(--ln)}.chk small{display:block;color:var(--t2);font-size:12px}
+.lg{list-style:none;margin:0;padding:0;font-size:13px}.lg li{padding:6px 0;border-bottom:1px solid var(--ln)}.lg small{color:var(--t2)}
+.act{display:grid;gap:8px;margin-top:14px}.btn{display:grid;place-items:center;min-height:48px;border-radius:99px;border:1.5px solid var(--ink);font-weight:800;background:#fff;padding:0 16px}.btn.p{background:var(--ink);color:#fff}.btn:disabled{opacity:.4;cursor:not-allowed}
+.note{color:var(--t2);font-size:12.5px}.warn{border:1.5px dashed var(--ink);border-radius:12px;padding:10px 12px;margin:10px 0;font-weight:600}
+.empty{padding:40px 10px;text-align:center;color:var(--t2)}
+body.det .lst,body.det .tabs{display:none}body.det .dt{display:block}
+@media(min-width:800px){.wrap{grid-template-columns:360px 1fr}.lst{border-right:1px solid var(--ln);max-height:calc(100vh - 100px);overflow:auto}.dt{display:block}.back{display:none}body.det .lst,body.det .tabs{display:block}body.det .tabs{display:flex}.act{grid-template-columns:repeat(3,auto)}}
+.bk{position:fixed;inset:0;background:rgb(0 0 0/.5);z-index:20;display:none}.bk.on{display:block}
+.sheet{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:min(480px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:22px 22px 0 0;padding:8px 16px 18px;z-index:21;display:none}.sheet.on{display:block}.sheet::before{content:"";display:block;width:38px;height:5px;border-radius:9px;background:var(--ln);margin:2px auto 10px}
+.sheet h4{margin:0 0 6px;font-size:18px;display:flex;justify-content:space-between;align-items:center}.ib{min-width:40px;height:40px;border:0;background:none;border-radius:50%;font-size:18px}
+.fld{display:grid;gap:4px;margin:12px 0;font-weight:700;font-size:13px}.fld select,.fld textarea{border:1px solid var(--ctl);border-radius:12px;padding:10px 12px;background:#fff;font-weight:500;min-height:46px}.fld textarea{min-height:90px}.fld.bad select,.fld.bad textarea{border:2px solid var(--err)}.em{display:none;color:var(--err);font-weight:700;font-size:12.5px}.fld.bad .em{display:block}
+.prev{background:var(--s1);border-radius:12px;padding:10px 12px;font-size:13px;margin-top:6px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);top:62px;background:var(--ink);color:#fff;padding:10px 16px;border-radius:99px;font-weight:700;font-size:13px;z-index:30;display:none;white-space:nowrap}.toast.on{display:block}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+</style></head><body><main class="app">
+<header class="hd"><b>Buyer review</b><span>Admin · Overseas buyers</span></header>
+<div class="tabs" role="tablist" id="tabs"></div>
+<div class="wrap"><div class="lst" id="ls"><input class="srch" id="q" type="search" placeholder="Search company, country, email" aria-label="Search"><div id="li"></div></div><div class="dt" id="dt"></div></div>
+</main><div class="bk" id="bk"></div><div class="sheet" id="sh" role="dialog" aria-modal="true" aria-labelledby="st" tabindex="-1"></div><div class="toast" id="ts" role="status"></div>
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];let tab='pending',cur=null,last,tt,query='';
+const NOW='Today 09:'+String(new Date().getMinutes()).padStart(2,'0').replace(/^0$/,'00');const ME='Admin (you)';
+const BLOCK=['Demoland'],FREE=['gmail.com','yahoo.com','outlook.com','hotmail.com'];
+const D=[
+{id:1,co:'Al Noor Textiles LLC',cy:'United Arab Emirates',em:'buyer@alnoor.ae',ty:'Importer',tl:'TRN',tx:'100234567890003',web:'alnoor.ae',up:1,vol:'10,000 – 100,000 m',buy:'Cotton, Silk',h:5,st:'pending',lg:[]},
+{id:2,co:'Dhaka Fabrics Ltd',cy:'Bangladesh',em:'info@dhakafabrics.com.bd',ty:'Wholesaler',tl:'BIN',tx:'00123456789',web:'dhakafabrics.com.bd',up:1,vol:'Over 100,000 m',buy:'Rayon, Denim',h:30,st:'pending',lg:[]},
+{id:3,co:'Sam Trading',cy:'United States',em:'samtrading88@gmail.com',ty:'Sourcing agent',tl:'EIN',tx:'12-3456789',web:'',up:0,vol:'Under 10,000 m',buy:'Linen',h:20,st:'pending',lg:[]},
+{id:4,co:'Fashion House Co',cy:'United Kingdom',em:'orders@fashionhouse.co.uk',ty:'Brand / designer',tl:'VAT',tx:'GB123456789',web:'fashionhouse.co.uk',up:0,vol:'10,000 – 100,000 m',buy:'Silk, Embroidered',h:52,st:'pending',lg:[]},
+{id:5,co:'Test Imports',cy:'Demoland',em:'hello@testimports.example',ty:'Importer',tl:'TRN',tx:'100234567890003',web:'testimports.example',up:1,vol:'Under 10,000 m',buy:'Cotton',h:3,st:'pending',lg:[]},
+{id:6,co:'Nairobi Weaves',cy:'Kenya',em:'sales@nairobiweaves.co.ke',ty:'Retailer',tl:'KRA PIN',tx:'P051234567Z',web:'nairobiweaves.co.ke',up:1,vol:'Under 10,000 m',buy:'Cotton',h:80,st:'approved',lg:[['Approved','Admin','Yesterday 11:20','']]},
+{id:7,co:'Quick Cloth FZE',cy:'United Arab Emirates',em:'qc@gmail.com',ty:'Importer',tl:'TRN',tx:'100999999999999',web:'',up:0,vol:'Under 10,000 m',buy:'Cotton',h:90,st:'rejected',lg:[['Rejected','Admin','Yesterday 10:05','Could not verify business']]}];
+const ST={pending:'Pending',info:'Needs info',approved:'Approved',rejected:'Rejected'};
+const dom=b=>b.em.split('@')[1];
+const flags=b=>{const f=[];if(BLOCK.includes(b.cy))f.push(['x','Blocked country']);if(D.some(o=>o.id!==b.id&&o.tx===b.tx))f.push(['w','Duplicate tax ID']);if(FREE.includes(dom(b)))f.push(['w','Free-mail address']);if(b.web&&!b.up)f.push(['w','Website not reachable']);if(!b.web)f.push(['w','No website']);return f};
+const sla=b=>b.st!=='pending'&&b.st!=='info'?'':b.h>48?'Overdue · '+b.h+' h':b.h>24?'Due soon · '+b.h+' h':b.h+' h waiting';
+const toast=m=>{const t=$('#ts');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),2400)};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function tabs(){$('#tabs').innerHTML=Object.entries(ST).map(([k,v])=>`<button role="tab" aria-selected="${k===tab}" data-k="${k}">${v}<em>${D.filter(b=>b.st===k).length}</em></button>`).join('');$$('#tabs button').forEach(b=>b.onclick=()=>{tab=b.dataset.k;cur=null;document.body.classList.remove('det');render()})}
+function list(){const q=query.toLowerCase(),a=D.filter(b=>b.st===tab&&(!q||(b.co+b.cy+b.em).toLowerCase().includes(q))).sort((x,y)=>y.h-x.h);
+ $('#li').innerHTML=a.length?a.map(b=>`<button class="it" data-id="${b.id}" aria-current="${cur===b.id}"><div class="r"><b>${esc(b.co)}</b><small>${sla(b)}</small></div><small>${esc(b.cy)} · ${esc(b.ty)} · ${esc(dom(b))}</small><div class="tg">${flags(b).map(([c,t])=>`<i class="${c}">${c=='x'?'⛔':'⚠'} ${t}</i>`).join('')||'<i>✓ No flags</i>'}</div></button>`).join(''):'<div class="empty">Nothing here.</div>';
+ $$('.it').forEach(e=>e.onclick=()=>{cur=+e.dataset.id;document.body.classList.add('det');render()})}
+function detail(){const b=D.find(x=>x.id===cur);if(!b){$('#dt').innerHTML='<div class="empty">Select a buyer to review.</div>';return}
+ const f=flags(b),blocked=BLOCK.includes(b.cy),open=b.st==='pending'||b.st==='info';
+ $('#dt').innerHTML=`<button class="back" id="bkb">← Back to list</button><h2>${esc(b.co)}</h2><div class="tg"><span class="pill">${{pending:'○',info:'?',approved:'✓',rejected:'✕'}[b.st]} ${ST[b.st]}</span>${sla(b)?`<span class="pill">${sla(b)}</span>`:''}</div>
+ ${blocked?'<div class="warn">⛔ This country is on the blocked list. Approval is disabled. You can reject, or ask the owner for an override.</div>':''}
+ <table><tr><td>Country</td><td>${esc(b.cy)}</td></tr><tr><td>Business type</td><td>${esc(b.ty)}</td></tr><tr><td>Email</td><td>${esc(b.em)}</td></tr><tr><td>${esc(b.tl)}</td><td><span id="tv">${esc(b.tx.slice(0,3))}${'•'.repeat(Math.max(b.tx.length-5,3))}${esc(b.tx.slice(-2))}</span> <button id="rv" style="border:0;background:none;text-decoration:underline;font-weight:700">Reveal</button></td></tr><tr><td>Website</td><td>${b.web?esc(b.web):'—'}</td></tr><tr><td>Buys</td><td>${esc(b.buy)}</td></tr><tr><td>Yearly volume</td><td>${esc(b.vol)}</td></tr></table>
+ <h3>Checks</h3><ul class="chk"><li><span>${blocked?'✕':'✓'}</span><div>Country allowed<small>${blocked?'On blocked list':'Not on blocked list'}</small></div></li><li><span>${f.some(x=>x[1]=='Duplicate tax ID')?'✕':'✓'}</span><div>Unique tax ID<small>${f.some(x=>x[1]=='Duplicate tax ID')?'Same ID used by another buyer':'No other buyer uses it'}</small></div></li><li><span>${FREE.includes(dom(b))?'○':'✓'}</span><div>Company email<small>${FREE.includes(dom(b))?'Free-mail domain: ask for a company document':'Own domain: '+esc(dom(b))}</small></div></li><li><span>${!b.web?'○':b.up?'✓':'✕'}</span><div>Website<small>${!b.web?'Not provided':b.up?'Reachable':'Did not load'}</small></div></li></ul>
+ <h3>History</h3><ul class="lg">${[['Submitted','Buyer',b.h+' h ago','']].concat(b.lg).map(l=>`<li><b>${l[0]}</b> · ${l[1]} · <small>${l[2]}${l[3]?' · '+esc(l[3]):''}</small></li>`).join('')}</ul>
+ ${open?`<div class="act"><button class="btn p" id="ap" ${blocked?'disabled':''}>Approve</button><button class="btn" id="rq">Request more info</button><button class="btn" id="rj">Reject</button></div><p class="note" style="margin-top:8px">Every action is recorded with your name, time and reason. Target: decide within 48 working hours.</p>`:'<p class="note">This review is closed. Changes need a super admin.</p>'}`;
+ $('#bkb').onclick=()=>{document.body.classList.remove('det');cur=null;render()};
+ $('#rv').onclick=()=>{$('#tv').textContent=b.tx;$('#rv').remove();b.lg.push(['Tax ID viewed','Admin',NOW,''])};
+ if(open){$('#ap').onclick=()=>sheet('Approve '+b.co,`<p>They will be able to send RFQs to export-ready mills and receive quotes.</p><button class="btn p" id="go" style="width:100%">Confirm approval</button>`,()=>done(b,'approved','Approved',''));
+  $('#rq').onclick=()=>sheet('Request more info',`<label class="fld" id="f1">Message to buyer<textarea id="m" placeholder="e.g. Please send a copy of your company registration."></textarea><span class="em" role="alert">Write at least 10 characters.</span></label><button class="btn p" id="go" style="width:100%">Send request</button>`,()=>{const m=$('#m').value.trim();if(m.length<10){$('#f1').classList.add('bad');$('#m').focus();return false}done(b,'info','Info requested',m)});
+  $('#rj').onclick=()=>sheet('Reject '+b.co,`<label class="fld" id="f1">Reason<select id="r"><option value="">Choose a reason</option><option>Could not verify business</option><option>Incomplete details</option><option>Country not supported</option><option>Duplicate account</option><option>Other</option></select><span class="em" role="alert">Choose a reason.</span></label><label class="fld" id="f2">Note to buyer (required for "Other")<textarea id="n"></textarea><span class="em" role="alert">Add a short note.</span></label><div class="prev">The buyer receives an email with this reason and can edit details and resubmit.</div><button class="btn p" id="go" style="width:100%;margin-top:12px">Confirm rejection</button>`,()=>{const r=$('#r').value,n=$('#n').value.trim();$('#f1').classList.toggle('bad',!r);$('#f2').classList.toggle('bad',r==='Other'&&n.length<5);if(!r||(r==='Other'&&n.length<5))return false;done(b,'rejected','Rejected',r+(n?' — '+n:''))})}}
+function done(b,st,label,why){b.st=st;b.lg.push([label,ME,NOW,why]);close_();toast(label+' · '+b.co);tab=st==='info'?'info':tab;cur=null;document.body.classList.remove('det');render()}
+function sheet(t,h,fn){last=document.activeElement;$('#sh').innerHTML=`<h4><span id="st">${esc(t)}</span><button class="ib" aria-label="Close" onclick="close_()">✕</button></h4>`+h;$('#bk').classList.add('on');$('#sh').classList.add('on');$('#sh').focus();$('#go').onclick=()=>{fn()};$$('#sh .fld').forEach(f=>f.addEventListener('input',()=>f.classList.remove('bad')));$$('#sh .fld').forEach(f=>f.addEventListener('change',()=>f.classList.remove('bad')))}
+function close_(){$('#bk').classList.remove('on');$('#sh').classList.remove('on');last&&last.focus&&last.focus()}
+$('#bk').onclick=close_;addEventListener('keydown',e=>e.key==='Escape'&&close_());$('#q').oninput=e=>{query=e.target.value;list()};
+function render(){tabs();list();detail()}render();
+</script></body></html>

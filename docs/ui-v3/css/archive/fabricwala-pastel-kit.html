@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FabricWala — Pastel Gradient UI Kit</title>
+<style>
+/* ===================== THEMES (change only here) ===================== */
+ [data-theme="aurora"]{--bg1:#E6EEFF;--bg2:#EEE6FF;--bg3:#FFE9EF;--ink:#14172B;--sec:#565B75;--btn1:#2F55E8;--btn2:#6A4BE0;--acc:#3A4FD6;--soft:#E3E9FF;--line:#8E94B3}
+[data-theme="mint"]{--bg1:#DFF5EC;--bg2:#E4F1FF;--bg3:#FFF6DC;--ink:#0E1F1A;--sec:#4A5C55;--btn1:#0B7A56;--btn2:#0F7C86;--acc:#0B7A56;--soft:#D9EEE5;--line:#86A096}
+[data-theme="rose"]{--bg1:#FFE4EC;--bg2:#FFEBDD;--bg3:#EDE4FF;--ink:#26141C;--sec:#6A5560;--btn1:#C2305F;--btn2:#8E3BC9;--acc:#B02A57;--soft:#FCE3EB;--line:#A8909B}
+[data-theme="lagoon"],:root:not([data-theme]){--bg1:#D4F1EE;--bg2:#E6F4EF;--bg3:#FFE4D4;--ink:#0F2427;--sec:#4A5F62;--btn1:#0A7C84;--btn2:#087A66;--acc:#0A7479;--soft:#D6EFEC;--line:#7E9A9C}
+[data-theme="sage"]{--bg1:#F3EBDD;--bg2:#E4EDDD;--bg3:#F7E6DC;--ink:#2A2218;--sec:#5E5546;--btn1:#4F5B3A;--btn2:#6B5320;--acc:#4F5B3A;--soft:#E7EADD;--line:#948A78}
+:root{
+  --g-bg:radial-gradient(60% 50% at 0% 0%,var(--bg1),transparent 70%),radial-gradient(60% 50% at 100% 30%,var(--bg2),transparent 70%),radial-gradient(70% 50% at 30% 100%,var(--bg3),transparent 70%),#fff;
+  --g-btn:linear-gradient(135deg,var(--btn1),var(--btn2));
+  --g-soft:linear-gradient(135deg,var(--bg1),var(--bg2) 55%,var(--bg3));
+  --glass:rgb(255 255 255/.72);--glass-s:rgb(255 255 255/.88);--edge:rgb(255 255 255/.8);
+  --sh:0 12px 32px rgb(20 23 43/.10);--r:28px;--spring:cubic-bezier(.34,1.4,.64,1);
+}
+*{box-sizing:border-box}body{margin:0;font:400 16px/1.55 "Manrope","Noto Sans Devanagari",system-ui,sans-serif;color:var(--ink);background:#F4F5F8}
+h1,h2,h3,p{margin:0}.wrap{max-width:1240px;margin:auto;padding:24px 20px 80px}
+/* ---------- kit chrome ---------- */
+.top{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:24px}
+.top h1{font-size:clamp(1.5rem,1rem+2vw,2.25rem);letter-spacing:-.02em}.top p{color:var(--sec)}
+.themes{display:flex;gap:8px;flex-wrap:wrap}.themes button{display:flex;align-items:center;gap:8px;min-height:44px;padding:0 16px 0 8px;border:1px solid var(--line);background:#fff;border-radius:99px;font-weight:700;font-size:14px;font-family:inherit;color:var(--ink);cursor:pointer}
+.themes button[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.themes i{inline-size:28px;block-size:28px;border-radius:50%;display:block;box-shadow:inset 0 0 0 2px #fff}
+section{margin-top:40px}section>h2{font-size:1.25rem;margin-bottom:12px}
+.sw-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+.sw{border:0;text-align:start;cursor:pointer;border-radius:20px;overflow:hidden;background:#fff;box-shadow:var(--sh);padding:0;font:inherit;color:inherit}
+.sw b{display:block;block-size:84px}.sw span{display:block;padding:10px 12px;font-size:13px}.sw small{color:var(--sec);display:block}
+.copy{min-height:44px;padding:0 18px;border:0;border-radius:99px;background:var(--g-btn);color:#fff;font-weight:700;font-size:14px;font-family:inherit;cursor:pointer}
+pre{background:#14172B;color:#E6EEFF;padding:16px;border-radius:16px;overflow:auto;font-size:12.5px;line-height:1.5}
+.phones{display:flex;gap:24px;flex-wrap:wrap;justify-content:center}
+/* ---------- app components ---------- */
+.phone{position:relative;inline-size:375px;block-size:780px;border-radius:44px;border:8px solid #fff;overflow:hidden;box-shadow:0 30px 60px rgb(20 23 43/.18);background:var(--g-bg);isolation:isolate}
+.screen{block-size:100%;padding:18px 16px 110px;display:grid;gap:14px;align-content:start;overflow:hidden}
+.glass{background:var(--glass);backdrop-filter:blur(22px) saturate(1.4);-webkit-backdrop-filter:blur(22px) saturate(1.4);border:1px solid var(--edge);border-radius:var(--r);box-shadow:0 1px 0 #fff inset,var(--sh)}
+.pillow{background:#fff;border-radius:var(--r);box-shadow:8px 8px 20px rgb(20 23 43/.08),-8px -8px 20px rgb(255 255 255/.9)}
+.hdr{display:grid;grid-template-columns:44px 1fr 44px;align-items:center}.hdr b{text-align:center;font-size:1.05rem}
+.ic{inline-size:44px;block-size:44px;border:0;border-radius:50%;background:#fff;box-shadow:0 2px 10px rgb(20 23 43/.12);font-size:18px;color:var(--ink);cursor:pointer;transition:transform .12s var(--spring)}.ic:active{transform:scale(.92)}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 24px;border:0;border-radius:99px;background:var(--g-btn);color:#fff;font-weight:700;font-size:16px;font-family:inherit;cursor:pointer;box-shadow:0 10px 24px color-mix(in srgb,var(--btn1) 35%,transparent);transition:transform .12s var(--spring)}.btn:active{transform:scale(.97)}
+.btn.ghost{background:#fff;color:var(--ink);box-shadow:none;border:1px solid var(--line)}
+.cta{position:absolute;inset:auto 0 0 0;padding:12px 16px 20px;background:linear-gradient(to top,#fff 40%,transparent)}.cta .btn{inline-size:100%}
+.tabbar{position:absolute;inset:auto 14px 14px;display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:2px;padding:8px;border-radius:99px;background:var(--glass-s);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);border:1px solid var(--edge);box-shadow:var(--sh)}
+.tabbar a{display:grid;justify-items:center;gap:2px;padding:7px 0;border-radius:99px;font-size:11px;font-weight:700;color:var(--sec);text-decoration:none}.tabbar a[aria-current]{background:var(--g-btn);color:#fff}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;padding:4px;border-radius:99px;background:rgb(255 255 255/.55);box-shadow:inset 3px 3px 8px rgb(20 23 43/.08),inset -3px -3px 8px rgb(255 255 255/.9)}
+.seg button{min-height:40px;border:0;background:transparent;border-radius:99px;font-weight:700;font-size:13px;font-family:inherit;color:var(--sec)}.seg button[aria-pressed=true]{background:#fff;color:var(--ink);box-shadow:0 2px 8px rgb(20 23 43/.12)}
+.chip{display:inline-flex;align-items:center;min-height:34px;padding:0 14px;border-radius:99px;background:var(--soft);color:var(--acc);font-weight:700;font-size:13px}
+.lbl{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--sec)}
+.muted{color:var(--sec);font-size:14px}.num{font-variant-numeric:tabular-nums}
+.pic{aspect-ratio:5/4;border-radius:24px;position:relative;overflow:hidden}.pic .glass{position:absolute;inset:auto 10px 10px;padding:10px 14px;border-radius:18px}
+.v{font-size:12px;font-weight:700;color:var(--acc)}.v::before{content:"✓ "}
+.bars{display:grid;grid-auto-flow:column;gap:8px;align-items:end;block-size:90px;margin-top:10px}.bars i{position:relative;block-size:100%;border-radius:99px;background:var(--soft);box-shadow:inset 3px 3px 8px rgb(20 23 43/.08)}.bars i::after{content:"";position:absolute;inset:auto 0 0;block-size:var(--v);border-radius:inherit;background:var(--g-btn)}
+.row{display:grid;grid-template-columns:52px 1fr auto;gap:12px;align-items:center;padding:10px;background:#fff;border-radius:20px;box-shadow:0 4px 14px rgb(20 23 43/.07)}.row .t{inline-size:52px;block-size:52px;border-radius:14px}
+.sheetbg{position:absolute;inset:0;background:rgb(20 23 43/.35);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.sheet{position:absolute;inset:auto 8px 8px;padding:8px 16px 16px;border-radius:34px;background:var(--glass-s);backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);border:1px solid var(--edge);box-shadow:var(--sh);display:grid;gap:10px}
+.sheet::before{content:"";justify-self:center;inline-size:40px;block-size:5px;border-radius:9px;background:var(--line);opacity:.5;margin:6px 0 4px}
+.field{display:grid;gap:6px}.field input{min-height:48px;padding:0 14px;border:1px solid var(--line);border-radius:12px;background:#fff;font-size:16px;font-family:inherit;color:var(--ink)}.field input:focus-visible,.btn:focus-visible,.ic:focus-visible,.themes button:focus-visible,.sw:focus-visible,.copy:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.demo{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}.demo>div{padding:18px;display:grid;gap:12px;align-content:start}
+.badge{display:inline-block;padding:2px 10px;border-radius:99px;font-size:12px;font-weight:700}.ok{background:#E5F0E9;color:#286648}.wa{background:#F8EBD3;color:#8A5A14}.er{background:#FBE9E6;color:#B42318}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style></head><body><div class="wrap">
+
+<div class="top"><div><h1>FabricWala Pastel Gradient Kit</h1><p>Default: Lagoon. Theme chuno → sab screens aur CSS apne aap badal jayenge. Image banane ki zarurat nahi.</p></div>
+<div class="themes" id="themes" role="group" aria-label="Theme"></div></div>
+
+<section><h2>Gradients (click = copy)</h2><div class="sw-grid" id="sw"></div></section>
+
+<section><h2>Mobile screens (live)</h2><div class="phones">
+
+<div class="phone"><div class="screen">
+ <div class="hdr"><button class="ic" aria-label="Menu">☰</button><b>FabricWala</b><button class="ic" aria-label="Saved">♡</button></div>
+ <h1 style="font-size:1.9rem;line-height:1.15;letter-spacing:-.02em">Find fabric,<br>the easy way</h1>
+ <div class="glass" style="padding:6px 16px;border-radius:99px;display:flex;gap:10px;align-items:center"><span>⌕</span><span class="muted">Search cotton, silk, linen…</span></div>
+ <div class="seg"><button aria-pressed="true">Catalogue</button><button aria-pressed="false">Post RFQ</button><button aria-pressed="false">Suppliers</button></div>
+ <div class="pic" style="background:linear-gradient(135deg,#27465e,#6f93ab)"><div class="glass"><div class="v">Verified mill</div><b>Indigo Linen</b> <span class="muted num">· ₹ 238/m</span></div></div>
+ <div class="glass" style="display:grid;grid-template-columns:repeat(3,1fr);text-align:center;padding:14px 0"><div><b class="num" style="font-size:1.4rem">2.4k</b><div class="muted">Fabrics</div></div><div style="border-inline:1px solid rgb(0 0 0/.08)"><b class="num" style="font-size:1.4rem">380</b><div class="muted">Mills</div></div><div><b class="num" style="font-size:1.4rem">12h</b><div class="muted">Quote time</div></div></div>
+ <nav class="tabbar"><a aria-current="page" href="#">⌂<span>Home</span></a><a href="#">▦<span>Explore</span></a><a href="#">✎<span>RFQ</span></a><a href="#">☺<span>Profile</span></a></nav>
+</div></div>
+
+<div class="phone"><div class="screen">
+ <div class="hdr"><button class="ic" aria-label="Back">‹</button><b>Indigo Linen</b><button class="ic" aria-label="Save">♡</button></div>
+ <div class="pic" style="background:linear-gradient(135deg,#27465e,#6f93ab);aspect-ratio:4/5"></div>
+ <div class="sheetbg"></div>
+ <div class="sheet"><div style="display:flex;justify-content:space-between;align-items:center"><b>Choose quantity</b><button class="ic" style="inline-size:34px;block-size:34px" aria-label="Close">✕</button></div>
+  <div class="row"><div class="t" style="background:linear-gradient(135deg,var(--bg1),var(--bg2))"></div><div><b>Sample · 1 m</b><div class="muted">Ships in 2 days</div></div><b class="num">₹160</b></div>
+  <div class="row"><div class="t" style="background:linear-gradient(135deg,var(--bg2),var(--bg3))"></div><div><b>Roll · 50 m</b><div class="muted">MOQ 50 m · slab price</div></div><b class="num">₹142/m</b></div>
+  <div class="row"><div class="t" style="background:linear-gradient(135deg,var(--bg3),var(--bg1))"></div><div><b>Bulk RFQ · 500 m+</b><div class="muted">Get quotes from mills</div></div><b>›</b></div>
+  <button class="btn">Continue</button></div>
+</div></div>
+
+<div class="phone"><div class="screen">
+ <div class="hdr"><button class="ic" aria-label="Back">‹</button><b>My RFQ</b><button class="ic" aria-label="More">⋯</button></div>
+ <div class="pillow" style="padding:18px"><div class="lbl">Quotes received</div><b class="num" style="font-size:2.6rem;line-height:1.1">7</b><div class="muted">3 mills · lowest ₹138/m</div>
+  <div class="bars"><i style="--v:40%"></i><i style="--v:70%"></i><i style="--v:55%"></i><i style="--v:90%"></i><i style="--v:62%"></i><i style="--v:35%"></i><i style="--v:80%"></i></div></div>
+ <div class="glass" style="padding:16px;display:grid;gap:6px"><div style="display:flex;justify-content:space-between"><b>Surat Weaves</b><span class="badge ok">Quoted</span></div><div class="muted num">₹138/m · 500 m · 6 days</div></div>
+ <div class="glass" style="padding:16px;display:grid;gap:6px"><div style="display:flex;justify-content:space-between"><b>Kashmir Looms</b><span class="badge wa">Pending</span></div><div class="muted">Awaiting quote</div></div>
+ <div class="cta"><button class="btn">Compare quotes</button></div>
+</div></div>
+</div></section>
+
+<section><h2>Components</h2><div class="demo">
+ <div class="glass"><span class="lbl">Buttons</span><button class="btn">Primary gradient</button><button class="btn ghost">Secondary</button><span class="chip">Chip / tag</span></div>
+ <div class="glass"><span class="lbl">Input</span><label class="field"><span class="muted">Mobile number</span><input placeholder="+91 98765 43210" inputmode="tel"></label><div><span class="badge ok">Success</span> <span class="badge wa">Warning</span> <span class="badge er">Error</span></div></div>
+ <div class="pillow" style="padding:18px"><span class="lbl">Pillow tile</span><p class="muted">Sirf 1–2 hero tiles per screen. Forms, tables, chat par glass/pillow nahi.</p></div>
+</div></section>
+
+<section><h2>Theme CSS (copy karke project me paste karo)</h2><p class="muted" style="margin-bottom:10px">Sirf ye variables badlo, baaki sab same rehta hai.</p><pre id="code"></pre><div style="margin-top:12px"><button class="copy" id="copyCss">Copy theme CSS</button> <span class="muted" id="msg" role="status"></span></div></section>
+
+</div>
+<script>
+const THEMES={lagoon:'Lagoon (default)',aurora:'Aurora',mint:'Mint',rose:'Rose',sage:'Sage (textile)'};
+const VARS=['bg1','bg2','bg3','ink','sec','btn1','btn2','acc','soft','line'];
+const $=s=>document.querySelector(s),cs=()=>getComputedStyle(document.documentElement);
+function theme(t){document.documentElement.dataset.theme=t;try{localStorage.setItem('fw-theme',t)}catch(e){}
+ document.querySelectorAll('#themes button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.t===t));render()}
+function render(){const s=cs(),v=n=>s.getPropertyValue('--'+n).trim();
+ $('#sw').innerHTML=[['Page gradient',`linear-gradient(135deg,${v('bg1')},${v('bg2')},${v('bg3')})`,`${v('bg1')} → ${v('bg2')} → ${v('bg3')}`],['Button gradient',`linear-gradient(135deg,${v('btn1')},${v('btn2')})`,`${v('btn1')} → ${v('btn2')}`],['Soft chip',v('soft'),v('soft')],['Ink (text)',v('ink'),v('ink')],['Secondary text',v('sec'),v('sec')],['Accent text',v('acc'),v('acc')]]
+  .map(([n,bg,h])=>`<button class="sw" data-c="${h}"><b style="background:${bg}"></b><span>${n}<small>${h}</small></span></button>`).join('');
+ document.querySelectorAll('.sw').forEach(b=>b.onclick=()=>copy(b.dataset.c));
+ $('#code').textContent=`[data-theme="${document.documentElement.dataset.theme}"]{\n`+VARS.map(n=>`  --${n}:${v(n)};`).join('\n')+`\n}\n/* gradients */\n--g-btn:linear-gradient(135deg,var(--btn1),var(--btn2));\n--g-bg:radial-gradient(60% 50% at 0% 0%,var(--bg1),transparent 70%),radial-gradient(60% 50% at 100% 30%,var(--bg2),transparent 70%),radial-gradient(70% 50% at 30% 100%,var(--bg3),transparent 70%),#fff;`}
+function copy(t){(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>$('#msg').textContent='Copied: '+t.slice(0,40)).catch(()=>$('#msg').textContent='Select & copy manually')}
+$('#copyCss').onclick=()=>copy($('#code').textContent);
+$('#themes').innerHTML=Object.entries(THEMES).map(([k,n])=>`<button data-t="${k}" aria-pressed="false"><i data-sw="${k}"></i>${n}</button>`).join('');
+document.querySelectorAll('#themes button').forEach(b=>b.onclick=()=>theme(b.dataset.t));
+const P={lagoon:['#D4F1EE','#E6F4EF','#FFE4D4'],aurora:['#E6EEFF','#EEE6FF','#FFE9EF'],mint:['#DFF5EC','#E4F1FF','#FFF6DC'],rose:['#FFE4EC','#FFEBDD','#EDE4FF'],sage:['#F3EBDD','#E4EDDD','#F7E6DC']};
+document.querySelectorAll('[data-sw]').forEach(i=>i.style.background=`linear-gradient(135deg,${P[i.dataset.sw].join(',')})`);
+let t='lagoon';try{t=localStorage.getItem('fw-theme')||t}catch(e){}if(!THEMES[t])t='lagoon';theme(t);
+</script></body></html>

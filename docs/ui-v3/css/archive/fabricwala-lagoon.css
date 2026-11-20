@@ -1,0 +1,40 @@
+/* =====================================================================
+   FabricWala — LAGOON theme (teal + peach pastel gradients)  ** DEFAULT **
+   Load AFTER fabricwala-ivory-atelier.css and fabricwala-mobile-feel.css.
+   Replaces the ivory/espresso palette; structure, radii, glass, motion unchanged.
+   Verified pairs: see check-lagoon.py
+   ===================================================================== */
+:root {
+  --lg-aqua:  #D4F1EE;  --lg-mint: #E6F4EF;  --lg-peach: #FFE4D4;   /* pastel gradient stops */
+  --lg-btn1:  #0A7C84;  --lg-btn2: #087A66;                          /* deep stops: white text 5.0–5.3:1 */
+
+  --c-canvas: #EAF6F3;  --c-surface: #FFFFFF;  --c-surface-raised: #FFFFFF; --c-surface-subtle: #D6EFEC;
+  --c-text: #0F2427;    --c-text-secondary: #4A5F62;  --c-text-muted: #4F6568;  --c-placeholder: #5B7073;
+  --c-border: #D3E4E2;  --c-border-control: #6F8D8F;  --c-border-strong: #4A5F62;
+
+  --c-action: #0A7C84;  --c-action-hover: #08666D;  --c-action-active: #064F55;  --c-on-action: #FFFFFF;
+  --c-accent: #0A7C84;  --c-accent-text: #0A7479;   --c-accent-soft: #D6EFEC;   --c-focus: #0A7479;
+  --c-overlay: rgb(15 36 39 / .38);
+  --c-premium: #0A7C84; --c-premium-text: #0A7479;  --c-premium-soft: #D6EFEC;  --c-on-premium: #FFFFFF;
+
+  --g-btn:  linear-gradient(135deg, var(--lg-btn1), var(--lg-btn2));
+  --g-page: radial-gradient(60% 50% at 0% 0%, var(--lg-aqua), transparent 70%),
+            radial-gradient(60% 50% at 100% 35%, var(--lg-peach), transparent 70%),
+            radial-gradient(70% 50% at 30% 100%, var(--lg-mint), transparent 70%), #fff;
+
+  --glass-bg: rgb(255 255 255 / .72);  --glass-bg-strong: rgb(255 255 255 / .88);
+  --shadow-low: 0 2px 12px rgb(15 36 39 / .06);  --shadow-raised: 0 10px 30px rgb(15 36 39 / .09);  --shadow-floating: 0 16px 44px rgb(15 36 39 / .13);
+  --glass-shadow: 0 1px 0 rgb(255 255 255 / .85) inset, 0 12px 32px rgb(15 36 39 / .09);
+}
+body, .app-bg { background: var(--g-page); background-attachment: fixed; }
+.app-bg::before { background: var(--lg-aqua); } .app-bg::after { background: var(--lg-peach); }
+.btn { --_bg: var(--g-btn); box-shadow: 0 10px 24px rgb(10 124 132 / .30); }
+.btn:hover { --_bg: linear-gradient(135deg, #08666D, #066A59); } .btn:active { --_bg: linear-gradient(135deg, #064F55, #055245); }
+.btn--secondary { --_bg: #fff; box-shadow: none; } .btn--secondary:hover { --_bg: var(--c-surface-subtle); }
+.btn--tertiary { --_bg: transparent; box-shadow: none; }
+.btn--danger { --_bg: var(--c-danger); box-shadow: none; }
+.tabbar [aria-current="page"], .chip[aria-pressed="true"] { background: var(--g-btn); border-color: transparent; }
+.bars > i::after { background: var(--g-btn); }
+.cta-bar { background: linear-gradient(to top, #fff 45%, transparent); }
+.skeleton { background: linear-gradient(90deg, #D6EFEC 25%, #E9F6F4 50%, #D6EFEC 75%); background-size: 200% 100%; }
+@media (prefers-contrast: more) { :root { --c-border: #6F8D8F; --c-text-muted: #3E5356; } }

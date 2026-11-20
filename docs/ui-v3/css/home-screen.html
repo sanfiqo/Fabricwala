@@ -1,0 +1,139 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FabricWala — Home</title>
+<style>
+:root{--ink:#0A0A0A;--t2:#595959;--s1:#F5F5F5;--ln:#E2E2E2;--ctl:#8C8C8C}
+*{box-sizing:border-box}body{margin:0;background:#ddd;font:14px/1.4 Inter,Manrope,"Noto Sans Devanagari",system-ui,sans-serif;color:var(--ink)}
+.app{max-width:440px;min-height:100vh;margin:auto;background:#fff;padding-bottom:132px;position:relative}
+a{color:inherit;text-decoration:none}button{font:inherit;cursor:pointer;color:inherit}
+.ph{background:repeating-linear-gradient(45deg,#ECECEC 0 10px,#E4E4E4 10px 20px);display:grid;place-items:center;color:#7A7A7A;font-size:11px;font-weight:700;border-radius:12px}
+.top{padding:12px 14px 8px;display:grid;gap:10px;position:sticky;top:0;background:#fff;z-index:5;transition:box-shadow .2s}.top.sm{box-shadow:0 4px 14px rgb(0 0 0/.08)}
+.row{display:flex;align-items:center;gap:6px}.logo{font-weight:900;font-size:19px;letter-spacing:-.04em}.sp{flex:1}.hi{font-size:13px;color:var(--t2);margin-left:6px}.hi b{color:var(--ink)}
+.ib{min-width:40px;height:40px;border:0;border-radius:50%;background:none;font-size:17px;position:relative}.go{background:var(--ink);color:#fff}
+.lang{border:1px solid var(--ctl);border-radius:99px;font-weight:800;font-size:13px;padding:0 12px;height:34px;background:#fff}
+.cnt{position:absolute;top:2px;right:0;min-width:17px;height:17px;border-radius:9px;background:var(--ink);color:#fff;font-size:10px;font-weight:800;display:grid;place-items:center;padding:0 4px}
+.sb{display:flex;align-items:center;gap:8px;min-height:46px;padding:0 5px 0 14px;border:1px solid var(--ctl);border-radius:99px;background:var(--s1)}.sb input{flex:1;border:0;background:none;font:inherit;outline:0;min-width:0}.sb:focus-within{outline:2px solid var(--ink)}
+.sug{display:none;gap:8px;overflow-x:auto;scrollbar-width:none}.top:focus-within .sug{display:flex}.top.sm .sug,.top.sm .hi{display:none}.sug a{white-space:nowrap;font-size:12.5px;font-weight:600;padding:5px 12px;border-radius:99px;border:1px solid var(--ctl)}
+.tabs{display:flex;gap:22px;padding:0 14px;border-bottom:1px solid var(--ln);overflow-x:auto;scrollbar-width:none}.tabs a{padding:10px 0;font-weight:600;color:var(--t2);border-bottom:3px solid transparent;white-space:nowrap}.tabs a.on{color:var(--ink);font-weight:800;border-color:var(--ink)}
+.qf{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:10px 14px;background:var(--s1)}.qf button{white-space:nowrap;min-height:36px;padding:0 14px;border-radius:99px;border:1px solid var(--ctl);background:#fff;font-weight:600;font-size:13px}.qf button[aria-pressed=true],.qf .fb{background:var(--ink);color:#fff;border-color:var(--ink)}
+.rfq{margin:12px 14px;padding:14px;border-radius:14px;background:var(--ink);color:#fff;display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:center}.rfq b{font-size:16px;grid-column:1}.rfq span{color:#d4d4d4;font-size:12.5px;grid-column:1}.rfq a{grid-row:1/3;grid-column:2;white-space:nowrap;background:#fff;color:var(--ink);font-weight:800;padding:11px 16px;border-radius:99px}
+.box{margin:12px 14px;border:1px solid var(--ink);border-radius:14px;padding:12px 14px;display:none;gap:4px 10px;grid-template-columns:1fr auto;align-items:center}.box b{font-size:15px}.box span{color:var(--t2);font-size:12.5px}.box a{grid-row:1/3;grid-column:2;background:var(--ink);color:#fff;font-weight:800;padding:10px 16px;border-radius:99px}
+.pb{grid-column:1/3;height:6px;border-radius:9px;background:var(--ln);overflow:hidden;margin-top:6px}.pb i{display:block;height:100%;background:var(--ink)}
+.steps{grid-column:1/3;display:flex;justify-content:space-between;font-size:11px;color:var(--t2);margin-top:4px}.steps .d{font-weight:800;color:var(--ink)}
+[data-auth=buyer] .box{display:grid}[data-auth=buyer] .rfq,[data-auth=buyer] .bar .in{display:none}[data-auth=guest] .buyer-only{display:none}
+.cats{display:flex;gap:14px;overflow-x:auto;scrollbar-width:none;padding:4px 14px 8px;text-align:center;font-size:12px;font-weight:600}.cats a{flex:0 0 66px}.cats .ph{width:64px;height:64px;border-radius:50%;margin:0 auto 5px}
+.sec{padding:14px 0 4px}.sec h2{margin:0 14px 2px;font-size:18px;letter-spacing:-.02em;display:flex;justify-content:space-between}.sec h2 a{font-size:13px;color:var(--t2);font-weight:600}.sec p{margin:0 14px 10px;color:var(--t2);font-size:13px}
+.use{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:0 14px;text-align:center;font-weight:700;font-size:13px}.use .ph{aspect-ratio:4/3;margin-bottom:5px}
+.rail{display:flex;gap:10px;overflow-x:auto;padding:0 14px 6px;scroll-snap-type:x mandatory;scroll-padding:0 14px;scrollbar-width:none}
+.card{flex:0 0 156px;scroll-snap-align:start;position:relative}.card .ph{aspect-ratio:1}.card b{display:block;margin-top:7px;font-size:15px}.card small{color:var(--t2);display:block;font-size:12px}.card i{font-style:normal;display:inline-block;margin-top:5px;font-size:11px;font-weight:700;border:1px solid var(--ink);border-radius:99px;padding:0 7px}
+.ic2{position:absolute;right:6px;width:32px;height:32px;border-radius:50%;border:0;background:#fff;box-shadow:0 1px 6px rgb(0 0 0/.2);font-size:15px}.heart{top:6px}.shr{top:44px}.heart[aria-pressed=true]{background:var(--ink);color:#fff}
+.lk{display:block;border:0;background:none;padding:2px 0;font-size:11.5px;color:var(--t2);text-decoration:underline;text-align:left}
+.smp{display:block;width:100%;margin-top:6px;border:1.5px solid var(--ink);background:#fff;border-radius:99px;font-weight:800;font-size:12px;padding:7px}
+.mill{flex:0 0 214px;border:1px solid var(--ln);border-radius:14px;padding:12px;display:grid;grid-template-columns:44px 1fr;gap:4px 10px;align-items:center}.mill .ph{width:44px;height:44px}.mill b{font-size:14px}.mill small{color:var(--t2);font-size:12px;white-space:nowrap}
+.tg{grid-column:1/3;display:flex;gap:6px}.tg i{font-style:normal;font-size:11px;font-weight:700;border:1px solid var(--ink);border-radius:99px;padding:0 7px}
+.bt{grid-column:1/3;display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px}.bt a{text-align:center;border:1.5px solid var(--ink);border-radius:99px;font-weight:800;padding:7px;font-size:13px}.bt .wa{background:var(--ink);color:#fff}
+.bar{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:min(440px,100%);background:#fff;border-top:1px solid var(--ln);z-index:9}.bar .in{display:flex;justify-content:space-between;align-items:center;background:var(--ink);color:#fff;padding:8px 14px;font-weight:700;font-size:13px}.bar .in a{background:#fff;color:var(--ink);padding:7px 16px;border-radius:99px;font-weight:800}
+.nav{display:grid;grid-template-columns:repeat(5,1fr);padding:7px 0 10px}.nav a{display:grid;justify-items:center;gap:2px;font-size:11px;color:var(--t2);font-weight:600}.nav a.on{color:var(--ink);font-weight:800}.nav span{font-size:19px}
+.cr{margin:12px 0 2px}.sl{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding:0 14px;padding:0 14px;scrollbar-width:none}
+.s{flex:0 0 88%;scroll-snap-align:start;display:grid;grid-template-columns:1fr 84px;gap:10px;align-items:center;min-height:116px;padding:14px;border-radius:14px;border:1px solid var(--ink);background:var(--s1)}
+.s.k{background:var(--ink);color:#fff}.s b{display:block;font-size:16px;line-height:1.25}.s span{display:block;color:var(--t2);font-size:12.5px;margin:3px 0 8px}.s.k span{color:#d4d4d4}.s u{font-weight:800;font-size:13px}.s .ph{width:84px;height:84px}.s.k .ph{background:#2a2a2a;color:#aaa}
+.cc{display:flex;justify-content:center;align-items:center;gap:10px;margin-top:8px}.dt{display:flex;gap:6px}.dt i{width:7px;height:7px;border-radius:9px;background:#C4C4C4;transition:width .25s}.dt i.on{width:20px;background:var(--ink)}
+.pp{width:28px;height:28px;border-radius:50%;border:1px solid var(--ctl);background:#fff;font-size:9px;letter-spacing:-1px}
+@media(prefers-reduced-motion:reduce){{.dt i{{transition:none}}}}
+/* sheet + toast */
+.bk{position:fixed;inset:0;background:rgb(0 0 0/.5);z-index:20;display:none}.bk.on{display:block}
+.sheet{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:min(440px,100%);max-height:86vh;overflow:auto;background:#fff;border-radius:22px 22px 0 0;padding:8px 16px 18px;z-index:21;display:none}.sheet.on{display:block}
+.sheet::before{content:"";display:block;width:38px;height:5px;border-radius:9px;background:var(--ln);margin:2px auto 10px}.sheet h3{margin:0 0 10px;font-size:18px;display:flex;justify-content:space-between;align-items:center}
+.grp{margin:12px 0 6px;font-weight:800;font-size:13px}.chs{display:flex;flex-wrap:wrap;gap:8px}.chs button{min-height:38px;padding:0 14px;border-radius:99px;border:1px solid var(--ctl);background:#fff;font-weight:600}.chs button[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.dots{display:flex;gap:10px;flex-wrap:wrap}.dots button{width:34px;height:34px;border-radius:50%;border:1px solid var(--ctl);background:var(--c);position:relative}.dots button[aria-pressed=true]{outline:3px solid var(--ink);outline-offset:2px}
+.pri{display:block;width:100%;min-height:50px;margin-top:16px;border:0;border-radius:99px;background:var(--ink);color:#fff;font-weight:800;font-size:15px}
+.fld{display:grid;gap:4px;margin:10px 0}.fld input{min-height:46px;border:1px solid var(--ctl);border-radius:12px;padding:0 12px;font:inherit}.res{margin-top:10px;padding:12px;border-radius:12px;background:var(--s1);display:grid;gap:3px}.res b{font-size:22px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:150px;background:var(--ink);color:#fff;padding:10px 16px;border-radius:99px;font-weight:700;font-size:13px;z-index:30;display:none;white-space:nowrap}.toast.on{display:block}
+a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+</style></head><body><main class="app">
+<header class="top">
+ <div class="row"><div class="logo">FabricWala</div><div class="hi buyer-only">Hi, <b>Rashid</b></div><div class="sp"></div>
+  <button class="lang" id="lang" aria-label="Language">हि</button><button class="ib" id="saved" aria-label="Swatch board">♡<span class="cnt" id="cnt" hidden>0</span></button><button class="ib" aria-label="Notifications">🔔</button></div>
+ <form class="sb" role="search" onsubmit="return false"><input placeholder="Search fabric, e.g. cotton 44 inch" data-hip="कपड़ा खोजें, जैसे कॉटन 44 इंच" aria-label="Search" autocomplete="off"><button type="button" class="ib" aria-label="Search by photo">📷</button><button class="ib go" aria-label="Search">⌕</button></form>
+ <div class="sug"><a href="#">Cotton 44"</a><a href="#">Georgette</a><a href="#">Ikat</a><a href="#">Linen</a><a href="#">Rayon print</a></div>
+</header>
+<nav class="tabs" aria-label="Browse"><a class="on" href="#" data-hi="कपड़े">Fabrics</a><a href="#" data-hi="मिल">Mills</a><a href="#" data-hi="रेडी स्टॉक">Ready stock</a><a href="#" data-hi="मेरे RFQ">My RFQs</a></nav>
+<div class="qf" role="group" aria-label="Quick filters"><button class="fb" id="fbtn">⚙ <span data-hi="फ़िल्टर">Filters</span></button><button aria-pressed="false">✓ Verified</button><button aria-pressed="false">Ready stock</button><button aria-pressed="false">MOQ &lt; 50 m</button><button aria-pressed="false">Under ₹200</button></div>
+<section class="cr" aria-roledescription="carousel" aria-label="Offers">
+<div class="sl" id="sl" tabindex="0">
+ <a class="s k" href="#"><div><b data-hi="थोक में कपड़ा चाहिए?">Need fabric in bulk?</b><span data-hi="एक रिक्वेस्ट डालें, मिलों से कोट पाएँ।">Post one request, get quotes from mills.</span><u>Request quote ›</u></div><div class="ph">IMG</div></a>
+ <a class="s" href="#"><div><b>Ready stock · ships in 48 h</b><span>Small orders from 20 m, no waiting.</span><u>Shop ready stock ›</u></div><div class="ph">IMG</div></a>
+ <a class="s" href="#"><div><b>New verified mills</b><span>GST-checked suppliers joined this week.</span><u>Meet the mills ›</u></div><div class="ph">IMG</div></a>
+ <a class="s" href="#"><div><b>Order a sample ₹160</b><span>Feel the fabric before a bulk order.</span><u>Browse samples ›</u></div><div class="ph">IMG</div></a>
+</div>
+<div class="cc"><div class="dt" id="dt"></div><button id="pp" class="pp" aria-label="Pause slideshow">❚❚</button></div></section>
+<section class="box" aria-label="Active RFQ"><b>RFQ #2041 · Silk 500 m</b><span>7 quotes received · lowest ₹138/m</span><a href="#">Compare</a><div class="pb"><i style="width:60%"></i></div></section>
+<section class="box" aria-label="Order tracking"><b>Order #1042 · Shipped</b><span>Arrives Tue · 2 rolls · 100 m</span><a href="#">Track</a><div class="steps"><span class="d">● Placed</span><span class="d">● Packed</span><span class="d">● Shipped</span><span>○ Delivered</span></div></section>
+<div class="cats" role="list"><a href="#"><div class="ph">IMG</div>Cotton</a><a href="#"><div class="ph">IMG</div>Silk</a><a href="#"><div class="ph">IMG</div>Denim</a><a href="#"><div class="ph">IMG</div>Linen</a><a href="#"><div class="ph">IMG</div>Rayon</a><a href="#"><div class="ph">IMG</div>Wool</a><a href="#"><div class="ph">IMG</div>All</a></div>
+<section class="sec"><h2><span data-hi="उपयोग के अनुसार खरीदें">Shop by use</span></h2><p>&nbsp;</p><div class="use"><a href="#"><div class="ph">IMG</div><span data-hi="साड़ी">Saree</span></a><a href="#"><div class="ph">IMG</div><span data-hi="कुर्ती">Kurti</span></a><a href="#"><div class="ph">IMG</div><span data-hi="शर्टिंग">Shirting</span></a><a href="#"><div class="ph">IMG</div><span data-hi="सूटिंग">Suiting</span></a><a href="#"><div class="ph">IMG</div><span data-hi="अपहोल्स्ट्री">Upholstery</span></a><a href="#"><div class="ph">IMG</div><span data-hi="लहंगा">Lehenga</span></a></div></section>
+<section class="sec"><h2><span data-hi="इस हफ़्ते ट्रेंडिंग">Trending this week</span><a href="#">See all ›</a></h2><p>Lowest price in 30 days</p><div class="rail"><div class="card" data-name="Silk brocade"><a class="cl" href="#"><div class="ph">IMG 1:1</div><b>₹560–620</b><small>Min. order: 20 m</small></a>
+ <button class="ic2 heart" aria-pressed="false" aria-label="Save to swatch board">♡</button><button class="ic2 shr" aria-label="Share on WhatsApp">↗</button>
+ <button class="lk" data-calc='20:620,100:590,500:560' data-n="Silk brocade">₹560 at 500 m+ · Estimate</button><i>✓ Verified</i><button class="smp">Order sample ₹160</button></div><div class="card" data-name="Indigo denim"><a class="cl" href="#"><div class="ph">IMG 1:1</div><b>₹210–240</b><small>Min. order: 50 m</small></a>
+ <button class="ic2 heart" aria-pressed="false" aria-label="Save to swatch board">♡</button><button class="ic2 shr" aria-label="Share on WhatsApp">↗</button>
+ <button class="lk" data-calc='50:240,200:220,500:195' data-n="Indigo denim">₹195 at 500 m+ · Estimate</button><i>✓ Verified</i><button class="smp">Order sample ₹160</button></div><div class="card" data-name="Brick check"><a class="cl" href="#"><div class="ph">IMG 1:1</div><b>₹165–180</b><small>Min. order: 100 m</small></a>
+ <button class="ic2 heart" aria-pressed="false" aria-label="Save to swatch board">♡</button><button class="ic2 shr" aria-label="Share on WhatsApp">↗</button>
+ <button class="lk" data-calc='100:180,300:172,500:165' data-n="Brick check">₹165 at 500 m+ · Estimate</button><button class="smp">Order sample ₹160</button></div></div></section>
+<section class="sec"><h2><span data-hi="रेडी स्टॉक">Ready stock</span><a href="#">See all ›</a></h2><p>Ships in 48 hours</p><div class="rail"><div class="card" data-name="Ikat cotton"><a class="cl" href="#"><div class="ph">IMG 1:1</div><b>₹360–390</b><small>Min. order: 30 m</small></a>
+ <button class="ic2 heart" aria-pressed="false" aria-label="Save to swatch board">♡</button><button class="ic2 shr" aria-label="Share on WhatsApp">↗</button>
+ <button class="lk" data-calc='30:390,100:375,300:360' data-n="Ikat cotton">₹360 at 300 m+ · Estimate</button><i>✓ Verified</i><button class="smp">Order sample ₹160</button></div><div class="card" data-name="Yarn-dyed stripe"><a class="cl" href="#"><div class="ph">IMG 1:1</div><b>₹140–160</b><small>Min. order: 100 m</small></a>
+ <button class="ic2 heart" aria-pressed="false" aria-label="Save to swatch board">♡</button><button class="ic2 shr" aria-label="Share on WhatsApp">↗</button>
+ <button class="lk" data-calc='100:160,300:150,500:140' data-n="Yarn-dyed stripe">₹140 at 500 m+ · Estimate</button><button class="smp">Order sample ₹160</button></div><div class="card" data-name="Floral rayon"><a class="cl" href="#"><div class="ph">IMG 1:1</div><b>₹95–120</b><small>Min. order: 200 m</small></a>
+ <button class="ic2 heart" aria-pressed="false" aria-label="Save to swatch board">♡</button><button class="ic2 shr" aria-label="Share on WhatsApp">↗</button>
+ <button class="lk" data-calc='200:120,500:105,1000:95' data-n="Floral rayon">₹95 at 1000 m+ · Estimate</button><button class="smp">Order sample ₹160</button></div></div></section>
+<section class="sec"><h2><span data-hi="टॉप वेरिफ़ाइड मिल">Top verified mills</span><a href="#">See all ›</a></h2><p>Rated by buyers</p><div class="rail"><div class="mill"><div class="ph">LOGO</div><b>Surat Weaves</b><small>Surat · 9 yrs · 4.8 ★</small><div class="tg"><i>✓ Verified</i><i>GST ✓</i></div><div class="bt"><a href="#">Visit</a><a class="wa" href="https://wa.me/?text=Hi%2C%20I%20found%20you%20on%20FabricWala" target="_blank" rel="noopener">WhatsApp</a></div></div><div class="mill"><div class="ph">LOGO</div><b>Varanasi Silk</b><small>Varanasi · 12 yrs · 4.7 ★</small><div class="tg"><i>✓ Verified</i><i>GST ✓</i></div><div class="bt"><a href="#">Visit</a><a class="wa" href="https://wa.me/?text=Hi%2C%20I%20found%20you%20on%20FabricWala" target="_blank" rel="noopener">WhatsApp</a></div></div><div class="mill"><div class="ph">LOGO</div><b>Ludhiana Mills</b><small>Ludhiana · 7 yrs · 4.6 ★</small><div class="tg"><i>✓ Verified</i><i>GST ✓</i></div><div class="bt"><a href="#">Visit</a><a class="wa" href="https://wa.me/?text=Hi%2C%20I%20found%20you%20on%20FabricWala" target="_blank" rel="noopener">WhatsApp</a></div></div></div></section>
+<footer class="bar"><div class="in"><span>Sign in for better sourcing</span><a href="#" data-hi="साइन इन">Sign in</a></div>
+ <nav class="nav" aria-label="Main"><a class="on" href="#"><span>⌂</span><em style="font-style:normal" data-hi="होम">Home</em></a><a href="#"><span>▦</span><em style="font-style:normal" data-hi="श्रेणियाँ">Categories</em></a><a href="#"><span>✎</span>RFQ</a><a href="#"><span>🛒</span><em style="font-style:normal" data-hi="कार्ट">Cart</em></a><a href="#"><span>☺</span><em style="font-style:normal" data-hi="खाता">Account</em></a></nav></footer>
+</main>
+<div class="bk" id="bk"></div><div class="sheet" id="sh" role="dialog" aria-modal="true" aria-labelledby="st" tabindex="-1"></div><div class="toast" id="ts" role="status"></div>
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];let last;
+document.body.dataset.auth=location.hash==='#buyer'?'buyer':'guest';
+addEventListener('scroll',()=>$('.top').classList.toggle('sm',scrollY>40),{passive:true});
+/* auto-slide: 4 s, pauses on touch/focus/hover/pause button, off for reduced-motion */
+const sl=$('#sl'),sd=$$('#sl .s'),dt=$('#dt'),pp=$('#pp');let ci=0,paused=matchMedia('(prefers-reduced-motion:reduce)').matches,hold=false;
+dt.innerHTML=sd.map(()=>'<i></i>').join('');const dd=[...dt.children];
+const go=i=>{ci=(i+sd.length)%sd.length;sl.scrollTo({left:sd[ci].offsetLeft-14,behavior:'smooth'})};
+const mark=()=>{const i=sd.reduce((b,e,k)=>Math.abs(e.offsetLeft-14-sl.scrollLeft)<Math.abs(sd[b].offsetLeft-14-sl.scrollLeft)?k:b,0);ci=i;dd.forEach((d,k)=>d.classList.toggle('on',k===i))};
+sl.addEventListener('scroll',mark,{passive:true});mark();
+const sync=()=>{pp.textContent=paused?'▶':'❚❚';pp.setAttribute('aria-label',paused?'Play slideshow':'Pause slideshow')};sync();
+pp.onclick=()=>{paused=!paused;sync()};
+['pointerdown','focusin','mouseenter'].forEach(v=>sl.addEventListener(v,()=>hold=true));['pointerup','focusout','mouseleave'].forEach(v=>sl.addEventListener(v,()=>hold=false));
+setInterval(()=>{if(!paused&&!hold&&!document.hidden&&!$('#sh.on'))go(ci+1)},4000);
+/* language (demo: key strings only) */
+let hi=false;$('#lang').onclick=()=>{hi=!hi;$('#lang').textContent=hi?'EN':'हि';document.documentElement.lang=hi?'hi':'en';
+ $$('[data-hi]').forEach(e=>{e.dataset.en??=e.textContent;e.textContent=hi?e.dataset.hi:e.dataset.en});
+ $$('[data-hip]').forEach(e=>{e.dataset.en??=e.placeholder;e.placeholder=hi?e.dataset.hip:e.dataset.en})};
+/* sheet + toast */
+function open_(t,h){last=document.activeElement;$('#sh').innerHTML=`<h3><span id="st">${t}</span><button class="ib" aria-label="Close" onclick="close_()">✕</button></h3>`+h;$('#bk').classList.add('on');$('#sh').classList.add('on');$('#sh').focus()}
+function close_(){$('#bk').classList.remove('on');$('#sh').classList.remove('on');last&&last.focus()}
+$('#bk').onclick=close_;addEventListener('keydown',e=>e.key==='Escape'&&close_());
+let tt;function toast(m){const t=$('#ts');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),2200)}
+document.addEventListener('click',e=>{const t=e.target.closest('button,a');if(!t)return;if(t.getAttribute('href')==='#')e.preventDefault();
+ if(t.closest('.chs,.dots')){t.setAttribute('aria-pressed',t.getAttribute('aria-pressed')!=='true');upd();return}
+ if(t.closest('.qf')&&!t.classList.contains('fb'))t.setAttribute('aria-pressed',t.getAttribute('aria-pressed')!=='true')});
+/* swatch board: heart = save + price alert */
+const board=new Map();
+$$('.heart').forEach(b=>b.onclick=()=>{const n=b.closest('.card').dataset.n||b.closest('.card').dataset.name,on=b.getAttribute('aria-pressed')!=='true';b.setAttribute('aria-pressed',on);b.textContent=on?'♥':'♡';on?board.set(n,1):board.delete(n);
+ $('#cnt').hidden=!board.size;$('#cnt').textContent=board.size;toast(on?'Saved to swatch board · price alerts on':'Removed from swatch board')});
+$('#saved').onclick=()=>{const l=[...board.keys()];open_('Swatch board ('+l.length+')',l.length?`<div class="chs">${l.map(n=>`<button aria-pressed="true">${n}</button>`).join('')}</div><p class="sm" style="color:#595959">Price-drop and restock alerts are on for saved fabrics.</p><a class="pri" style="display:grid;place-items:center" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent('My FabricWala swatch board: '+l.join(', '))}">Share board on WhatsApp</a>`:'<p>Tap ♡ on any fabric to save it here and get price-drop alerts.</p>')};
+/* share on WhatsApp */
+$$('.shr').forEach(b=>b.onclick=()=>open('https://wa.me/?text='+encodeURIComponent('Check this fabric on FabricWala: '+b.closest('.card').dataset.name),'_blank','noopener'));
+$$('.smp').forEach(b=>b.onclick=()=>toast('Sample request started · '+b.closest('.card').dataset.name));
+/* filters */
+const cols=[['Red','#C8412B'],['Pink','#E0489B'],['Blue','#22407A'],['Teal','#2F8F83'],['Green','#3E4A22'],['Yellow','#D9A441'],['Black','#111'],['White','#F4F4F4']];
+const grp=(t,a)=>`<div class="grp">${t}</div><div class="chs">${a.map(x=>`<button aria-pressed="false">${x}</button>`).join('')}</div>`;
+function upd(){const n=$$('#sh [aria-pressed=true]').length,c=Math.max(12,Math.round(2418*Math.pow(.78,n)));const b=$('#apply');b&&(b.textContent='Show '+c.toLocaleString('en-IN')+' fabrics')}
+$('#fbtn').onclick=()=>{open_('Filters',grp('Width',['36"','44"','58"'])+grp('GSM',['Under 100','100–150','150+'])+grp('Composition',['100% Cotton','Silk','Polyester','Linen','Blend'])+`<div class="grp">Colour</div><div class="dots">${cols.map(([n,c])=>`<button style="--c:${c}" aria-pressed="false" aria-label="${n}"></button>`).join('')}</div>`+grp('Price unit',['per metre','per kg'])+`<button class="pri" id="apply" onclick="close_()">Show 2,418 fabrics</button><p class="sm" style="color:#595959">Counts are demo values.</p>`)};
+/* bulk estimate (slab pricing) */
+$$('.lk').forEach(b=>b.onclick=()=>{const s=b.dataset.calc.split(',').map(x=>x.split(':').map(Number));
+ open_('Estimate · '+b.dataset.n,`<div class="chs">${s.map(([q,p])=>`<button disabled style="opacity:1">${q}+ m · ₹${p}</button>`).join('')}</div>
+ <label class="fld">Metres<input id="mt" type="number" inputmode="numeric" min="1" value="${s[0][0]}"></label>
+ <label class="fld">Delivery pincode<input id="pc" inputmode="numeric" maxlength="6" placeholder="e.g. 400001"></label><div class="res" id="rs" aria-live="polite"></div>
+ <p class="sm" style="color:#595959">Prices exclude GST and freight. Delivery time is a demo value.</p><a class="pri" style="display:grid;place-items:center" href="#">Request quote for this</a>`);
+ const f=()=>{const m=+$('#mt').value,pc=$('#pc').value;let r=null,nx=null;s.forEach(([q,p])=>{if(m>=q)r=p});nx=s.find(([q])=>q>m);
+  $('#rs').innerHTML=!m||m<s[0][0]?`<span>Minimum order is ${s[0][0]} m</span>`:`<span>Rate</span><b>₹${r}/m</b><span>Total ₹${(r*m).toLocaleString('en-IN')}</span>`+(nx?`<span>Add ${nx[0]-m} m more for ₹${nx[1]}/m</span>`:'')+(/^\d{6}$/.test(pc)?`<span>Delivery to ${pc}: 3–5 days (demo)</span>`:'')};
+ $('#mt').oninput=f;$('#pc').oninput=f;f()});
+</script></body></html>
