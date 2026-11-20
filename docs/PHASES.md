@@ -180,6 +180,39 @@ These were "backend foundations": empty stubs. They were reviewed and removed on
 
 ---
 
+## Phases 14 to 17 — Design V3 and the next features (planned, nothing built)
+Source: `docs/ui-v3/35-REPO-RECONCILIATION-AND-PLAN.md` (the plan) and `docs/ui-v3/33-FEATURE-MAP.md` (feature IDs `FM-xxx` and `BL-x.y`, each with its spec file). The specs in `docs/ui-v3/` are references, not a second task list: this file is the only task list. If a spec and `AGENTS.md` disagree, `AGENTS.md` wins; the known cases are in `docs/ui-v3/CONFLICTS.md`.
+Every row below names its agent ([BE] or [WEB], BE first) and says whether it needs owner approval before work starts. Decisions D1 to D5 are in doc 35 section 3; only D3 (retailer verification is required) is settled. Phase 17 does not start while P5.9 and P11.1 to P11.9 are open.
+
+### Phase 14 — Design V3, black and white (spec `25`, `08`)
+- [ ] P14.1 [WEB] Black and white token swap, step 1: replace the colour tokens in `client/src/index.css` (background, ink `#0A0A0A`, mute, line, focus ring, status colours) with the values of `docs/ui-v3/css/fabricwala-bw.css`, and mirror them in `client/design-ref/tokens.json`. Tokens only: no component edits, no layout change. **Needs owner approval: yes (D1: B&W wins over charcoal ink).** Plan only so far.
+- [ ] P14.2 [WEB] Token swap, step 2: find colours written directly in `client/src` (hex values, Tailwind palette classes) and move them to tokens; run `docs/ui-v3/css/check-bw.py` and the contrast check; `npm run lint`, `npm run build`, `npm run e2e`; screenshots before and after. Starts after P14.1. **Needs owner approval: no** (follows P14.1; ask only if a component needs a real redesign).
+- [ ] P14.3 [WEB] Rebase the screens on branch `claude/vision-style` onto `main` and drop its colour-token commit (`b50a321`): bulk upload, RFQ (retailer and seller), saved products, seller storefront, legal pages, invoice rows, address book, order rating, help centre. Review each screen against the real API (some calls may be mock-only); these overlap P10.7, P10.10, P10.12, P10.14, P10.16, P10.20 and P10.30, so tick those when a screen is real. **Needs owner approval: yes (D2, and each screen before merge).**
+- [ ] P14.4 [WEB] Home (spec `26`; FM-201 to FM-204, FM-210): auto-slide banner (4 s, pause, reduced motion), shop by use, filters sheet with live count, all on the existing endpoints (banners P10.27, `GET /api/v1/products/filters`). Not here: swatch alerts, sample button, bulk estimate delivery days (they need new backend, see Phase 17). **Needs owner approval: no.**
+
+### Phase 15 — Account and verification (spec `31`, `30`, `27`)
+Rule for this phase: every Business, Retailer as well as Manufacturer, must be Approved before it can list or order (`AGENTS.md` rule 1; doc 31 was corrected). Only the GSTIN may be empty at signup.
+- [ ] P15.1 [BE] Lost-access cases (FM-103, FM-704; flow `X-01` to `X-06`, `E-05`): support case for a changed number, OTP to the new number, admin approval, all old sessions revoked, every number change logged. Then [WEB] the user screens and the admin case list. Touches the sign-in flow (protected). **Needs owner approval: yes** (voice or WhatsApp OTP provider for X-02 is an open owner decision; no auto-approval ever).
+- [ ] P15.2 [BE] Verification records and a `NeedsInfo` status on a Business, plus the flags in doc 30 (duplicate tax id, free-mail domain, no website), waiting time and a request-more-info message, added to the existing `/admin/businesses` queue (not a second queue); the retailer queue is required, not optional (FM-702, FM-703, FM-401). Then [WEB] the admin queue upgrade. New status = migration and a change next to rule 1. **Needs owner approval: yes.**
+- [ ] P15.3 [BE] Mill profile fields (capacity, lead time, response rate) and the verification list in the storefront response (`GET /api/v1/storefronts/{businessId}`; FM-301, FM-302, FM-308, spec `27`). Then [WEB] the profile screen (also P10.16). Money `decimal(18,2)`, UTC, `CreatedAt`/`UpdatedAt` on new tables. **Needs owner approval: no.**
+
+### Phase 16 — Catalogue tools (spec `28` part A)
+- [ ] P16.1 [BE] Bulk CSV import with row validation, preview and publish: this is P10.19, done once and ticked in both places (CSV only, no Excel; FM-601). Then [WEB] P10.20. **Needs owner approval: no.**
+- [ ] P16.2 [BE] Products and orders CSV export beside the payout and report exports, with the CSV formula-injection guard (FM-602). **Needs owner approval: no.**
+
+### Phase 17 — After the launch essentials (Phase 11 and P5.9 done first)
+- [ ] P17.1 [BE] Overseas buyer signup with email OTP and review status (FM-605, FM-701, spec `29`). Audit the sign-in code first (protected). An overseas buyer is a Business with a country and a type, not a new user kind or role. Then [WEB]. **Needs owner approval: yes (D4; blocked-country list; email OTP provider).**
+- [ ] P17.2 [BE] Export profile on the mill (countries, ports, Incoterms, IEC verified by admin, "Export ready" badge) and "Outside India" fields on RFQ matching (FM-603, FM-604, spec `28` part B). RFQ is `Feature.Rfq`, off by default. Then [WEB]. **Needs owner approval: yes (D4).**
+- [ ] P17.3 [WEB] Export globe on the overseas signup and the mill profile (FM-607, spec `34`, `docs/ui-v3/css/fw-globe.js`). Starts after P17.1 and P17.2. **Needs owner approval: yes (D4).**
+- [ ] P17.4 [BE] Sample orders (FM-207): sample price and policy, courier option. Then [WEB]. **Needs owner approval: yes (price and policy decision, doc 33 section 3).**
+- [ ] P17.5 [BE] Price alerts and saved-search alerts on `/saved-products` (FM-205, BL-2.2, BL-4.1): a background job and a sender. Needs the WhatsApp or SMS sender (P11.3, P11.1) first. Then [WEB]. **Needs owner approval: no.**
+- [ ] P17.6 [BE] In-app chat buyer to mill (BL-3.1) with notification centre and anti-bypass rules first (BL-1.7). Then [WEB]. **Needs owner approval: yes (moderation and contact rules; the RFQ award shares contacts and takes no commission).**
+- [ ] P17.7 [BE] Support tickets and FAQ (BL-10.2). Then [WEB]. **Needs owner approval: no.**
+- [ ] P17.8 [BE] Purchase order PDF (BL-2.8) next to the GST invoice (F4.1). Then [WEB]. **Needs owner approval: yes (anything that touches invoice or GST rules needs the accountant, see INVOICING.md).**
+- Not planned here, kept in doc 33 (`BL-x.y`, status Idea): everything else in `docs/ui-v3/32-ADDITIONAL-FEATURES-BACKLOG.md`. The dispute flow (BL-1.1) already exists as the problem report (P10.11); only its screen (P10.12) is open.
+
+---
+
 ## Completion plan (FABRICWALA_COMPLETION_PROMPT.md)
 
 ### Phase F0 - Establish the truth

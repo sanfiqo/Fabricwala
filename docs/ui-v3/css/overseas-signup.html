@@ -1,0 +1,80 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FabricWala — Overseas buyer signup</title>
+<style>
+:root{--ink:#0A0A0A;--t2:#595959;--s1:#F5F5F5;--ln:#E2E2E2;--ctl:#8C8C8C;--err:#B42318}
+*{box-sizing:border-box}body{margin:0;background:#ddd;font:14px/1.45 Inter,system-ui,sans-serif;color:var(--ink)}
+.app{max-width:440px;margin:auto;background:#fff;min-height:100vh;padding:0 16px 30px}button,select,input{font:inherit;color:inherit}button{cursor:pointer}
+.hd{display:flex;align-items:center;gap:6px;margin:0 -16px 6px;padding:8px 10px;border-bottom:1px solid var(--ln)}.hd b{flex:1;font-size:17px;letter-spacing:-.03em}.ib{min-width:40px;height:40px;border:0;background:none;border-radius:50%;font-size:18px}
+.st{display:flex;gap:6px;margin:14px 0;padding:0;list-style:none;font-size:11.5px;font-weight:700;color:var(--t2)}.st li{flex:1;border-top:4px solid var(--ln);padding-top:5px}.st li.d{border-color:var(--ink);color:var(--ink)}
+h1{margin:6px 0 4px;font-size:22px;letter-spacing:-.02em}.sub{color:var(--t2);margin:0 0 12px}.note{color:var(--t2);font-size:12.5px}
+.fld{display:grid;gap:4px;margin:12px 0;font-weight:700;font-size:13px}.fld input,.fld select{min-height:48px;border:1px solid var(--ctl);border-radius:12px;padding:0 12px;background:#fff;font-weight:500;width:100%}.fld small{font-weight:500;color:var(--t2);font-size:12px}
+.fld.bad input,.fld.bad select{border:2px solid var(--err)}.em{color:var(--err);font-weight:700;font-size:12.5px;display:none}.fld.bad .em{display:block}
+.two{display:grid;grid-template-columns:96px 1fr;gap:8px}.chs{display:flex;flex-wrap:wrap;gap:8px}.chs button{min-height:40px;padding:0 14px;border-radius:99px;border:1px solid var(--ctl);background:#fff;font-weight:600}.chs button[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.btn{display:grid;place-items:center;min-height:50px;border-radius:99px;border:1.5px solid var(--ink);font-weight:800;background:#fff;width:100%;margin-top:12px}.btn.p{background:var(--ink);color:#fff}.btn:disabled{opacity:.4}
+.otp{display:flex;gap:8px;justify-content:center;margin:16px 0}.otp input{width:46px;height:56px;text-align:center;font-size:22px;font-weight:800;border:1px solid var(--ctl);border-radius:12px}
+.chk{display:flex;gap:10px;align-items:flex-start;margin:14px 0;font-size:13px}.chk input{width:22px;height:22px;margin-top:1px;flex:none}
+.box{border:1px solid var(--ink);border-radius:14px;padding:14px;margin:12px 0}.box ul{margin:6px 0 0;padding-left:0;list-style:none}.box li{padding:5px 0}.box i{font-style:normal;font-weight:800;margin-right:6px}
+.pill{display:inline-block;border:1.5px dashed var(--ink);border-radius:99px;padding:2px 12px;font-weight:800;font-size:12.5px}
+.gl{margin:0 -16px 4px;border-bottom:1px solid var(--ln);background:radial-gradient(120% 90% at 50% 45%,#fff 45%,var(--s1))}.gl canvas{display:block;width:100%;height:auto;touch-action:pan-y}
+.pn{display:none}.pn.on{display:block}
+.toast{position:fixed;left:50%;transform:translateX(-50%);top:64px;background:var(--ink);color:#fff;padding:10px 16px;border-radius:99px;font-weight:700;font-size:13px;z-index:30;display:none}.toast.on{display:block}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+</style></head><body><main class="app">
+<header class="hd"><button class="ib" id="bk" aria-label="Back">←</button><b>FabricWala</b><span class="note">International buyers</span></header>
+<ol class="st" id="st"><li class="d">1 Account</li><li>2 Verify</li><li>3 Business</li><li>4 Review</li></ol>
+
+<form class="pn on" id="s1" novalidate><div class="gl"><canvas id="gl" width="800" height="560" data-h="560" role="img" aria-label="Globe showing connections from Surat, India to buyers in Dubai, Dhaka, Colombo, Nairobi, London, New York and Sydney"></canvas></div><h1>Source fabric from India</h1><p class="sub">Create a buyer account to request quotes from verified mills and exporters.</p>
+ <label class="fld" data-f="country">Country<select id="co"><option value="">Select country</option></select><span class="em" role="alert">Choose your country.</span></label>
+ <label class="fld" data-f="company">Company name<input id="cn" autocomplete="organization"><span class="em" role="alert">Enter your company name.</span></label>
+ <label class="fld" data-f="email">Business email<input id="em" type="email" inputmode="email" autocomplete="email" placeholder="name@company.com"><small>A company email gets approved faster.</small><span class="em" role="alert">Enter a valid email address.</span></label>
+ <div class="fld" data-f="phone"><label for="pn">WhatsApp / phone (optional)</label><div class="two"><input id="dc" value="+" aria-label="Country code" inputmode="tel"><input id="pn" inputmode="tel" autocomplete="tel-national"></div><span class="em" role="alert">Use digits only.</span></div>
+ <button class="btn p" type="submit">Send verification code</button><p class="note" style="margin-top:10px">Based in India? <a href="#" style="color:inherit;text-decoration:underline">Sign in with your mobile number</a>.</p></form>
+
+<form class="pn" id="s2" novalidate><h1>Check your email</h1><p class="sub">We sent a 6-digit code to <b id="se"></b>.</p><div class="otp" id="otp"></div><div class="em" id="oe" role="alert" style="display:none;text-align:center">That code is not right. Try again.</div>
+ <button class="btn p" type="submit">Verify email</button><button class="btn" type="button" id="rs" disabled>Resend code in 30s</button><p class="note" style="margin-top:10px">Demo code: 123456</p></form>
+
+<form class="pn" id="s3" novalidate><h1>About your business</h1><p class="sub">Helps us match you with the right mills.</p>
+ <div class="fld" data-f="type">What best describes you?<div class="chs" id="ty" role="group"><button type="button" aria-pressed="false">Importer</button><button type="button" aria-pressed="false">Wholesaler</button><button type="button" aria-pressed="false">Retailer</button><button type="button" aria-pressed="false">Brand / designer</button><button type="button" aria-pressed="false">Sourcing agent</button></div><span class="em" role="alert">Choose one.</span></div>
+ <label class="fld" data-f="tax"><span id="tl">Tax / business registration no.</span><input id="tx" autocomplete="off"><small>Used only for verification. Not shown to mills.</small><span class="em" role="alert">Enter your registration number (at least 5 characters).</span></label>
+ <label class="fld">Website or LinkedIn page (optional)<input id="wb" type="url" inputmode="url" placeholder="https://"></label>
+ <div class="fld" data-f="buy">What do you want to buy?<div class="chs" id="by" role="group"><button type="button" aria-pressed="false">Cotton</button><button type="button" aria-pressed="false">Silk</button><button type="button" aria-pressed="false">Rayon</button><button type="button" aria-pressed="false">Linen</button><button type="button" aria-pressed="false">Denim</button><button type="button" aria-pressed="false">Embroidered</button></div><span class="em" role="alert">Choose at least one.</span></div>
+ <label class="fld">Yearly volume<select id="vo"><option>Under 10,000 m</option><option>10,000 – 100,000 m</option><option>Over 100,000 m</option></select></label>
+ <label class="fld">Destination port (optional)<input id="pt" placeholder="e.g. Jebel Ali, Chattogram"></label>
+ <div class="fld">Preferred Incoterm<div class="chs" id="ic" role="group"><button type="button" aria-pressed="true">FOB</button><button type="button" aria-pressed="false">CIF</button><button type="button" aria-pressed="false">EXW</button></div></div>
+ <label class="chk" data-f="terms"><input type="checkbox" id="tm"><span>I agree to the <u>Terms</u> and <u>Privacy Policy</u>, and confirm I am buying for a business.</span></label><div class="em" id="te" role="alert" style="display:none;margin-top:-8px">Please accept to continue.</div>
+ <button class="btn p" type="submit">Submit for review</button></form>
+
+<section class="pn" id="s4"><h1>You're in. Review under way</h1><p class="sub">We check new international buyers within <b>24–48 hours</b> (working days). We will email <b id="fe"></b>.</p><p><span class="pill">○ Under review</span></p>
+ <div class="box"><b>Available now</b><ul><li><i>✓</i>Browse fabrics, mills and exporters</li><li><i>✓</i>Save fabrics to your swatch board</li><li><i>✓</i>Prepare an RFQ (held until approval)</li></ul></div>
+ <div class="box"><b>After approval</b><ul><li><i>○</i>Send RFQs to export-ready mills</li><li><i>○</i>See mill contact details and receive quotes</li><li><i>○</i>Request samples</li></ul></div>
+ <button class="btn p" type="button">Browse fabrics</button><p class="note" style="margin-top:10px">Need to change something? Reply to our email or update it in Account.</p></section>
+</main><div class="toast" id="ts" role="status"></div>
+<script src="fw-globe.js"></script>
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];let step=1,tt,cd,tick;
+const C={'United Arab Emirates':['+971','TRN (Tax Registration No.)'],'Bangladesh':['+880','BIN / TIN'],'Sri Lanka':['+94','VAT / TIN'],'Nepal':['+977','PAN'],'United States':['+1','EIN'],'United Kingdom':['+44','VAT no. / Company no.'],'Germany':['+49','VAT ID (USt-IdNr.)'],'France':['+33','VAT no. (TVA)'],'Italy':['+39','VAT no. (Partita IVA)'],'Saudi Arabia':['+966','VAT no.'],'Oman':['+968','VAT no.'],'Kenya':['+254','KRA PIN'],'Nigeria':['+234','TIN / RC no.'],'Australia':['+61','ABN'],'Canada':['+1','Business Number (BN)'],'Malaysia':['+60','SST / SSM no.'],'Singapore':['+65','UEN'],'Turkey':['+90','Tax no. (VKN)'],'Other':['+','Tax / business registration no.']};
+FWGlobe.mount($('#gl'),{radius:.3});
+$('#co').innerHTML+=Object.keys(C).map(k=>`<option>${k}</option>`).join('');
+const toast=m=>{const t=$('#ts');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),2200)};
+function go(n){step=n;$$('.pn').forEach((p,i)=>p.classList.toggle('on',i===n-1));$$('#st li').forEach((l,i)=>l.classList.toggle('d',i<n));scrollTo(0,0);const f=$$('.pn')[n-1].querySelector('input,select,button');f&&f.focus({preventScroll:true})}
+$('#bk').onclick=()=>step>1&&step<4?go(step-1):history.back();
+const bad=(el,on)=>{const f=el.closest('.fld,.chk');f&&f.classList.toggle('bad',on);return on};
+$('#co').onchange=e=>{const c=C[e.target.value];if(c){$('#dc').value=c[0];$('#tl').textContent=c[1]}};
+['input','change','click'].forEach(v=>document.addEventListener(v,e=>{const f=e.target.closest('.fld,.chk');f&&f.classList.remove('bad');if(e.target.id==='tm')$('#te').style.display='none'}));
+/* step 1 */
+$('#s1').onsubmit=e=>{e.preventDefault();const em=$('#em').value.trim(),ph=$('#pn').value.trim();
+ const er=[bad($('#co'),!$('#co').value),bad($('#cn'),$('#cn').value.trim().length<2),bad($('#em'),!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em)),bad($('#pn'),!!ph&&!/^[\d\s-]{5,15}$/.test(ph))];
+ const i=er.indexOf(true);if(i>-1)return [$('#co'),$('#cn'),$('#em'),$('#pn')][i].focus();
+ $('#se').textContent=em;$('#fe').textContent=em;go(2);startCd()};
+/* step 2: 6 boxes */
+$('#otp').innerHTML=[...Array(6)].map((_,i)=>`<input inputmode="numeric" maxlength="1" aria-label="Digit ${i+1}" autocomplete="${i?'off':'one-time-code'}">`).join('');
+const ob=$$('#otp input');ob.forEach((b,i)=>{b.oninput=()=>{b.value=b.value.replace(/\D/g,'');if(b.value&&ob[i+1])ob[i+1].focus()};b.onkeydown=e=>{if(e.key==='Backspace'&&!b.value&&ob[i-1])ob[i-1].focus()};b.onpaste=e=>{const d=(e.clipboardData.getData('text')||'').replace(/\D/g,'').slice(0,6);if(d){e.preventDefault();[...d].forEach((c,k)=>ob[k].value=c);ob[Math.min(d.length,5)].focus()}}});
+$('#s2').onsubmit=e=>{e.preventDefault();const ok=ob.map(b=>b.value).join('')==='123456';$('#oe').style.display=ok?'none':'block';if(ok){toast('Email verified');go(3)}else{ob.forEach(b=>b.value='');ob[0].focus()}};
+function startCd(){clearInterval(tick);cd=30;const b=$('#rs');b.disabled=true;const f=()=>{b.textContent=cd>0?`Resend code in ${cd}s`:'Resend code';b.disabled=cd>0;if(cd--<=0)clearInterval(tick)};f();tick=setInterval(f,1000)}
+$('#rs').onclick=()=>{toast('New code sent (demo)');startCd()};
+/* step 3 */
+$$('#ty button').forEach(b=>b.onclick=()=>$$('#ty button').forEach(x=>x.setAttribute('aria-pressed',x===b)));
+$$('#by button').forEach(b=>b.onclick=()=>b.setAttribute('aria-pressed',b.getAttribute('aria-pressed')!=='true'));
+$$('#ic button').forEach(b=>b.onclick=()=>$$('#ic button').forEach(x=>x.setAttribute('aria-pressed',x===b)));
+$('#s3').onsubmit=e=>{e.preventDefault();const e1=bad($('#ty'),!$$('#ty [aria-pressed=true]').length),e2=bad($('#tx'),$('#tx').value.trim().length<5),e3=bad($('#by'),!$$('#by [aria-pressed=true]').length),e4=!$('#tm').checked;bad($('#tm'),e4);$('#te').style.display=e4?'block':'none';
+ if(e1||e2||e3||e4)return;go(4)};
+</script></body></html>

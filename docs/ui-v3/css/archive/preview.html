@@ -1,0 +1,54 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>FabricWala mobile feel preview</title>
+<link rel="stylesheet" href="fabricwala-ivory-atelier.css"><link rel="stylesheet" href="fabricwala-mobile-feel.css"><link rel="stylesheet" href="fabricwala-lagoon.css">
+<style>
+body{display:flex;gap:28px;justify-content:center;align-items:flex-start;padding:32px;background:#e8e1d8;min-height:auto}
+.phone{position:relative;inline-size:390px;block-size:820px;border-radius:44px;overflow:hidden;box-shadow:0 30px 60px rgb(46 33 27/.25);border:8px solid #fff;transform:translateZ(0)}
+.phone .screen{block-size:100%;overflow:hidden}
+.phone .tabbar,.phone .cta-bar,.phone .sheet-glass,.phone .sheet-backdrop{position:absolute}
+.fab{aspect-ratio:4/5;border-radius:20px;background:var(--g);}
+.sw{aspect-ratio:4/5;border-radius:var(--r-card);position:relative;overflow:hidden;box-shadow:var(--shadow-low)}
+.sw span{position:absolute;inset:auto 8px 8px 8px;padding:.5rem .75rem;border-radius:14px}
+</style></head><body>
+
+<!-- Screen 1: Home -->
+<div class="phone app-bg"><div class="screen">
+  <div class="app-header"><button class="icon-btn" aria-label="Menu">☰</button><div class="app-title">FabricWala</div><button class="icon-btn" aria-label="Wishlist">♡</button></div>
+  <h1 class="app-title--large app-title enter" style="--i:0">Find fabric,<br>the easy way</h1>
+  <div class="glass enter" style="--i:1;padding:.5rem .75rem;display:flex;align-items:center;gap:.75rem;border-radius:9999px"><span aria-hidden="true">⌕</span><input class="input" style="border:0;background:transparent;min-block-size:40px;padding:0" placeholder="Search cotton, silk, georgette…"></div>
+  <div class="segmented enter" style="--i:2"><button aria-pressed="true">Catalogue</button><button aria-pressed="false">Post RFQ</button><button aria-pressed="false">Suppliers</button></div>
+  <div class="rail enter" style="--i:3">
+    <div class="sw press" style="background:linear-gradient(135deg,#a8452e,#d98a5f)"><span class="glass"><b>Rust Cotton</b><div class="text-small">₹ 142 / m</div></span></div>
+    <div class="sw press" style="background:linear-gradient(135deg,#27465e,#6f93ab)"><span class="glass"><b>Indigo Linen</b><div class="text-small">₹ 238 / m</div></span></div>
+    <div class="sw press" style="background:linear-gradient(135deg,#6a7a4f,#b7c08a)"><span class="glass"><b>Olive Twill</b><div class="text-small">₹ 190 / m</div></span></div>
+  </div>
+  <div class="glass stats enter" style="--i:4"><div><div class="kpi num">2.4k</div><div class="text-small text-muted">Fabrics</div></div><div><div class="kpi num">380</div><div class="text-small text-muted">Mills</div></div><div><div class="kpi num">12h</div><div class="text-small text-muted">Quote time</div></div></div>
+  <nav class="tabbar" aria-label="Main"><a aria-current="page" href="#">⌂<span>Home</span></a><a href="#">▦<span>Browse</span></a><a href="#">✎<span>RFQ</span></a><a href="#">☺<span>Account</span></a></nav>
+</div></div>
+
+<!-- Screen 2: Sheet -->
+<div class="phone app-bg"><div class="screen">
+  <div class="app-header"><button class="icon-btn" aria-label="Back">‹</button><div class="app-title">Rust Cotton</div><button class="icon-btn" aria-pressed="true" aria-label="Saved">♥</button></div>
+  <div class="sw" style="background:linear-gradient(135deg,#a8452e,#d98a5f);aspect-ratio:4/5"></div>
+  <div class="sheet-backdrop"></div>
+  <div class="sheet-glass">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--sp-3)"><h3 class="app-title" style="font-size:1.125rem">Choose quantity</h3><button class="icon-btn" style="inline-size:36px;block-size:36px" aria-label="Close">✕</button></div>
+    <div class="stack" style="--stack-gap:.625rem">
+      <div class="row-item"><div class="row-item__thumb" style="background:#c46a45"></div><div><b>Sample · 1 m</b><div class="text-small text-muted">Ships in 2 days</div></div><b class="num">₹ 160</b></div>
+      <div class="row-item"><div class="row-item__thumb" style="background:#a8452e"></div><div><b>Roll · 50 m</b><div class="text-small text-muted">MOQ 50 m · slab price</div></div><b class="num">₹ 142/m</b></div>
+      <div class="row-item"><div class="row-item__thumb" style="background:#8a3a27"></div><div><b>Bulk RFQ · 500 m+</b><div class="text-small text-muted">Get quotes from mills</div></div><b>›</b></div>
+    </div>
+    <button class="btn btn--block press" style="margin-top:var(--sp-4);min-block-size:56px">Continue</button>
+  </div>
+</div></div>
+
+<!-- Screen 3: RFQ tracker with soft pillow -->
+<div class="phone app-bg"><div class="screen">
+  <div class="app-header"><button class="icon-btn" aria-label="Back">‹</button><div class="app-title">My RFQ</div><button class="icon-btn" aria-label="More">⋯</button></div>
+  <div class="pillow" style="padding:var(--sp-5)"><div class="text-label">Quotes received</div><div class="kpi num" style="font-size:2.5rem;font-weight:700">7</div><div class="text-small text-muted">3 mills · lowest ₹ 138/m</div>
+    <div class="bars" style="margin-top:var(--sp-4)"><i style="--v:40%"></i><i style="--v:70%"></i><i style="--v:55%"></i><i style="--v:90%"></i><i style="--v:62%"></i><i style="--v:35%"></i><i style="--v:80%"></i></div></div>
+  <div class="glass" style="padding:var(--sp-4);display:grid;gap:.5rem"><div style="display:flex;justify-content:space-between"><b>Surat Weaves</b><span class="badge badge--success">Quoted</span></div><div class="text-small text-muted">₹ 138/m · 500 m · 6 days</div></div>
+  <div class="glass" style="padding:var(--sp-4);display:grid;gap:.5rem"><div style="display:flex;justify-content:space-between"><b>Kashmir Looms</b><span class="badge badge--warning">Pending</span></div><div class="text-small text-muted">Awaiting quote</div></div>
+  <div class="cta-bar"><button class="btn press">Compare quotes</button></div>
+</div></div>
+</body></html>
